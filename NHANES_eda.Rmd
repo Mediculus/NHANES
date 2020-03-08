@@ -152,6 +152,8 @@ Per our "nested" findings, it was surprising to see that the `seqn` are all uniq
 
 **NOTE: Working with a single wave dataset may take up to 5GB of RAM**
 
+The function `process_accel` seems to be able to interact with CDC's data directly and therefore capable of obtaining more recent data if needed. 
+
 ## [Flags Data](#loading-dataset)
 
 ```{r flags_data}
@@ -193,11 +195,13 @@ flag2 <- Flags_D %>%
 
 ```
 
-The flags data appear to be a very detailed, minute-by-minute indicator of whether or not the device was worn by that particular person as identified by their `seqn`. These numbers are equivalent to the number of data points observed in accelerometer. 
+The flags data appear to be a very detailed, minute-by-minute indicator of whether or not the device was worn by that particular person as identified by their `seqn`. These numbers are equivalent to the number of data points observed in accelerometer. **Besides the minute tracking of wear flags, other variables are the same as those found in accelerometer data.** 
 
 We can also nest these data since "flag_dataset" is capable of being its own dataset. Since flag and accelerometer data are related, we could probably join these datasets based on the unique `seqn` identifier and have everything in 1 "table"
 
 **NOTE: working with accelerometer AND flag data consumes a large amount of RAM (~10 GB)**
+
+The function `process_flags` from the package allows the "raw" data obtained from `process_accel` and isolate just the wear variables. 
 
 ## [Covariate Data](#loading-dataset)
 
@@ -257,6 +261,6 @@ covar_data_C <- as_tibble(
 
 ```
 
-
+Playing around with the function from the package unfortunately only reveals that the dataset included only ranges from wave C (2003-2004) & D (2005-2006). However, it appears that if we could obtain .XPT files from more recent datasets, we could process it similarly. 
 
 *Self-question: Why does, given a list of tibble, using tibble vs data.frame differs in the results? The covar_data_C is a list structure where it it spits out a list of 1 that contains a list of 383 variables that each contains a "list" of the observations*
