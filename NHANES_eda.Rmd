@@ -209,7 +209,6 @@ covar1 <- Covariate_C %>%
   janitor::clean_names()
   
 
-
 covar2 <- Covariate_D %>% 
   janitor::clean_names()
 
@@ -221,7 +220,27 @@ Additionally, the amount of `seqn` observations in the covariates are more than 
 
 Furthermore, the covariates inside were not the complete covariates from the NHANES raw data. In these "cleaned" dataset, covariates are:
 
-* 
+* `SDDSRVYR`: Wave indicator as in other datasets
+* `SDMVPSU`: Masked variance pseudo probability sampling units. Used for variance estimation??
+* `SDMVSTRA`: Masked variance pseudo stratum. Used for variance estimation??
+* `WTINT2YR`: Full sample interviewed weight (likely reported weight)
+* `WTMEC2YR`: Full sample examination weight (likely observed weight)
+* `RIDAGEMN`: Age in months at screening date for those < 85 years. >= 85 is coded as NA
+* `RIDAGEEX`: Age in months at examination date for those < 85 years. >= 85 is coded as NA
+* `RIDAGEYR`: Age in years at date of screening
+* `BMI`: BMI in kg/m^2. A copy of BMXBMI variable.
+* `BMI_cat`: Category for the BMI values. underweight (<= 18.5), normal (18.5 < x <= 25), overweight (25 < x <= 30), obese (> 30)
+* `Race`: Self-reported ethnicity
+* `Gender`: Self-reported gender for M/F
+* `Diabetes`: Self-reported diagnosed diabetes, categorized to Yes, No, Borderline, Refused, Don't know. 
+* CHF
+* CHD
+* Cancer
+* Stroke
+* MobilityProblem
+* DrinkStatus
+* DrinksPerWeek
+* SmokeCigs
 
 # Raw Data Exploration
 
