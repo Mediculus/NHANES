@@ -246,6 +246,17 @@ Furthermore, the covariates inside were not the complete covariates from the NHA
 * DrinksPerWeek
 * SmokeCigs
 
+## Mortality Data
+
+Processed mortality data for NHANES, released in 2011 for waves C and D. 
+
+```{r}
+
+
+
+```
+
+
 # Raw Data Exploration
 
 Based on the package, it appears that the raw NHANES data primarily contributes to the covariate data. Using a function from within the `rnhanesdata` package, `process_covar()`, we're able to interact with the raw NHANES data within the package and obtain all available covariates. 
