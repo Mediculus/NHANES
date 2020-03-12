@@ -9,6 +9,7 @@ output: github_document
 
 # global default settings for chunks
 knitr::opts_chunk$set(echo = TRUE, #eval = FALSE,
+                      warning = FALSE, message = FALSE, 
                       fig.dim = c(10, 4), 
                       fig.align = "center",
                       results = "asis"
