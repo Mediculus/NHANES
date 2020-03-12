@@ -67,7 +67,7 @@ Based on the vignette? provided by the author, it seems that there are 2 main "d
   * `NHANES_2003-2004_MORT_2011_PUBLIC`
   * `NHANES_2005-2006_MORT_2011_PUBLIC`
 
- We are going to explore these processed dataset and see what can be done with it. Unfortunately, the raw data were inaccessible without using the package's functions and I wasn't too familiar yet with this. Although it seems that data 
+We are going to explore these processed dataset and see what can be done with it. Unfortunately, the raw data were inaccessible without using the package's functions, `process_covar`. As we'll see later, we could use this function to extract all possible covariates, meaning all the raw .XPT files can be extracted except for the NHANES mortality data. 
 
 # Processed Data Exploration
 
@@ -76,7 +76,7 @@ Based on the vignette? provided by the author, it seems that there are 2 main "d
 ```{r accel_data}
 
 # Data import for accelerometry data from wave C (2003-2004)
-nested_accel1 <- PAXINTEN_C %>% 
+nested_accelC <- PAXINTEN_C %>% 
   janitor::clean_names() %>% 
 #  pivot_longer(cols = starts_with("MIN"), 
 #               names_to = "min",
@@ -95,7 +95,7 @@ nested_accel1 <- PAXINTEN_C %>%
 
 
 # Data import for accelerometry data from wave D (2005-2006)
-accel2 <- PAXINTEN_D %>% 
+nested_accelD <- PAXINTEN_D %>% 
   janitor::clean_names() %>% 
 #  pivot_longer(cols = starts_with("MIN"), 
 #               names_to = "min",
@@ -127,7 +127,7 @@ Taking wave C's data and checking each variable using skimr reveals that paxcal 
 
 ```{r skimr_accel, eval = FALSE}
 
-accel1 %>% 
+accelC %>% 
   select(-min) %>% 
   skimr::skim_without_charts()
 
@@ -138,7 +138,7 @@ We also merged wave C and D to see if all these data are continuously recorded f
 ```{r joined_accel_data}
 
 # combining 2 datasets based on seqn, the unique ID
-joined_accel <- full_join(nested_accel1, nested_accel2, by = "seqn")
+joined_accel <- full_join(nested_accelC, nested_accelD, by = "seqn")
 
 # counts distinct seqn's based on the unique ID
 joined_accel %>% 
@@ -148,7 +148,7 @@ joined_accel %>%
 
 ```
 
-Per our "nested" findings, it was surprising to see that the `seqn` are all unique from wave C to D. In other words, we have a total of `nrow(joined_accel)` unique observations, which are all from different people. If we were to just aggregate these, we could likely ignore the wave ID if time were not considered. 
+Per our "nested" findings, it was surprising to see that the `seqn` are all unique from wave C to D. In other words, we have a total of `r nrow(joined_accel)` unique observations, which are all from different people. If we were to just aggregate these, we could likely ignore the wave ID if time were not considered. 
 
 **NOTE: Working with a single wave dataset may take up to 5GB of RAM**
 
@@ -158,7 +158,7 @@ The function `process_accel` seems to be able to interact with CDC's data direct
 
 ```{r flags_data}
 
-flag1 <- Flags_C %>% 
+flagC <- Flags_C %>% 
   janitor::clean_names() %>% 
 #  pivot_longer(cols = starts_with("MIN"), 
 #               names_to = "min",
@@ -176,7 +176,7 @@ flag1 <- Flags_C %>%
   nest(wave_C = paxcal:flag_mins)
 
 
-flag2 <- Flags_D %>% 
+flagD <- Flags_D %>% 
   janitor::clean_names() %>% 
 #  pivot_longer(cols = starts_with("MIN"), 
 #               names_to = "min",
@@ -209,18 +209,23 @@ Based on the vignette? it appears that the raw NHANES data beyond accelerometry 
 
 ```{r covar_data}
 
-covar1 <- Covariate_C %>% 
-  janitor::clean_names()
+covarC <- Covariate_C %>% 
+  janitor::clean_names() %>% 
+  nest(wave_C_covar = sddsrvyr:smoke_cigs)
   
 
-covar2 <- Covariate_D %>% 
-  janitor::clean_names()
+covarD <- Covariate_D %>% 
+  janitor::clean_names() %>% 
+  nest(wave_D_covar = sddsrvyr:smoke_cigs)
+
+
+joined_covar <- full_join(covarC, covarD, by = 'seqn')
 
 ```
 
 Unlike flag and accelerometer data, these covar data are not structured similarly to the other two and therefore might benefit from being a separate dataset. Unique identifier still exist and thus can be joined if necessary. This will be easily possible if we can maintain nested dataset of both flag and accelerometer. 
 
-Additionally, the amount of `seqn` observations in the covariates are more than `seqn` within flag and accelerometer. We should left join this if we plan to merge the datasets. 
+Additionally, the amount of `seqn` observations in the covariates are more than `seqn` within flag and accelerometer. With both wave C and D combined, we have `r nrow(joined_covar)` observations. We should left join this if we plan to merge the datasets. 
 
 Furthermore, the covariates inside were not the complete covariates from the NHANES raw data. In these "cleaned" dataset, covariates are:
 
@@ -234,21 +239,25 @@ Furthermore, the covariates inside were not the complete covariates from the NHA
 * `RIDAGEYR`: Age in years at date of screening
 * `BMI`: BMI in kg/m^2. A copy of BMXBMI variable.
 * `BMI_cat`: Category for the BMI values. underweight (<= 18.5), normal (18.5 < x <= 25), overweight (25 < x <= 30), obese (> 30)
-* `Race`: Self-reported ethnicity
-* `Gender`: Self-reported gender for M/F
-* `Diabetes`: Self-reported diagnosed diabetes, categorized to Yes, No, Borderline, Refused, Don't know. 
-* CHF
-* CHD
-* Cancer
-* Stroke
-* MobilityProblem
-* DrinkStatus
-* DrinksPerWeek
-* SmokeCigs
+* Self-reported survey answers:
+  * `Race`: ethnicity
+  * `Gender`: gender for M/F
+  * `Diabetes`: diagnosed diabetes, categorized to Yes, No, Borderline, Refused, Don't know. 
+  * `CHF`: diagnosed CHF, categorized as yes, no, refused, don't know (variable MCQ160B in raw)
+  * `CHD`: diagnosed CHD, categorized as yes, no refused, don't know (variable MCQ160C)
+  * `Cancer`: diagnosed history of any cancer. Categorized as yes, no, refused, don't know (MCQ220)
+  * `Stroke`: diagnosed history of stroke, categorized as yes, no, refused, or don't know. (MCQ160F)
+  * `Education_adult`: Present only in wave D
+  * `Mobility_Problem`: mobility issue categorized into any vs. no difficulty. Derived from responses of (PFQ-049, -054, -057, -059, -061B, -61C). Details in vignette.
+  * `Drink_Status`: current alcohol consumption categorized as non-, moderate-, or heavy-drinker. Details in vignette
+  * `Drinks_Per_Week`: number of drinks per week. Details in vignette
+  * `Smoke_Cigs`: cigarette smoking status categorized as never, former, or current. Details in vignette. 
 
 ## Mortality Data
 
 Processed mortality data for NHANES, released in 2011 for waves C and D. 
+
+*Pending exploration*
 
 ```{r}
 
@@ -264,14 +273,28 @@ Based on the package, it appears that the raw NHANES data primarily contributes 
 ```{r covar_raw_data}
 
 # extract raw NHANES data and convert to tibble
-covar_data_C <- as_tibble(
+raw_covar_data_C <- as_tibble(
   process_covar(
     waves = "C", extractAll = TRUE
     )[[1]] # process_covar outputs a list of 1 containing the tibble, this extracts the "content" and 
-  )        # turn it into tibble
+  ) %>%    # turn it into tibble
+  janitor::clean_names()
+
+
+
+raw_covar_data_D <- as_tibble(
+  process_covar(
+    waves = "D", extractAll = TRUE
+    )[[1]] # process_covar outputs a list of 1 containing the tibble, this extracts the "content" and 
+  ) %>%    # turn it into tibble
+  janitor::clean_names()
 
 ```
 
+By obtaining all possible covariates from the NHANES .XPT contained in the package, we notice that we have `r nrow(raw_covar_data_C)` unique observations with corresponding `r ncol(raw_covar_data_C)` variables including the unique `seqn` ID for wave C. Similarly, for wave D, we have `r nrow(raw_covar_data_D)` unique observations with corresponding `r ncol(raw_covar_data_D)` variables including the unique `seqn` ID. 
+
 Playing around with the function from the package unfortunately only reveals that the dataset included only ranges from wave C (2003-2004) & D (2005-2006). However, it appears that if we could obtain .XPT files from more recent datasets, we could process it similarly. 
+
+Beyond that, there appears to be a lot of `NA` variables within these covariates data. Furthermore, given the massive variables recorded and their unique naming, I unfortunately have not been able to find a good resource to decipher the meaning behind the variables barring the obvious ones. 
 
 *Self-question: Why does, given a list of tibble, using tibble vs data.frame differs in the results? The covar_data_C is a list structure where it it spits out a list of 1 that contains a list of 383 variables that each contains a "list" of the observations*
