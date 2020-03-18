@@ -9,6 +9,7 @@ output: github_document
 
 # global default settings for chunks
 knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, message = FALSE,
                       fig.dim = c(10, 4), 
                       fig.align = "center",
                       results = "asis"
@@ -37,4 +38,83 @@ theme_set(theme_minimal() +
 
 ```
 
-# Header 1
+# Re-fresh start for NHANES dataset
+
+Since we've explored almost all possible datasets that can be found in the `rnhanesdata` package, we can now make a more targeted approach to which dataset we want to work on as well as obtaining particular raw data information. First though, we need to load the package as always.
+
+```{r package_load}
+
+library(rnhanesdata)
+
+```
+
+# Picking which NHANES Data
+
+The original package has 2 waves, C and D, that corresponds to surveys sent out between 2003-2004 and 2005-2006, respectively. Working with wave D has advantage because not only is the data more recent, it also has more "raw" observations and thus potentially more datapoints we could work with. 
+
+```{r raw_covar_load}
+
+covar_data_d <- as_tibble(
+  process_covar(
+    waves = "D", extractAll = TRUE
+    )[[1]] # process_covar outputs a list of 1 containing the tibble, this extracts the "content" and 
+  ) %>%    # turn it into tibble
+  janitor::clean_names()
+
+```
+
+We can then filter out these observations to only include that may be useful for accelerometer and flag data (in case we ever want to explore relationships between these variables).
+
+First, we load up the flag data:
+
+```{r flag_data}
+
+flag_d <- Flags_D %>% 
+  janitor::clean_names() %>% 
+#  pivot_longer(cols = starts_with("MIN"), 
+#               names_to = "min",
+#               names_prefix = "min",
+#               values_to = "flag_indicator") %>% 
+#  mutate(
+#    min = as.numeric(min)
+#  ) %>% 
+  mutate_at(
+    .vars = vars("paxcal", "paxstat", "weekday", "sddsrvyr"),
+    .funs = funs(factor)
+  ) %>% 
+  group_by(seqn) %>% 
+  nest(flag_mins = min1:min1440) %>% 
+  nest(wave_D = paxcal:flag_mins)
+
+```
+
+We can then use left join with flag_d as our reference variable.
+
+```{r}
+
+identifier <- flag_d %>% 
+  select(seqn) %>% 
+  ungroup() %>% 
+  mutate(
+    seqn = as.integer(seqn)
+  )
+
+covar_data_d <- left_join(identifier, covar_data_d, by = 'seqn')
+
+```
+
+Now that we have filtered out our raw covariates data, we can further stratify our datasets into lists for specific questionnaires and tackle this 1-by-1.
+
+```{r}
+
+nested_covar_data_d <- covar_data_d %>% 
+  group_by(seqn) %>% 
+  nest(alc_q = alq101:alq150)
+
+
+
+nested_covar_data_d
+
+```
+
+
