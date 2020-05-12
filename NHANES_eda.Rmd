@@ -1,5 +1,5 @@
 ---
-title: "NHANES EDA"
+title: "rnhanesdata Package EDA"
 author: "Kevin S.W. --- UNI: ksw2137"
 date: "`r format(Sys.time(), '%x')`"
 output: github_document
@@ -38,7 +38,7 @@ theme_set(theme_minimal() +
 
 # NHANES Dataset EDA
 
-Purpose of this project is to explore what the dataset contains and if it is workable. Further exploration will be decided based on these possibilities. 
+Purpose of this section of the project is to explore what the dataset contains and if it is workable. Further exploration will be decided based on these possibilities. 
 
 ## Loading Dataset
 
