@@ -659,23 +659,44 @@ Questionnaires of interest:
   * FSD081: lost weight because no money for food in the past 12 months
   * FSD092: any adults in the household not eat for whole day b/c no money
   * FSD102: how often do these adults not eat for a whole day?
-  * 
 * Health Insurance
-  *
+  * None
 * Hospital Utilization & Access to Care
-  *
+  * None
 * Housing Characteristics
-  *
+  * None
+* Immunization
+  * None
 * Medical Conditions
-  *
+  * MCQ010: Asthma Dx
+  * MCQ025: Age 1st asthma
+  * MCQ035: Still with asthma
+  * MCQ080: Overweight told by MD.
+  * MCQ160B: CHF dx
+  * MCQ160C: CAD dx
+  * MCQ160D: dx angina/angina pectoris
+  * MCQ160E: MI dx
+  * MCQ160F: Stroke dx
+  * MCQ160G: dx emphysema
+  * MCQ180B: Age of CHF dx
+  * MCQ180C: Age of CAD dx
+  * MCQ180D: Age of angina/angina pectoris dx
+  * MCQ180E: Age of MI dx
+  * MCQ180F: Age of stroke Dx
+  * MCQ180G: Age of emphysema dx
+  * MCQ300A: close relative who had MI
+  * MCQ300B: close relative who had asthma
+  * MCQ300C: close relative who had diabetes
 * Occupation
-  *
+  * 
 * Physical Activity
   *
 * Physical Activity - Individual Activities
   *
 * Physical Functioning
   *
+* Prescription Medications
+  * 
 * Respiratory Health
   *
 * Smoking - Cigarette Use
@@ -685,9 +706,13 @@ Questionnaires of interest:
 * Smoking - Recent Tobacco Use
   *
 * Weight History
-  *
+  * WHD010: current self-reported height (inches)
+  * WHD020: current self-reported weight (lbs)
+  * WHQ030: how do subject feel about their weight
+  * WHQ040: like to weigh more/less/same
+  * WHQ060: is weight change intentional?
 * Weight History - Youth
-  *
+  * None
 
 ```{r que_var_keep}
 
