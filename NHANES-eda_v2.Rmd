@@ -440,8 +440,7 @@ demo_keep_list <- c("SEQN", "SDDSRVYR", "RIDSTATR", "RIAGENDR", "RIDAGEYR", "RID
 demo_survey <- demo_survey %>% 
   filter((str_detect(var_name, 
                       paste(demo_keep_list,            
-                            collapse = "|")))) %>% 
-  select(var_name)
+                            collapse = "|"))))
 
 ```
 
@@ -512,8 +511,7 @@ diet_survey <- diet_survey %>%
   filter(!(str_detect(data_desc, "Individual|Questionnaire|Supplement")), 
          (str_detect(var_name, 
                       paste(diet_keep_list,            
-                            collapse = "|")))) %>% 
-  select(var_name)
+                            collapse = "|"))))
 
 ```
 
@@ -573,8 +571,7 @@ exam_keep_list <- c("SEQN", "PEASCST1", "BPXCHR", "BPXPLS", "BPXPULS", "BPXPTY",
 exam_survey <- exam_survey %>% 
   filter(str_detect(var_name, 
                       paste(exam_keep_list,            
-                            collapse = "|"))) %>% 
-  select(var_name)
+                            collapse = "|")))
 
 ```
 
@@ -584,8 +581,7 @@ exam_survey <- exam_survey %>%
 
 lab_survey <- det_selected_df %>% 
   filter(survey_type == "laboratory") %>% 
-  select(-survey_type, -filedata) %>% 
-  select(var_name)
+  select(-survey_type, -filedata)
 
 # used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
 #janitor::get_dupes(lab_survey, var_name)
@@ -769,7 +765,19 @@ Variables of interest:
 ```{r limvar_keep}
 
 lim_survey <- lim_survey %>% 
-  filter(str_detect(data_desc, "Census 2010")) %>% 
-  select(var_name)
+  filter(str_detect(data_desc, "Census 2010"))
 
 ```
+
+
+#### Combining all the filtered database to isolate the variable names
+
+```{r final_variables}
+
+final_df <- bind_rows(demo_survey, diet_survey, exam_survey, lab_survey, que_survey, lim_survey)
+
+final_df <- final_df %>% 
+  distinct(var_name, var_desc)
+
+```
+
