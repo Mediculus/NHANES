@@ -8,7 +8,7 @@ output: github_document
 ```{r setup, include = FALSE, message = FALSE, warning = FALSE}
 
 # global default settings for chunks
-knitr::opts_chunk$set(echo = TRUE, 
+knitr::opts_chunk$set(echo = TRUE,
                       warning = FALSE, message = FALSE,
                       fig.dim = c(10, 4), 
                       fig.align = "center",
@@ -652,6 +652,9 @@ Questionnaires of interest:
     * A: worried about running out of food
     * B: food didn't last
     * C: couldn't afford balanced meal
+    * D: 
+    * E:
+    * F:
   * FSD041: adults cut size/skip meals
   * FSD052: How often adults cut size/skip meals
   * FSD061: eating less than they should in the past 12 months
@@ -688,23 +691,33 @@ Questionnaires of interest:
   * MCQ300B: close relative who had asthma
   * MCQ300C: close relative who had diabetes
 * Occupation
-  * 
-* Physical Activity
-  *
+  * None
+* Physical Activity (Describes subsections of activities, likely not needed)
+  * None
 * Physical Activity - Individual Activities
-  *
+  * PADACTIV: over the past 30 days, what vigorous/moderate activities did you do?
+  * PADLEVEL: reported intensity level of activity
+  * PADTIMES: how often did you do activities over the past 30 days?
+  * PADDRAT: average duration of the activities (minutes)
 * Physical Functioning
-  *
+  * PFQ020: Do you have impairment or health problem that limits your ability to crawl/walk/...?
+  * PFQ030: Is the impairment chronic or acute (>= 12 months)?
 * Prescription Medications
-  * 
+  * None
 * Respiratory Health
-  *
+  * None
 * Smoking - Cigarette Use
-  *
+  * SMQ020: smoked at least 100 cigs in life
+  * SMD030: age started smoking regularly
+  * SMQ040: do you now smoke cigs still?
+  * SMQ050Q: if not smoking, how long ago did you stop?
+  * SMQ050U: unit of days/week/months/year
 * Smoking - Household Smokers
-  *
+  * None
 * Smoking - Recent Tobacco Use
-  *
+  * None
+* Social Support
+  * None
 * Weight History
   * WHD010: current self-reported height (inches)
   * WHD020: current self-reported weight (lbs)
@@ -716,14 +729,20 @@ Questionnaires of interest:
 
 ```{r que_var_keep}
 
-que_keep_list_data <- c("Cardiovascular", "Diabetes")
-que_keep_list_var <- c("SEQN", 
+que_remove_list <- c("Bowel Health", "Diet Behavior", "Drug", "Early Childhood", "Health Insurance", "Hospital Utilization", 
+                     "Housing Characteristic", "Immunization", "Occupation", "Prescription Medication", "Respiratory Health",
+                     "Household Smokers", "Recent Tobacco Use", "Social Support", "Weight History - Youth")
+
+que_keep_list <- c("SEQN", "ALQ120Q", "ALQ120U", "BPQ040A", "BPQ070", "BPQ080", "BPQ090", "CDQ", "DIQ", "HSD010", "FSD032", "FSD041", 
+                   "FSD052", "FSD061", "FSD071", "FSD081", "FSD092", "FSD102", "MCQ010", "MCQ025", "MCQ035", "MCQ080", 
+                   "MCQ160B", "MCQ160C", "MCQ160D", "MCQ160E", "MCQ160F", "MCQ160G", "MCQ180B", "MCQ180C", "MCQ180D", 
+                   "MCQ180E", "MCQ180F", "MCQ180G", "MCQ300A", "MCQ300B", "MCQ300C", "PADACTIV", "PADLEVEL", "PADTIMES", 
+                   "PADDRAT", "PFQ020", "PFQ030", "SMQ020", "SMD030", "SMQ040", "SMQ050Q", "SMQ050U", "WHD010", "WHD020", 
+                   "WHQ030", "WHQ040", "WHQ060", "DID")
 
 que_survey <- que_survey %>% 
-  filter(data_desc != "Bowel Health",
-         str_detect(var_name, 
-                      paste(exam_keep_list,            
-                            collapse = "|")))
+  filter(!(str_detect(data_desc, paste(que_remove_list, collapse = "|"))),
+         str_detect(var_name, paste(que_keep_list, collapse = "|")))
 
 ```
 
