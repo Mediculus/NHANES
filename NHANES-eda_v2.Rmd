@@ -138,11 +138,57 @@ na_check_df <- na_check_df %>%
 
 ```
 
-We then evaluate from the remaining `r nrow(na_check_df)` variables and felt that `NA` amount that is >`r 100*((7455-1000)/7455)`% would not be a good representative of the variable. Therefore, we filtered all those that have values greater than `r 7455*(7455-1000)/7455`. 
+We then evaluate from the remaining `r nrow(na_check_df)` variables and felt that an `NA` amount that is >`r round(100*((7455-1000)/7455), 3)`% would not be a good representative of the variable. Therefore, we filtered all those that have values greater than `r 7455*(7455-1000)/7455`. 
 
 ```{r filter_NA}
 
 na_check_df <- na_check_df %>% 
-  filter()
+  filter( na_count < 6455)
 
 ```
+
+## Re-selecting Viable Variables for Data Analysis 
+
+Now that we've set a level of acceptable responses, we could revisit our variables and be more selective.
+
+```{r}
+
+clean_variable_list <- left_join(na_check_df, variable_list, by = "var_name")
+
+```
+
+Revising the variables, these are the ones we decide to NOT include:
+
+* mcq010: asthma dx
+* mcq025: age of 1st asthma
+* mcq035: still have asthma currently
+* mcq300a: close relative had MI?
+* mcq300b: close relative had asthma?
+* mcq300c: close relative had diabetes?
+* bmxsub: subscapular skinfold (mm)
+* dmdeduc3: education level - children 6-19
+* dmdfmsiz: total # of people in the family
+* sdmvpsu: masked variance pseudo-psu
+* sdmvstra: masked variance pseuda-stratum
+
+```{r 2nd_var_remove}
+
+filter_remove_list <- 
+  c("mcq010", "mcq025", "mcq035", "mcq300a", "mcq300b", "mcq300c", "bmxsub", "dmdfmsiz", "sdmvpsu", "sdmvstra")
+
+clean_variable_list <- clean_variable_list %>% 
+  filter(!(str_detect(var_name, 
+                      paste(filter_remove_list,            
+                            collapse = "|"))))
+
+```
+
+We then further re-clean our `covar_d_clean` dataframe
+
+```{r recleaned_covar}
+
+covar_d_clean <- select_if(covar_data_d, 
+                           names(covar_data_d) %in% c("seqn", pull(clean_variable_list, var_name)))
+
+```
+
