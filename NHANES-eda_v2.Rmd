@@ -103,18 +103,6 @@ covar_data_d <- left_join(identifier, covar_data_d, by = 'seqn')
 
 ```
 
-Now that we have filtered out our raw covariates data, we can further stratify our datasets into lists for specific questionnaires and tackle this 1-by-1.
-
-```{r}
-
-nested_covar_data_d <- covar_data_d %>% 
-  group_by(seqn) %>% 
-  nest(alc_q = alq101:alq150)
-
-nested_covar_data_d
-
-```
-
 Next step however, is to select relevant variables...
 
 # Code Book of Covariates from CDC
@@ -778,6 +766,11 @@ final_df <- bind_rows(demo_survey, diet_survey, exam_survey, lab_survey, que_sur
 
 final_df <- final_df %>% 
   distinct(var_name, var_desc)
+
+final_df <- final_df %>% 
+  mutate(var_name = str_to_lower(var_name))
+
+final_covar_data <- select_if(covar_data_d, names(covar_data_d) %in% final_df$var_name)
 
 ```
 
