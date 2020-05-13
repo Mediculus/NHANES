@@ -9,10 +9,9 @@ output: github_document
 
 # global default settings for chunks
 knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, message = FALSE, 
                       fig.dim = c(10, 4), 
-                      fig.align = "center",
-                      results = "asis"
-                      )
+                      fig.align = "center")
 
 # loaded packages; placed here to be able to load global settings
 Packages <- c("tidyverse", "dplyr", "rvest", "httr")
@@ -83,7 +82,7 @@ The code below creates our first dataframe that scrapes the group variables as w
 ```{r NHANES_groupvar_scrape}
 
 # obtaining survey type/and its topic-contents
-survey_filedata <- 
+survey_df <- 
   tibble(
     survey_link = c(
       "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Demographics&CycleBeginYear=2005",  # demographics
@@ -110,9 +109,8 @@ survey_filedata <-
     group_var = data_name,                               # Rename to proper descriptors (Group variable name)
     group_filename = data_name1                          # Rename to proper descriptors (filename for group variables)
   ) %>% 
-  select(-survey_link) %>%                               # remove now-useless column
   mutate(
-    group_filename = gsub(" Doc", "", group_filename)    # remove the "Doc" text at the end of every filename in filedata
+    group_filename = gsub(" Doc", "", group_filename)    # remove the "Doc" text at the end of every filename in group_filename
     ) %>% 
   filter(!(group_filename %in%                           # remove the odd-one-out survey links
              c("All Years", "VID_D", "DSBI", "DSII", "DSPI", "RXQ_DRUG"))) %>% 
@@ -128,17 +126,17 @@ survey_filedata <-
                        .y = "#CodebookLinks a", 
                        ~read_page(url = .x, tag = .y))
   ) %>% 
-  select(-var_url)                                       # remove unneeded column. 
+  select(-survey_link, -var_url)                                       # remove unneeded column. 
 
 ```
 
 Now that we have the "list of descriptions", we could scan which variables/topics are of interest to us. We are particularly interested in variables potentially related to cardiovascular function. 
 
-Note however that `nrow =` `r nrow(survey_filedata)` has 3 more variables when compared to `distinct(survey_filedata, group_filename) =` `r nrow(distinct(survey_filedata, group_filename))`, suggesting that there are some duplicates (see below).
+Note however that `nrow =` `r nrow(survey_df)` has 3 more variables when compared to `distinct(survey_df, group_filename) =` `r nrow(distinct(survey_df, group_filename))`, suggesting that there are some duplicates (see below).
 
 ```{r surveydf_dupe_check}
 
-janitor::get_dupes(survey_filedata, group_filename)
+janitor::get_dupes(survey_df, group_filename)
 
 ```
 
@@ -150,7 +148,7 @@ Another step we need to do is the add clarifying descriptions as some of these v
 
 ```{r detailed_var_desc_scrape}
 
-detailed_var_desc <- survey_filedata %>% 
+detailed_var_desc <- survey_df %>% 
   select(category) %>% 
   distinct(category, .keep_all = TRUE) %>%       # obtaining the survey type variables
   # adding url for each survey type
@@ -178,9 +176,13 @@ detailed_var_desc <- survey_filedata %>%
 
 We will keep this dataframe to be used for later, once we remove variables that we are NOT interested in. 
 
-## Removing Irrelevant Variables
+## Selecting Variables of Interest
 
-Unfortunately, this is one of the more time-consuming portion and tedious as we need to evaluate each variable by eye to determine which variables are of specific interest. Thankfully, our `group_var` variable can provide some insight on which group variables we should look into. List of removed group variables below, based on "irrelevance" to cardiovascular issues:
+Unfortunately, this is one of the more time-consuming portion and tedious as we need to evaluate each variable by eye to determine which variables are of specific interest. 
+
+### Removing Irrelevant Group Variables 
+
+Thankfully, our `group_var` variable can provide some insight on which group variables we should look into. List of removed group variables below, based on "irrelevance" to cardiovascular issues:
 
 * Demographic:
   * None
@@ -278,8 +280,8 @@ groupvar_remove_list <-
     "Oral Health", "Osteoporosis", "Reproductive Health", "Sleep Disorders", "Los Angeles County", "Sexual")
 
 
-# curated filedata that removes all those in the remove_list
-selected_filedata <- survey_filedata %>% 
+# curated group_filename that removes all those in the remove_list
+survey_df_filtered <- survey_df %>% 
   filter(!(str_detect(group_var, 
                       paste(groupvar_remove_list,      # remove using a combination of !, str_detect, paste funcs
                             collapse = "|")))) %>%     # collapse "merges" the list with the specified char as the "space"
@@ -295,8 +297,7 @@ Now that we have filtered out unnecessary group variables, we can check for dupl
 
 ```{r selecteddf_dupe_check}
 
-janitor::get_dupes(selected_filedata, var_name) %>% 
-  view()
+janitor::get_dupes(survey_df_filtered, var_name)
 
 ```
 
@@ -304,7 +305,7 @@ Unfortunately, as seen by the function, there were multiple duplicate variables 
 
 ```{r left_join_detailed}
 
-selected_filedata <- left_join(selected_filedata, 
+survey_df_filtered <- left_join(survey_df_filtered, 
                                detailed_var_desc,
                                by = c("category", "group_filename", "var_name"))
 
@@ -314,15 +315,15 @@ After obtaining a more comprehensive description dataset, we always check for du
 
 ```{r detailedselecteddf_dupe_check}
 
-janitor::get_dupes(selected_filedata, group_filename, var_name)
+janitor::get_dupes(survey_df_filtered, group_filename, var_name)
 
 ```
 
-As we see above, there were `r nrow(janitor::get_dupes(selected_filedata, group_filename, var_name))` rows of duplicates. Having cross-checked with CDC's descriptions that doesn't appear to show any particular difference, we could safely use `distinct()` to filter these out. However, to ensure there's no "missing information", we decided to remove duplicates with exact matches in three columns, `group_filename`, `var_name`, and `det_var_desc`. 
+As we see above, there were `r nrow(janitor::get_dupes(survey_df_filtered, group_filename, var_name))` rows of duplicates. Having cross-checked with CDC's descriptions that doesn't appear to show any particular difference, we could safely use `distinct()` to filter these out. However, to ensure there's no "missing information", we decided to remove duplicates with exact matches in three columns, `group_filename`, `var_name`, and `det_var_desc`. 
 
 ```{r detailedselecteddf_remove_dupe}
 
-selected_filedata <- distinct(selected_filedata, 
+survey_df_filtered <- distinct(survey_df_filtered, 
                               group_filename, var_name, det_var_desc, 
                               .keep_all = TRUE)
 
@@ -330,13 +331,13 @@ selected_filedata <- distinct(selected_filedata,
 
 These are the first step in filtering our incredibly large dataset. The next step is then to further filter out the items contained within the remaining group variables.
 
-### Demographic Data
+### Keeping Variables of Interest under Demographic Category
 
 ```{r demo_survey}
 
-demo_survey <- det_selected_df %>% 
-  filter(survey_type == "demographics") %>% 
-  select(-survey_type, -data_desc, -filedata)
+demo_survey <- survey_df_filtered %>% 
+  filter(category == "demographics") %>% 
+  select(-category, -group_var, -group_filename)
 
 ```
 
@@ -358,12 +359,15 @@ Under demographic survey data, we see that variables of interest are:
 * SDMVPSU: Masked variance pseudo-PSU
 * SDMVSTRA: Masked variance pseudo-stratum
 
-From these, we could build a "keep-list" for our demographic data.
+From these, we could build a "keep-list" for our demographic data and obtain a filtered variable list for our demographics category. 
 
 ```{r demo_var_keep}
 
-demo_keep_list <- c("SEQN", "SDDSRVYR", "RIDSTATR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC3", "DMDEDUC2",
-                    "DMDFMSIZ", "INDFMINC", "INDFMPIR", "WTINT2YR", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")
+demo_keep_list <- 
+  c("SEQN", "SDDSRVYR", "RIDSTATR", "RIAGENDR", 
+    "RIDAGEYR", "RIDRETH1", "DMDEDUC3", "DMDEDUC2",
+    "DMDFMSIZ", "INDFMINC", "INDFMPIR", "WTINT2YR", 
+    "WTMEC2YR", "SDMVPSU", "SDMVSTRA")
 
 demo_survey <- demo_survey %>% 
   filter((str_detect(var_name, 
@@ -372,15 +376,15 @@ demo_survey <- demo_survey %>%
 
 ```
 
-### Dietary Data
+### Keeping Variables of Interest under Dietary Category
 
 We can do similar steps with our dietary data.
 
 ```{r diet_survey}
 
-diet_survey <- det_selected_df %>% 
-  filter(survey_type == "dietary") %>% 
-  select(-survey_type, -filedata)
+diet_survey <- survey_df_filtered %>% 
+  filter(category == "dietary") %>% 
+  select(-category, -group_filename)
 
 # used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
 #distinct(diet_survey, var_name)
@@ -433,23 +437,29 @@ Of interest:
 
 ```{r diet_var_keep}
 
-diet_keep_list <- c("SEQN", "DR1ILINE", "DBD100", "DRQSDIET", "DRQSDT1", "DRQSDT2", "DRQSDT3", "DRQSDT4", "DRQSDT5", "DRQSDT6", "DRQSDT7", "DRQSDT8", "DRQSDT91", "TKCAL", "TPROT", "CARB", "TSUGR", "TFIBE", "TTFAT", "TSFAT", "TMFAT", "TPFAT", "TCHOL", "320Z", "330Z", "BWATZ")
+diet_keep_list <- 
+  c("SEQN", "DR1ILINE", "DBD100", "DRQSDIET", 
+    "DRQSDT1", "DRQSDT2", "DRQSDT3", "DRQSDT4", 
+    "DRQSDT5", "DRQSDT6", "DRQSDT7", "DRQSDT8", 
+    "DRQSDT91", "TKCAL", "TPROT", "CARB", "TSUGR", 
+    "TFIBE", "TTFAT", "TSFAT", "TMFAT", "TPFAT", 
+    "TCHOL", "320Z", "330Z", "BWATZ")
 
 diet_survey <- diet_survey %>% 
-  filter(!(str_detect(data_desc, "Individual|Questionnaire|Supplement")), 
+  filter(!(str_detect(group_var, "Individual|Questionnaire|Supplement")), 
          (str_detect(var_name, 
                       paste(diet_keep_list,            
                             collapse = "|"))))
 
 ```
 
-### Examination Data
+### Keeping Variables of Interest under Examination Category
 
 ```{r exam_survey}
 
-exam_survey <- det_selected_df %>% 
-  filter(survey_type == "examination") %>% 
-  select(-survey_type, -filedata)
+exam_survey <- survey_df_filtered %>% 
+  filter(category == "examination") %>% 
+  select(-category, -group_filename)
 
 # used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
 #janitor::get_dupes(exam_survey, var_name)
@@ -494,7 +504,11 @@ Variables of Interest:
 
 ```{r exam_var_keep}
 
-exam_keep_list <- c("SEQN", "PEASCST1", "BPXCHR", "BPXPLS", "BPXPULS", "BPXPTY", "BPXSY", "BPXDI", "BMXWT", "BMXHT", "BMXBMI", "BMXCALF", "BMXARMC", "BMXWAIST", "BMXTHICR", "BMXTRI", "BMXSUB")
+exam_keep_list <- 
+  c("SEQN", "PEASCST1", "BPXCHR", "BPXPLS", "BPXPULS", 
+    "BPXPTY", "BPXSY", "BPXDI", "BMXWT", "BMXHT", "BMXBMI", 
+    "BMXCALF", "BMXARMC", "BMXWAIST", "BMXTHICR", "BMXTRI", 
+    "BMXSUB")
 
 exam_survey <- exam_survey %>% 
   filter(str_detect(var_name, 
@@ -503,13 +517,13 @@ exam_survey <- exam_survey %>%
 
 ```
 
-### Laboratory Data
+### Keeping Variables of Interest under Laboratory Category
 
 ```{r lab_survey}
 
-lab_survey <- det_selected_df %>% 
-  filter(survey_type == "laboratory") %>% 
-  select(-survey_type, -filedata)
+lab_survey <- survey_df_filtered %>% 
+  filter(category == "laboratory") %>% 
+  select(-category, -group_filename)
 
 # used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
 #janitor::get_dupes(lab_survey, var_name)
@@ -532,16 +546,16 @@ Thankfully, the lab survey has initially been filtered by the kind of tests that
 * Vit B6
 * Vit C
 
-### Questionnaire Data
+### Keeping Variables of Interest under Questionnaire Category
 
 ```{r que_survey}
 
-que_survey <- det_selected_df %>% 
-  filter(survey_type == "questionnaire") %>% 
-  select(-survey_type, -filedata)
+que_survey <- survey_df_filtered %>% 
+  filter(category == "questionnaire") %>% 
+  select(-category, -group_filename)
 
 # used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
-janitor::get_dupes(que_survey, var_name)
+#janitor::get_dupes(que_survey, var_name)
 
 ```
 
@@ -665,24 +679,24 @@ que_keep_list <- c("SEQN", "ALQ120Q", "ALQ120U", "BPQ040A", "BPQ070", "BPQ080", 
                    "WHQ030", "WHQ040", "WHQ060", "DID")
 
 que_survey <- que_survey %>% 
-  filter(!(str_detect(data_desc, paste(que_remove_list, collapse = "|"))),
+  filter(!(str_detect(group_var, paste(que_remove_list, collapse = "|"))),
          str_detect(var_name, paste(que_keep_list, collapse = "|")))
 
 ```
 
-### Limited Data
+### Keeping Variables of Interest under Limited Data Category
 
 ```{r lim_survey}
 
-lim_survey <- det_selected_df %>% 
-  filter(survey_type == "limited data") %>% 
-  select(-survey_type, -filedata)
+lim_survey <- survey_df_filtered %>% 
+  filter(category == "limited data") %>% 
+  select(-category, -group_filename)
 
 # used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
-janitor::get_dupes(lim_survey, var_name)
+#janitor::get_dupes(lim_survey, var_name)
 
-lim_survey %>% 
-  distinct(data_desc)
+#lim_survey %>% 
+#  distinct(data_desc)
 
 ```
 
@@ -693,12 +707,13 @@ Variables of interest:
 ```{r limvar_keep}
 
 lim_survey <- lim_survey %>% 
-  filter(str_detect(data_desc, "Census 2010"))
+  filter(str_detect(group_var, "Census 2010"))
 
 ```
 
+## Combining Filtered Variables within Categories into a Single List
 
-#### Combining all the filtered database to isolate the variable names
+Now that we've isolated the variables, we can merge them together to create a csv file that we can use for when we actually process the covariates from `rnhanesdata` package. 
 
 ```{r final_variables}
 
@@ -708,8 +723,7 @@ final_df <- final_df %>%
   distinct(var_name, var_desc)
 
 final_df <- final_df %>% 
-  mutate(var_name = str_to_lower(var_name))
-
-final_covar_data <- select_if(covar_data_d, names(covar_data_d) %in% final_df$var_name)
+  mutate(var_name = str_to_lower(var_name)) 
+#%>% write_csv("variable_list.csv")
 
 ```
