@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       )
 
 # loaded packages; placed here to be able to load global settings
-Packages <- c("tidyverse", "dplyr")
+Packages <- c("tidyverse", "dplyr", "rvest", "httr")
 invisible(lapply(Packages, library, character.only = TRUE))
 
 
@@ -43,11 +43,22 @@ Purpose of this document is to obtain descriptions on the variables that is coll
 
 For my project in particular, we are interested in variables that might be associated with cardiovascular indicators or diseases. While we won't select all of the possible variables, we will try to select those that are "most commonly" known to affect or be related to cardiovascular physiology. 
 
-# Obtaining Variable Descriptions
+## Obtaining Variable Descriptions
 
 By consulting CDC's [NHANES website](https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Demographics&CycleBeginYear=2005), we could check 1-by-1 which variables are actually relevant to our interest. As tedious as it was, unfortunately this is the only method that can be done without further assistance or access to their API. 
 
-First, we need a function to grab these descriptions. 
+Given CDC's structure of data organization, we will give label to these structure so that the process can be followed along. CDC's data organization is as follows:
+
+> Category/Group Variable/Variable
+
+In other words, take the `examination` **category**, within it, we will have **group variables** such as "Audiometry", which will contain various **variables** that is associated with "Audiometry". 
+
+Notes on removed variables:
+
+* `All Years`, `VID_D`: different link
+* `DSBI`, `DSII`, `DSPI`, `RXQ_DRUG`: data from 1999-2000? (likely aggregate data and too difficult to process)
+
+To be able to understand our dataset, first we need a function to grab the descriptions for all of the variable-levels from the CDC web.  
 
 ```{r info_grab_fn}
 
@@ -67,20 +78,9 @@ read_page <- function(url, tag) {
 
 Now that we have a page-reader function, first we will scrape all the available "survey" documents' names.  To do this, we create a tibble containing the links to each of this categories (demographics, dietary, examination, laboratory, questionnaire, and limited data "surveys"). 
 
-Given CDC's structure of data organization, we will give label to these structure so that the process can be followed along. CDC's data organization is as follows:
+The code below creates our first dataframe that scrapes the group variables as well as the .doc filenames associated with it.
 
-> Category/Group Variable/Variable
-
-In other words, take the `examination` **category**, within it, we will have **group variables** such as "Audiometry", which will contain various **variables** that is associated with "Audiometry". 
-
-Notes on removed variables:
-
-* `All Years`, `VID_D`: different link
-* `DSBI`, `DSII`, `DSPI`, `RXQ_DRUG`: data from 1999-2000? (likely aggregate data and too difficult to process)
-
-We first create
-
-```{r NHANES_data_process}
+```{r NHANES_groupvar_scrape}
 
 # obtaining survey type/and its topic-contents
 survey_filedata <- 
@@ -94,97 +94,93 @@ survey_filedata <-
       "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Non-Public&CycleBeginYear=2005"     # limited data
       ),
     # categorizing based on CDC's classification of survey
-    survey_type = c("demographics", "dietary", "examination", "laboratory", "questionnaire", "limited_data")
+    category = c("demographics", "dietary", "examination", "laboratory", "questionnaire", "limited data")
   ) %>% 
-  # two different major link; add "indicator". as well as obtain "group variable/topic" description and its "filename".
   mutate(
-    survey_type = factor(survey_type),
-    limited_data = case_when(survey_link != "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Non-Public&CycleBeginYear=2005" ~ FALSE,
-                             survey_link == "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Non-Public&CycleBeginYear=2005" ~ TRUE),
-    data_desc = map2(.x = survey_link, .y = "td.text-left", ~read_page(url = .x, tag = .y)),
-    filedata = map2(.x = survey_link, .y = ".text-center:nth-child(2) a", ~read_page(url = .x, tag = .y))
+    category = factor(category),
+    group_var = map2(.x = survey_link,                   # Obtaining the group variable descriptors
+                     .y = "td.text-left", 
+                     ~read_page(url = .x, tag = .y)),
+    group_filename = map2(.x = survey_link,              # Obtaining the filenames for each group variables
+                          .y = ".text-center:nth-child(2) a", 
+                          ~read_page(url = .x, tag = .y))
     ) %>% 
   unnest() %>%   
   rename(
-    data_desc = data_name,                # description of the file-name
-    filedata = data_name1                 # file name for the particular "data category". 
+    group_var = data_name,                               # Rename to proper descriptors (Group variable name)
+    group_filename = data_name1                          # Rename to proper descriptors (filename for group variables)
   ) %>% 
-  select(-survey_link) %>%                # remove now-useless column
+  select(-survey_link) %>%                               # remove now-useless column
   mutate(
-    filedata = gsub(" Doc", "", filedata) # remove the "Doc" text at the end of every filename in filedata
+    group_filename = gsub(" Doc", "", group_filename)    # remove the "Doc" text at the end of every filename in filedata
     ) %>% 
-  filter(!(filedata %in% c("All Years", "VID_D", "DSBI", "DSII", "DSPI", "RXQ_DRUG"))) # remove the odd-one-out survey links
-
-
-
-
-
-# obtain the contents of each survey topic and removing now-unused variables 
-filtered_survey_filedata <- survey_filedata %>%
+  filter(!(group_filename %in%                           # remove the odd-one-out survey links
+             c("All Years", "VID_D", "DSBI", "DSII", "DSPI", "RXQ_DRUG"))) %>% 
+  # creating url for each group variables; prep for scraping the individual variables. 
   mutate(
-    var_url = case_when(limited_data == FALSE ~ str_c("https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/", filedata, ".htm"),
-                        limited_data == TRUE ~ str_c("https://wwwn.cdc.gov/Nchs/Nhanes/limited_access/", filedata, ".htm")
-    )
+    var_url = case_when(category != "limited data" ~ 
+                          str_c("https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/", group_filename, ".htm"),
+                        category == "limited data" ~ 
+                          str_c("https://wwwn.cdc.gov/Nchs/Nhanes/limited_access/", group_filename, ".htm"))
   ) %>% 
-  mutate(
-    var_content = map2(.x = var_url, .y = "#CodebookLinks a", ~read_page(url = .x, tag = .y))
+  mutate(                                                # mapping our scraper to obtain the individual variables,
+    var_content = map2(.x = var_url,                     # nested by group variable.
+                       .y = "#CodebookLinks a", 
+                       ~read_page(url = .x, tag = .y))
   ) %>% 
-  select(-var_url, -limited_data)
-
-# just to check if there's any duplicate filedata variables
-#distinct(filtered_survey_filedata, filedata, .keep_all = TRUE)
+  select(-var_url)                                       # remove unneeded column. 
 
 ```
 
 Now that we have the "list of descriptions", we could scan which variables/topics are of interest to us. We are particularly interested in variables potentially related to cardiovascular function. 
 
-Note however that `nrow =` `r nrow(filtered_survey_filedata` has 3 more variables when compared to `distinct(filtered_survey_filedata, filedata) =` `r nrow(distinct(filtered_survey_filedata, filedata))`, suggesting that there are some duplicates (see below).
+Note however that `nrow =` `r nrow(survey_filedata)` has 3 more variables when compared to `distinct(survey_filedata, group_filename) =` `r nrow(distinct(survey_filedata, group_filename))`, suggesting that there are some duplicates (see below).
 
 ```{r surveydf_dupe_check}
 
-janitor::get_dupes(filtered_survey_filedata, filedata)
+janitor::get_dupes(survey_filedata, group_filename)
 
 ```
 
 As we can see, the duplicates are likely from slightly different descriptions of the HPV tests. Thankfully we aren't interested in these variables so we can "remove the duplicates" later. 
 
-### Obtaining Detailed Version of Descriptions
+## Obtaining Detailed Version of Descriptions
 
 Another step we need to do is the add clarifying descriptions as some of these variables are still unclear.
 
 ```{r detailed_var_desc_scrape}
 
 detailed_var_desc <- survey_filedata %>% 
-  select(survey_type, limited_data) %>% 
-  distinct(survey_type, .keep_all = TRUE) %>%       # obtaining the survey type variables
+  select(category) %>% 
+  distinct(category, .keep_all = TRUE) %>%       # obtaining the survey type variables
   # adding url for each survey type
   mutate(
     detailed_var_url = 
-      case_when(limited_data == FALSE ~ 
+      case_when(category != "limited data" ~ 
                   str_c("https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?Component=", 
-                        survey_type, "&CycleBeginYear=2005"),
-                limited_data == TRUE ~
+                        category, "&CycleBeginYear=2005"),
+                category == "limited data" ~
                   "https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?CycleBeginYear=2005&Component=Non-Public")
     ) %>% 
   # obtaining variable ID and the detailed descriptions
   mutate(
     var_name = map2(.x = detailed_var_url, .y = "td:nth-child(1)", ~read_page(url = .x, tag = .y)),
     detailed_var_content = map2(.x = detailed_var_url, .y = "td:nth-child(2)", ~read_page(url = .x, tag = .y)),
-    filedata = map2(.x = detailed_var_url, .y = "td:nth-child(3)", ~read_page(url = .x, tag = .y))
+    group_filename = map2(.x = detailed_var_url, .y = "td:nth-child(3)", ~read_page(url = .x, tag = .y))
   ) %>% 
-  select(-limited_data, -detailed_var_url) %>% 
+  select(-detailed_var_url) %>% 
   unnest() %>% 
   rename("var_name" = data_name,
          "det_var_desc" = data_name1,
-         "filedata" = data_name2)
+         "group_filename" = data_name2)
 
 ```
 
-### Removing Irrelevant Variables
+We will keep this dataframe to be used for later, once we remove variables that we are NOT interested in. 
 
-Unfortunately, this is one of the more time-consuming portion and tedious as we need to evaluate each variable by eye to determine which variables are of specific interest. Thankfully, our `data_desc` variable can help us remove variables that are definitely NOT interesting.
+## Removing Irrelevant Variables
 
-Removed data based on `data_desc` that are unlikely to be related to cardiovascular issues:
+Unfortunately, this is one of the more time-consuming portion and tedious as we need to evaluate each variable by eye to determine which variables are of specific interest. Thankfully, our `group_var` variable can provide some insight on which group variables we should look into. List of removed group variables below, based on "irrelevance" to cardiovascular issues:
 
 * Demographic:
   * None
@@ -266,25 +262,26 @@ Removed data based on `data_desc` that are unlikely to be related to cardiovascu
   * Mental Health - Depression Screener
   * Sexual Behavior - Youth
 
-These are the first step in filtering our incredibly large dataset. The next step is then to further filter out the items contained within the remaining `filedata`.
+We then create a list for these criteria and filter them out. 
 
-```{r remove_filedata}
+```{r remove_groupvar}
 
 # list of group variable to be removed
-remove_list <- c("Audio", "X-ray", "Ophthalmol", "Oral", "Vision", "Acrylamide", "Allerg", 
-                 "Arsenics", "Brominated", "Cadmium", "Chlamydia", "Cotinine", "Environmental", "Epstein-Barr", 
-                 "Erythrocyte Protoporphyrin", "Fasting Questionnaire", "Ferritin", "Folate", "Hepatitis",
-                 "Herpes Simplex Virus", "HIV", "Human Papillomavirus", "Iodine", "Iron", "Mercury", "Metals", "Non-dioxin-like",
-                 "Organophosphate", "Parathyroid", "Perchlorate", "Pesticide", "Phthalates", "Phytoestrogens", "Polychlorinated",
-                 "Polyfluoroalkyl", "Pooled-Sample", "Pregnancy Test", "Prostate", "Salmonella", "Transferrin",
-                 "Volatile Organic Compounds", "Acculturation", "Dermatology", "Kidney Conditions", "Mental Health", 
-                 "Oral Health", "Osteoporosis", "Reproductive Health", "Sleep Disorders", "Los Angeles County", "Sexual")
+groupvar_remove_list <- 
+  c("Audio", "X-ray", "Ophthalmol", "Oral", "Vision", "Acrylamide", "Allerg", 
+    "Arsenics", "Brominated", "Cadmium", "Chlamydia", "Cotinine", "Environmental", "Epstein-Barr", 
+    "Erythrocyte Protoporphyrin", "Fasting Questionnaire", "Ferritin", "Folate", "Hepatitis",
+    "Herpes Simplex Virus", "HIV", "Human Papillomavirus", "Iodine", "Iron", "Mercury", "Metals", "Non-dioxin-like",
+    "Organophosphate", "Parathyroid", "Perchlorate", "Pesticide", "Phthalates", "Phytoestrogens", "Polychlorinated",
+    "Polyfluoroalkyl", "Pooled-Sample", "Pregnancy Test", "Prostate", "Salmonella", "Transferrin",
+    "Volatile Organic Compounds", "Acculturation", "Dermatology", "Kidney Conditions", "Mental Health", 
+    "Oral Health", "Osteoporosis", "Reproductive Health", "Sleep Disorders", "Los Angeles County", "Sexual")
 
 
 # curated filedata that removes all those in the remove_list
-selected_filedata <- filtered_survey_filedata %>% 
-  filter(!(str_detect(data_desc, 
-                      paste(remove_list,               # remove using a combination of !, str_detect, paste funcs
+selected_filedata <- survey_filedata %>% 
+  filter(!(str_detect(group_var, 
+                      paste(groupvar_remove_list,      # remove using a combination of !, str_detect, paste funcs
                             collapse = "|")))) %>%     # collapse "merges" the list with the specified char as the "space"
   unnest() %>%                                         # reveal variables (to cross ref with rnhanesdata)
   separate(data_name,                                  # separate the variable into the "variable name" and its decription
@@ -294,7 +291,7 @@ selected_filedata <- filtered_survey_filedata %>%
 
 ```
 
-Now that we have filtered out unwanted group variables, we can check for duplicate variables using `janitor::get_dupes` function. 
+Now that we have filtered out unnecessary group variables, we can check for duplicate variables using `janitor::get_dupes` function. 
 
 ```{r selecteddf_dupe_check}
 
@@ -303,35 +300,35 @@ janitor::get_dupes(selected_filedata, var_name) %>%
 
 ```
 
-Unfortunately, as seen by the function, there were multiple duplicate variables that are subset by different group-variables and thus we cannot efficiently remove this with `distinct()`. To make this more manageable, we should subset this by each survey category. 
-
-Given our smaller dataset now, we can merge the detailed description to our description dataset. 
+Unfortunately, as seen by the function, there were multiple duplicate variables that are subset by different group-variables and thus we cannot efficiently remove this with `distinct()`. To make this more manageable, we should subset this by each survey category. Before doing so however, we should merge our `detailed_var_desc` dataset to our current dataset, given it's currently smaller. 
 
 ```{r left_join_detailed}
 
-det_selected_df <- left_join(selected_filedata, 
+selected_filedata <- left_join(selected_filedata, 
                                detailed_var_desc,
-                               by = c("survey_type", "filedata", "var_name"))
+                               by = c("category", "group_filename", "var_name"))
 
 ```
 
-After obtaining a more comprehensive description dataset, we always check for duplicates, especially considering that our `det_selected_df` (merged df) contains `r nrow(det_selected_df)` rows while our `selected_filedata` only has `r nrow(selected_filedata)` rows. 
+After obtaining a more comprehensive description dataset, we always check for duplicates.
 
 ```{r detailedselecteddf_dupe_check}
 
-janitor::get_dupes(det_selected_df, filedata, var_name)
+janitor::get_dupes(selected_filedata, group_filename, var_name)
 
 ```
 
-As we see above, there were 52 rows of duplicates. If we were to divide it by 2, we get 26. This corresponds nicely to the difference between our `det_selected_df` and `selected_filedata`. Also suggests that there's only 2 copies of each `var_name`. Having cross-checked with CDC's descriptions that doesn't appear to show any particular difference, we could safely use `distinct()` to filter these out. However, to ensure there's no "missing information", we decided to remove duplicates with exact matches in three columns, `filedata`, `var_name`, and `det_var_desc`. 
+As we see above, there were `r nrow(janitor::get_dupes(selected_filedata, group_filename, var_name))` rows of duplicates. Having cross-checked with CDC's descriptions that doesn't appear to show any particular difference, we could safely use `distinct()` to filter these out. However, to ensure there's no "missing information", we decided to remove duplicates with exact matches in three columns, `group_filename`, `var_name`, and `det_var_desc`. 
 
 ```{r detailedselecteddf_remove_dupe}
 
-det_selected_df <- distinct(det_selected_df, 
-                             filedata, var_name, det_var_desc, 
-                             .keep_all = TRUE)
+selected_filedata <- distinct(selected_filedata, 
+                              group_filename, var_name, det_var_desc, 
+                              .keep_all = TRUE)
 
 ```
+
+These are the first step in filtering our incredibly large dataset. The next step is then to further filter out the items contained within the remaining group variables.
 
 ### Demographic Data
 
@@ -678,7 +675,7 @@ que_survey <- que_survey %>%
 ```{r lim_survey}
 
 lim_survey <- det_selected_df %>% 
-  filter(survey_type == "limited_data") %>% 
+  filter(survey_type == "limited data") %>% 
   select(-survey_type, -filedata)
 
 # used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
