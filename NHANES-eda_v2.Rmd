@@ -59,6 +59,8 @@ covar_data_d <- as_tibble(
   ) %>%    # turn it into tibble
   janitor::clean_names()
 
+covar_names <- names(covar_data_d)
+
 ```
 
 We can then filter out these observations to only include those that may be useful for accelerometer and flag data (in case we ever want to explore relationships between these variables).
@@ -191,4 +193,13 @@ covar_d_clean <- select_if(covar_data_d,
                            names(covar_data_d) %in% c("seqn", pull(clean_variable_list, var_name)))
 
 ```
+
+We now check for any distributions, min-max and so on using `skimr`
+
+```{r skim_data}
+
+skimr::skim(covar_d_clean)
+
+```
+
 
