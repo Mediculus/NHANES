@@ -144,8 +144,8 @@ We then evaluate from the remaining `r nrow(na_check_df)` variables and felt tha
 
 ```{r filter_NA}
 
-na_check_df <- na_check_df %>% 
-  filter( na_count < 6455)
+#na_check_df <- na_check_df %>% 
+#  filter( na_count < 6455)
 
 ```
 
