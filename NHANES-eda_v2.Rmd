@@ -202,4 +202,48 @@ skimr::skim(covar_d_clean)
 
 ```
 
+# Combining Covariates and Activity Data
+
+Now that we have covariates we can work with, it's time to merge these with our activity data. But first, we need to clean our activity records using the flags dataset. 
+
+```{r activity_wave_datamerge}
+
+activity_data_d <- PAXINTEN_D %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(cols = starts_with("MIN"), 
+               names_to = "min",
+               names_prefix = "min",
+               values_to = "activ_count") %>% 
+  mutate(
+    min = as.numeric(min)
+  ) %>% 
+  mutate_at(                                             # convert listed variables to factors
+    .vars = vars("paxcal", "paxstat", "weekday", "sddsrvyr"),
+    .funs = funs(factor)
+  )
+
+
+
+flag_d <- unnest(flag_d) %>% 
+  unnest() %>% 
+  pivot_longer(cols = starts_with("MIN"), 
+               names_to = "min",
+               names_prefix = "min",
+               values_to = "flag_indicator") %>% 
+  mutate(
+    min = as.numeric(min)
+  )
+
+
+activity_flag_joined <- 
+  left_join(
+    activity_data_d, 
+    flag_d, 
+    by = c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr", "min")) 
+
+activity_flag_joined <- activity_flag_joined %>%
+  filter(flag_indicator != 0)
+  
+```
+
 
