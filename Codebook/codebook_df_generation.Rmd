@@ -726,4 +726,6 @@ final_df <- final_df %>%
   mutate(var_name = str_to_lower(var_name)) 
 #%>% write_csv("variable_list.csv")
 
+view(final_df)
+
 ```
