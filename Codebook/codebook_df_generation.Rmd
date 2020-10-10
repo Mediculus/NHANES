@@ -1,5 +1,5 @@
 ---
-title: "NHANES Codebook Filtering"
+title: "NHANES Codebook Generation and Filtering"
 author: "Kevin S.W. --- UNI: ksw2137"
 date: "`r format(Sys.time(), '%x')`"
 output: github_document
@@ -713,7 +713,7 @@ lim_survey <- lim_survey %>%
 
 ## Combining Filtered Variables within Categories into a Single List
 
-Now that we've isolated the variables, we can merge them together to create a csv file that we can use for when we actually process the covariates from `rnhanesdata` package. 
+Now that we've isolated the variables, we can merge them together to create a `.csv` file that we can use for when we actually process the covariates from `rnhanesdata` package.
 
 ```{r final_variables}
 

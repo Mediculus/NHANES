@@ -1,0 +1,113 @@
+---
+title: "NHANES Data Cleaning"
+author: "Kevin S.W. --- UNI: ksw2137"
+date: "`r format(Sys.time(), '%x')`"
+output: github_document
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+
+# global default settings for chunks
+knitr::opts_chunk$set(echo = TRUE, 
+                      fig.dim = c(10, 4), 
+                      fig.align = "center",
+                      results = "asis"
+                      )
+
+# loaded packages; placed here to be able to load global settings
+Packages <- c("tidyverse", "dplyr")
+invisible(lapply(Packages, library, character.only = TRUE))
+
+
+
+# global settings for color palettes
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+# theme global setting for ggplot
+theme_set(theme_minimal() + 
+            theme(legend.position = "bottom") +
+            theme(plot.title = element_text(hjust = 0.5, size = 12),
+                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+          )
+
+```
+
+# Data Processing
+
+Now that we've explored the variables, found out what each of them represent, and selected for several variables of interest, we are ready to go to the next step. That is to find any kind of correlation between the variables. This step is important because we want our analysis to be worthwhile, thus requiring that there is at least some correlation between our variables of interest.
+
+# Cleaning and Consolidating Activity Data
+
+First, we need to re-arrange our activity data and make it less cumbersome. The current plan is to aggregate all of the activity counts into "daily counts", thus making it easier to parse through.
+
+### Loading dataset
+
+```{r dataload}
+
+library(rnhanesdata)
+
+# turning original dataset into long format
+activity_data_D <- PAXINTEN_D %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    cols = starts_with("MIN"), 
+    names_to = "min",
+    names_prefix = "min",
+    values_to = "activ_count") %>% 
+  mutate(
+    min = as.numeric(min)
+    ) %>% 
+  mutate_at(
+    .vars = vars("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"),
+    .funs = funs(factor)
+    ) %>% 
+  group_by(seqn)
+
+
+flag_data_D <- Flags_D %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    cols = starts_with("MIN"), 
+    names_to = "min",
+    names_prefix = "min",
+    values_to = "activ_count") %>% 
+  mutate(
+    min = as.numeric(min)
+    ) %>% 
+  mutate_at(
+    .vars = vars("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"),
+    .funs = funs(factor)
+    ) %>% 
+  group_by(seqn)
+
+
+activity_flag_joined <- 
+  left_join(
+    activity_data_D, 
+    flag_data_D, 
+    by = c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr", "min")) 
+
+activity_flag_joined <- activity_flag_joined %>% 
+  rename(activity_count = activ_count.x,
+         activity_flag = activ_count.y) %>% 
+  filter(activity_flag == 1)
+
+total_activity_df <- activity_flag_joined %>% 
+  group_by(seqn, paxcal, paxstat) %>% 
+  summarize(daily_count = sum(activity_count))
+
+total_activity_df <- total_activity_df %>% 
+  filter(paxcal != 2,
+         paxstat != 2)
+  
+total_activity_df %>% 
+  ggplot(aes(x = daily_count)) +
+  geom_histogram()
+
+```
+
