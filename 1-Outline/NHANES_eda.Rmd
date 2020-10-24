@@ -344,6 +344,3 @@ Since we are particularly interested in diabetes/obesity-related covariates, we 
 ### Activity Database Processing
 
 In this section, we will be aggregating the minute-by-minute data contained within the `PAXINTEN_*` and `FLAG_*` datasets. This is so that we can instead create "total activity time" as well as "daily" activity. We will export a dataset from this and ultimately merge it with our selected covariates of interest dataset. 
-
-
-
