@@ -1,0 +1,349 @@
+---
+title: "rnhanesdata Package EDA"
+author: "Kevin S.W. --- UNI: ksw2137"
+date: "`r format(Sys.time(), '%x')`"
+output: github_document
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+
+# global default settings for chunks
+knitr::opts_chunk$set(echo = TRUE, #eval = FALSE,
+                      warning = FALSE, message = FALSE, 
+                      fig.dim = c(10, 4), 
+                      fig.align = "center",
+                      results = "asis"
+                      )
+
+# loaded packages; placed here to be able to load global settings
+Packages <- c("tidyverse", "dplyr")
+invisible(lapply(Packages, library, character.only = TRUE))
+
+# global settings for color palettes
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+# theme global setting for ggplot
+theme_set(theme_minimal() + 
+            theme(legend.position = "bottom") +
+            theme(plot.title = element_text(hjust = 0.5, size = 12),
+                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+          )
+
+```
+
+# NHANES Dataset EDA
+
+This is the first part in a long list of sections where we will be exploring the `rnhanesdata` package and its contents.
+
+Purpose of this section of the project is to explore what the dataset contains and if it is workable. Further exploration will be decided based on these possibilities as well as exporting cleaned datasets as necessary. 
+
+* [Loading Dataset](#loading-dataset)
+* [Processed Data Exploration](#processed-data-exploration)
+* [Raw Data Exploration](#raw-data-exploration)
+* [Next Steps](#next-steps)
+
+# [Loading Dataset](#nhanes-dataset-eda)
+
+```{r dataload}
+
+# devtools::install_github("andrew-leroux/rnhanesdata")
+library(rnhanesdata)
+
+```
+
+Based on the vignette? provided by the author, it seems that there are 2 main "dataset-packs" contained in the package categorized below. Note that all of these datasets are separated by each "waves" where `_C` indicates wave 3 (2003-2004) while `_D` indicates wave 4 (2005-2006).
+
+* Processed:
+  * [`PAXINTEN_C` & `PAXINTEN_D`](#accelerometer-data): accelerometry data for 2003-2004 and 2005-2006 respectively. 
+  * [`Flags_C` & `Flags_D`](#flags-data): Wear/non-wear flags for 2003-2004 and 2005-2006 respectively. 
+  * [`Covariate_C` & `Covariate_D`](#covariate-data): Additional NHANES dataset containing other covariates recorded in the raw data for 2003-2004 and 2005-2006 respectively. 
+  * `Mortality_2011_C` & `Mortality_2011_D`: mortality info for 2003-2004 and 2005-2006 respectively from NHANES database that were processed; released in 2011. 
+* Raw:
+  * `ALQ_C` & `ALQ_D`: alcohol consumption dataset from 2 "waves" of datasets (exists in Covar)
+  * `BMX_C` & `BMX_D`: body measurement datasets from 2 waves. 
+  * `BPX_C` & `BPX_D`: blood pressure data from the 2 waves.
+  * `DEMO_C` & `DEMO_D`: demographic data
+  * `DIQ_C` & `DIQ_D`: diabetes questionnaire data
+  * `MCQ_C` & `MCQ_D`: medical conditions questionnaire
+  * `PFQ_C` & `PFQ_D`: physical function questionnaire data
+  * `SMQ_C` & `SMQ_D`: smoking status questionnaire
+  * `NHANES_2003-2004_MORT_2011_PUBLIC`
+  * `NHANES_2005-2006_MORT_2011_PUBLIC`
+
+We are going to explore these processed dataset and see what can be done with it. Unfortunately, the raw data were inaccessible without using the package's functions, `process_covar`. As we'll see later, we could use this function to extract all possible covariates, meaning all the raw .XPT files can be extracted except for the NHANES mortality data. 
+
+# [Processed Data Exploration]((#nhanes-dataset-eda))
+
+Having seen the contents of `rnhanesdata` package, we can see that we essentially have "processed" datasets and "raw" datasets. We will explore this to find out more about the contents of each of these datasets:
+
+* [Accelrometer Data](#accelerometer-data)
+* [Flags Data](#flags-data)
+* [Covariate Data](#covariate-data)
+* [Mortality Data](#mortality-data)
+
+## [Accelerometer Data](#processed-data-exploration)
+
+```{r accel_data}
+
+# Data import for accelerometry data from wave C (2003-2004)
+nested_accelC <- PAXINTEN_C %>% 
+  janitor::clean_names() %>% 
+#  pivot_longer(cols = starts_with("MIN"), 
+#               names_to = "min",
+#               names_prefix = "min",
+#               values_to = "activ_count") %>% 
+#  mutate(
+#    min = as.numeric(min)
+#  ) %>% 
+  mutate_at(
+    .vars = vars("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"),
+    .funs = funs(factor)
+  ) %>% 
+  group_by(seqn) %>% 
+  nest(accel_mins = min1:min1440) %>% 
+  nest(wave_C = paxcal:accel_mins)
+
+
+# Data import for accelerometry data from wave D (2005-2006)
+nested_accelD <- PAXINTEN_D %>% 
+  janitor::clean_names() %>% 
+#  pivot_longer(cols = starts_with("MIN"), 
+#               names_to = "min",
+#               names_prefix = "min",
+#               values_to = "activ_count") %>% 
+#  mutate(
+#    min = as.numeric(min)
+#  ) %>% 
+  mutate_at(
+    .vars = vars("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"),
+    .funs = funs(factor)
+  ) %>% 
+  group_by(seqn) %>% 
+  nest(accel_mins = min1:min1440) %>% 
+  nest(wave_D = paxcal:accel_mins)
+
+```
+  
+Both of these datasets contain similar variables. Of primary focus:
+
+* `SEQN`: Unique ID
+* `PAXCAL`: Device calibration with 1 = yes, 2 = no, 9 = unknown
+* `PAXSTAT`: Data reliability status with 1 = reliable, 2 = questionable
+* `SDDSRVYR`: Indicates which "wave" the data comes from. 3 means from 2003-2004, 4 = 2005-2006
+* `WEEKDAY`: Day of the week with 1 as Sunday, 7 as Saturday.
+* `MIN`: Activity count at each minute of the day.  
+
+Taking wave C's data and checking each variable using skimr reveals that paxcal has 3 unique values and paxstat has 2 values which suggests that some of these values are either "uncalibrated", "questionable", or "unknown". This might require further filtering.
+
+```{r skimr_accel, eval = FALSE}
+
+accelC %>% 
+  select(-min) %>% 
+  skimr::skim_without_charts()
+
+```
+
+We also merged wave C and D to see if all these data are continuously recorded for the same people. Will utilize nesting as well to minimize load on PC.  
+
+```{r joined_accel_data}
+
+# combining 2 datasets based on seqn, the unique ID
+joined_accel <- full_join(nested_accelC, nested_accelD, by = "seqn")
+
+# counts distinct seqn's based on the unique ID
+joined_accel %>% 
+  ungroup() %>% 
+  distinct(seqn) %>% 
+  count()
+
+```
+
+Per our "nested" findings, it was surprising to see that the `seqn` are all unique from wave C to D. In other words, we have a total of `r nrow(joined_accel)` unique observations, which are all from different people. If we were to just aggregate these, we could likely ignore the wave ID if time were not considered.
+
+**NOTE: Working with a single wave dataset may take up to 5GB of RAM**
+
+The function `process_accel` seems to be able to interact with CDC's data directly and therefore capable of obtaining more recent data if needed. 
+
+## [Flags Data](#processed-data-exploration)
+
+```{r flags_data}
+
+flagC <- Flags_C %>% 
+  janitor::clean_names() %>% 
+#  pivot_longer(cols = starts_with("MIN"), 
+#               names_to = "min",
+#               names_prefix = "min",
+#               values_to = "flag_indicator") %>% 
+#  mutate(
+#    min = as.numeric(min)
+#  ) %>% 
+  mutate_at(
+    .vars = vars("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"),
+    .funs = funs(factor)
+  ) %>% 
+  group_by(seqn) %>% 
+  nest(flag_mins = min1:min1440) %>% 
+  nest(wave_C = paxcal:flag_mins)
+
+
+flagD <- Flags_D %>% 
+  janitor::clean_names() %>% 
+#  pivot_longer(cols = starts_with("MIN"), 
+#               names_to = "min",
+#               names_prefix = "min",
+#               values_to = "flag_indicator") %>% 
+#  mutate(
+#    min = as.numeric(min)
+#  ) %>% 
+  mutate_at(
+    .vars = vars("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"),
+    .funs = funs(factor)
+  ) %>% 
+  group_by(seqn) %>% 
+  nest(flag_mins = min1:min1440) %>% 
+  nest(wave_D = paxcal:flag_mins)
+
+```
+
+The flags data appear to be a very detailed, minute-by-minute indicator of whether or not the device was worn by that particular person as identified by their `seqn`. These numbers are equivalent to the number of data points observed in accelerometer. **Besides the minute tracking of wear flags, other variables are the same as those found in accelerometer data.** 
+
+We can also nest these data since "flag_dataset" is capable of being its own dataset. Since flag and accelerometer data are related, we could probably join these datasets based on the unique `seqn` identifier and have everything in 1 "table"
+
+**NOTE: working with accelerometer AND flag data consumes a large amount of RAM (~10 GB)**
+
+The function `process_flags` from the package allows the "raw" data obtained from `process_accel` and isolate just the wear variables. 
+
+## [Covariate Data](#processed-data-exploration)
+
+Based on the vignette? it appears that the raw NHANES data beyond accelerometry are collated within the "covariates data". This will be explored further below.
+
+```{r covar_data}
+
+covarC <- Covariate_C %>% 
+  janitor::clean_names() %>% 
+  nest(wave_C_covar = sddsrvyr:smoke_cigs)
+  
+
+covarD <- Covariate_D %>% 
+  janitor::clean_names() %>% 
+  nest(wave_D_covar = sddsrvyr:smoke_cigs)
+
+
+joined_covar <- full_join(covarC, covarD, by = 'seqn')
+
+```
+
+Unlike flag and accelerometer data, these covar data are not structured similarly to the other two and therefore might benefit from being a separate dataset. Unique identifier still exist and thus can be joined if necessary. This will be easily possible if we can maintain nested dataset of both flag and accelerometer. 
+
+Additionally, the amount of `seqn` observations in the covariates are more than `seqn` within flag and accelerometer. With both wave C and D combined, we have `r nrow(joined_covar)` observations. We should left join this if we plan to merge the datasets. 
+
+Furthermore, the covariates inside were not the complete covariates from the NHANES raw data. In these "cleaned" dataset, covariates are:
+
+* `SDDSRVYR`: Wave indicator as in other datasets
+* `SDMVPSU`: Masked variance pseudo probability sampling units. Used for variance estimation??
+* `SDMVSTRA`: Masked variance pseudo stratum. Used for variance estimation??
+* `WTINT2YR`: Full sample interviewed weight (likely reported weight)
+* `WTMEC2YR`: Full sample examination weight (likely observed weight)
+* `RIDAGEMN`: Age in months at screening date for those < 85 years. >= 85 is coded as NA
+* `RIDAGEEX`: Age in months at examination date for those < 85 years. >= 85 is coded as NA
+* `RIDAGEYR`: Age in years at date of screening
+* `BMI`: BMI in kg/m^2. A copy of BMXBMI variable.
+* `BMI_cat`: Category for the BMI values. underweight (<= 18.5), normal (18.5 < x <= 25), overweight (25 < x <= 30), obese (> 30)
+* Self-reported survey answers:
+  * `Race`: ethnicity
+  * `Gender`: gender for M/F
+  * `Diabetes`: diagnosed diabetes, categorized to Yes, No, Borderline, Refused, Don't know. 
+  * `CHF`: diagnosed CHF, categorized as yes, no, refused, don't know (variable MCQ160B in raw)
+  * `CHD`: diagnosed CHD, categorized as yes, no refused, don't know (variable MCQ160C)
+  * `Cancer`: diagnosed history of any cancer. Categorized as yes, no, refused, don't know (MCQ220)
+  * `Stroke`: diagnosed history of stroke, categorized as yes, no, refused, or don't know. (MCQ160F)
+  * `Education_adult`: Present only in wave D
+  * `Mobility_Problem`: mobility issue categorized into any vs. no difficulty. Derived from responses of (PFQ-049, -054, -057, -059, -061B, -61C). Details in vignette.
+  * `Drink_Status`: current alcohol consumption categorized as non-, moderate-, or heavy-drinker. Details in vignette
+  * `Drinks_Per_Week`: number of drinks per week. Details in vignette
+  * `Smoke_Cigs`: cigarette smoking status categorized as never, former, or current. Details in vignette. 
+
+## [Mortality Data](#processed-data-exploration)
+
+Processed mortality data for NHANES, released in 2011 for waves C and D. 
+
+They have mortality data from 2011 and 2015. We will explore the more recent 2015 data for now. 
+
+```{r}
+
+mort_2015_c <- Mortality_2015_C %>% 
+  janitor::clean_names()
+
+
+mort_2015_d <- Mortality_2015_D %>% 
+  janitor::clean_names()
+
+
+```
+
+Obtaining the processed mortality table shows a number of unique observations of `r nrow(mort_2015_d)`, similar to the number found in covariates data. As such, we should likely `left_join` this table to accel or flag dataset to have consistent data throughout. Checking on the mortality table, we see several new variables besides `seqn`:
+
+* `eligstat`: eligibility for mortality follow-up. 1 = eligible, 2 = <18 yrs (not available for public), 3 = ineligible
+* `mortstat`: indicator for mortality status at f/u time from permth_exm and permth_int. 0 = assumed alive, 1 = assumed deceased, NA = <18 yrs (not available)
+* `permth_exm`: time in months when mortality assessment was done (date of mortality assessment)
+* `permth_int`: time in months from interview to mortality assessment
+* `ucod_leading`: underlying cause of death (recoded from UCOD_113). Details in vignette
+* `diabetes_mcod`: diabetes flag from multiple cause of death (dm part of cause?)
+* `hyperten_mcod`: hypertension flag from multiple cause of death (htn part of cause?)
+
+# [Raw Data Exploration](#nhanes-dataset-eda)
+
+Based on the package, it appears that the raw NHANES data primarily contributes to the covariate data. Using a function from within the `rnhanesdata` package, `process_covar()`, we're able to interact with the raw NHANES data within the package and obtain all available covariates. 
+
+```{r covar_raw_data}
+
+# extract raw NHANES data and convert to tibble
+raw_covar_data_C <- as_tibble(
+  process_covar(
+    waves = "C", extractAll = TRUE
+    )[[1]] # process_covar outputs a list of 1 containing the tibble, this extracts the "content" and 
+  ) %>%    # turn it into tibble
+  janitor::clean_names()
+
+
+
+raw_covar_data_D <- as_tibble(
+  process_covar(
+    waves = "D", extractAll = TRUE
+    )[[1]] # process_covar outputs a list of 1 containing the tibble, this extracts the "content" and 
+  ) %>%    # turn it into tibble
+  janitor::clean_names()
+
+```
+
+By obtaining all possible covariates from the NHANES .XPT contained in the package, we notice that we have `r nrow(raw_covar_data_C)` unique observations with corresponding `r ncol(raw_covar_data_C)` variables including the unique `seqn` ID for wave C. Similarly, for wave D, we have `r nrow(raw_covar_data_D)` unique observations with corresponding `r ncol(raw_covar_data_D)` variables including the unique `seqn` ID. 
+
+Playing around with the function from the package unfortunately only reveals that the dataset included only ranges from wave C (2003-2004) & D (2005-2006). However, it appears that if we could obtain .XPT files from more recent datasets, we could process it similarly. 
+
+Beyond that, there appears to be a lot of `NA` variables within these covariates data. Furthermore, given the massive variables recorded and their unique naming, I unfortunately have not been able to find a good resource to decipher the meaning behind the variables barring the obvious ones. 
+
+*Self-question: Why does, given a list of tibble, using tibble vs data.frame differs in the results? The covar_data_C is a list structure where it it spits out a list of 1 that contains a list of 383 variables that each contains a "list" of the observations*
+
+# [Next Steps]((#nhanes-dataset-eda))
+
+Now that we've got a slight understanding of the contents of the package, we can now move forward to designing and honing our questions. There are **three** things that will be needed:
+
+### Codebook and Selection on Covariates of Interest
+
+This section will be dedicated to obtaining the codebook. Having the Codebook also gives insight to the purpose of each variables contained in the covariates dataset. Further, it allows us to assess whether the data being stored is categorical or continuous variables. 
+
+We will develop a way to obtain these descriptions [here](). The expected result of this part is to export a dataset that contains the variable names as well as the descriptions. This dataset will be used to filter our list of covariates in `raw_covar_data_*`.
+
+Since we are particularly interested in diabetes/obesity-related covariates, we will try to filter the list of covariates to those that are potentially related to obesity/diabetes. This will be an exploration portion in which we evaluate every covariate and assess its potential association to obesity/diabetes. 
+
+### Activity Database Processing
+
+In this section, we will be aggregating the minute-by-minute data contained within the `PAXINTEN_*` and `FLAG_*` datasets. This is so that we can instead create "total activity time" as well as "daily" activity. We will export a dataset from this and ultimately merge it with our selected covariates of interest dataset. 
+
+
+
