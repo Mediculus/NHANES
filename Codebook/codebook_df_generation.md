@@ -1,7 +1,7 @@
-NHANES Codebook Filtering
+NHANES Codebook Generation and Filtering
 ================
 Kevin S.W. — UNI: ksw2137
-05/13/2020
+10/24/2020
 
 # CDC’s NHANES Codebook Filtering
 
@@ -15,7 +15,7 @@ select all of the possible variables, we will try to select those that
 are “most commonly” known to affect or be related to cardiovascular
 physiology.
 
-## Obtaining Variable Descriptions
+# Obtaining Variable Descriptions
 
 By consulting CDC’s [NHANES
 website](https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Demographics&CycleBeginYear=2005),
@@ -117,7 +117,7 @@ Now that we have the “list of descriptions”, we could scan which
 variables/topics are of interest to us. We are particularly interested
 in variables potentially related to cardiovascular function.
 
-Note however that `nrow =` 151 has 3 more variables when compared to
+Note however that `nrow =` 150 has 3 more variables when compared to
 `distinct(survey_df, group_filename) =` 148, suggesting that there are
 some duplicates (see below).
 
@@ -125,21 +125,19 @@ some duplicates (see below).
 janitor::get_dupes(survey_df, group_filename)
 ```
 
-    ## # A tibble: 6 x 5
-    ##   group_filename dupe_count category   group_var                    var_content 
-    ##   <chr>               <int> <fct>      <chr>                        <list>      
-    ## 1 HPVSER_D                2 laboratory "Human Papillomavirus (HPV)… <tibble [5 …
-    ## 2 HPVSER_D                2 laboratory "Human Papillomavirus (HPV)… <tibble [5 …
-    ## 3 HPVSWR_D                2 laboratory "Human Papillomavirus (HPV)… <tibble [43…
-    ## 4 HPVSWR_D                2 laboratory "Human Papillomavirus (HPV)… <tibble [43…
-    ## 5 SWR_D_R                 2 limited d… "Human Papillomavirus (HPV)… <tibble [43…
-    ## 6 SWR_D_R                 2 limited d… "Human Papillomavirus (HPV)… <tibble [43…
+    ## # A tibble: 4 x 5
+    ##   group_filename dupe_count category  group_var                     var_content 
+    ##   <chr>               <int> <fct>     <chr>                         <list>      
+    ## 1 HPVSER_D                2 laborato… Human Papillomavirus (HPV) -… <tibble [5 …
+    ## 2 HPVSER_D                2 laborato… Human Papillomavirus (HPV) -… <tibble [5 …
+    ## 3 HPVSWR_D                2 laborato… Human Papillomavirus (HPV) D… <tibble [43…
+    ## 4 HPVSWR_D                2 laborato… Human Papillomavirus (HPV) D… <tibble [43…
 
 As we can see, the duplicates are likely from slightly different
 descriptions of the HPV tests. Thankfully we aren’t interested in these
 variables so we can “remove the duplicates” later.
 
-## Obtaining Detailed Version of Descriptions
+# Obtaining Detailed Version of Descriptions
 
 Another step we need to do is the add clarifying descriptions as some of
 these variables are still unclear.
@@ -173,13 +171,13 @@ detailed_var_desc <- survey_df %>%
 We will keep this dataframe to be used for later, once we remove
 variables that we are NOT interested in.
 
-## Selecting Variables of Interest
+# Selecting Variables of Interest
 
 Unfortunately, this is one of the more time-consuming portion and
 tedious as we need to evaluate each variable by eye to determine which
 variables are of specific interest.
 
-### Removing Irrelevant Group Variables
+## Removing Irrelevant Group Variables
 
 Thankfully, our `group_var` variable can provide some insight on which
 group variables we should look into. List of removed group variables
@@ -361,7 +359,7 @@ These are the first step in filtering our incredibly large dataset. The
 next step is then to further filter out the items contained within the
 remaining group variables.
 
-### Keeping Variables of Interest under Demographic Category
+## Keeping Variables of Interest under Demographic Category
 
 ``` r
 demo_survey <- survey_df_filtered %>% 
@@ -404,7 +402,7 @@ demo_survey <- demo_survey %>%
                             collapse = "|"))))
 ```
 
-### Keeping Variables of Interest under Dietary Category
+## Keeping Variables of Interest under Dietary Category
 
 We can do similar steps with our dietary data.
 
@@ -481,7 +479,7 @@ diet_survey <- diet_survey %>%
                             collapse = "|"))))
 ```
 
-### Keeping Variables of Interest under Examination Category
+## Keeping Variables of Interest under Examination Category
 
 ``` r
 exam_survey <- survey_df_filtered %>% 
@@ -543,7 +541,7 @@ exam_survey <- exam_survey %>%
                             collapse = "|")))
 ```
 
-### Keeping Variables of Interest under Laboratory Category
+## Keeping Variables of Interest under Laboratory Category
 
 ``` r
 lab_survey <- survey_df_filtered %>% 
@@ -573,7 +571,7 @@ the lab tests that were kept are:
   - Vit B6
   - Vit C
 
-### Keeping Variables of Interest under Questionnaire Category
+## Keeping Variables of Interest under Questionnaire Category
 
 ``` r
 que_survey <- survey_df_filtered %>% 
@@ -693,8 +691,7 @@ Questionnaires of interest:
       - WHQ030: how do subject feel about their weight
       - WHQ040: like to weigh more/less/same
       - WHQ060: is weight change intentional?
-  - Weight History -
-Youth
+  - Weight History - Youth
       - None
 
 <!-- end list -->
@@ -716,7 +713,7 @@ que_survey <- que_survey %>%
          str_detect(var_name, paste(que_keep_list, collapse = "|")))
 ```
 
-### Keeping Variables of Interest under Limited Data Category
+## Keeping Variables of Interest under Limited Data Category
 
 ``` r
 lim_survey <- survey_df_filtered %>% 
@@ -741,12 +738,11 @@ lim_survey <- lim_survey %>%
   filter(str_detect(group_var, "Census 2010"))
 ```
 
-## Combining Filtered Variables within Categories into a Single List
+# Combining Filtered Variables within Categories into a Single List
 
 Now that we’ve isolated the variables, we can merge them together to
-create a csv file that we can use for when we actually process the
-covariates from `rnhanesdata`
-package.
+create a `.csv` file that we can use for when we actually process the
+covariates from `rnhanesdata` package.
 
 ``` r
 final_df <- bind_rows(demo_survey, diet_survey, exam_survey, lab_survey, que_survey, lim_survey)
@@ -757,4 +753,6 @@ final_df <- final_df %>%
 final_df <- final_df %>% 
   mutate(var_name = str_to_lower(var_name)) 
 #%>% write_csv("variable_list.csv")
+
+view(final_df)
 ```

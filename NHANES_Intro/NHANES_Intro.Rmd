@@ -333,7 +333,7 @@ Beyond that, there appears to be a lot of `NA` variables within these covariates
 
 Now that we've got a slight understanding of the contents of the package, we can now move forward to designing and honing our questions. There are **two** things that will be needed:
 
-### Codebook and Selection on Covariates of Interest
+## Codebook and Selection on Covariates of Interest
 
 This section will be dedicated to obtaining the [codebook](). Having the Codebook also gives insight to the purpose of each variables contained in the covariates dataset. Further, it allows us to assess whether the data being stored is categorical or continuous variables. 
 
@@ -341,6 +341,6 @@ We will develop a way to obtain these descriptions [here](). The expected result
 
 Since we are particularly interested in diabetes/obesity-related covariates, we will try to filter the list of covariates to those that are potentially related to obesity/diabetes. This will be an exploration portion in which we evaluate every covariate and assess its potential association to obesity/diabetes. 
 
-### Activity Database Processing
+## Activity Database Processing
 
 In this section, we will be aggregating the minute-by-minute data contained within the `PAXINTEN_*` and `FLAG_*` datasets. This is so that we can instead create "total activity time" as well as "daily" activity. We will export a dataset from this and ultimately merge it with our selected covariates of interest dataset. 
