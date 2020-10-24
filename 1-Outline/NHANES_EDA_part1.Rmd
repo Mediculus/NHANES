@@ -81,7 +81,7 @@ We are going to explore these processed dataset and see what can be done with it
 
 Having seen the contents of `rnhanesdata` package, we can see that we essentially have "processed" datasets and "raw" datasets. We will explore this to find out more about the contents of each of these datasets:
 
-* [Accelrometer Data](#accelerometer-data)
+* [Accelerometer Data](#accelerometer-data)
 * [Flags Data](#flags-data)
 * [Covariate Data](#covariate-data)
 * [Mortality Data](#mortality-data)
@@ -140,7 +140,7 @@ Both of these datasets contain similar variables. Of primary focus:
 
 Taking wave C's data and checking each variable using skimr reveals that paxcal has 3 unique values and paxstat has 2 values which suggests that some of these values are either "uncalibrated", "questionable", or "unknown". This might require further filtering.
 
-```{r skimr_accel, eval = FALSE}
+```{r skimr_accel, eval = FALSE, echo = FALSE}
 
 accelC %>% 
   select(-min) %>% 
@@ -150,7 +150,7 @@ accelC %>%
 
 We also merged wave C and D to see if all these data are continuously recorded for the same people. Will utilize nesting as well to minimize load on PC.  
 
-```{r joined_accel_data}
+```{r joined_accel_data, results=asis}
 
 # combining 2 datasets based on seqn, the unique ID
 joined_accel <- full_join(nested_accelC, nested_accelD, by = "seqn")
@@ -300,7 +300,7 @@ Obtaining the processed mortality table shows a number of unique observations of
 
 Based on the package, it appears that the raw NHANES data primarily contributes to the covariate data. Using a function from within the `rnhanesdata` package, `process_covar()`, we're able to interact with the raw NHANES data within the package and obtain all available covariates. 
 
-```{r covar_raw_data}
+```{r covar_raw_data, results = "hide"}
 
 # extract raw NHANES data and convert to tibble
 raw_covar_data_C <- as_tibble(
@@ -331,7 +331,7 @@ Beyond that, there appears to be a lot of `NA` variables within these covariates
 
 # [Next Steps]((#nhanes-dataset-eda))
 
-Now that we've got a slight understanding of the contents of the package, we can now move forward to designing and honing our questions. There are **three** things that will be needed:
+Now that we've got a slight understanding of the contents of the package, we can now move forward to designing and honing our questions. There are **two** things that will be needed:
 
 ### Codebook and Selection on Covariates of Interest
 
