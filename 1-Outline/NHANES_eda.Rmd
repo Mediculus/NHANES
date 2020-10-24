@@ -335,7 +335,7 @@ Now that we've got a slight understanding of the contents of the package, we can
 
 ### Codebook and Selection on Covariates of Interest
 
-This section will be dedicated to obtaining the codebook. Having the Codebook also gives insight to the purpose of each variables contained in the covariates dataset. Further, it allows us to assess whether the data being stored is categorical or continuous variables. 
+This section will be dedicated to obtaining the [codebook](). Having the Codebook also gives insight to the purpose of each variables contained in the covariates dataset. Further, it allows us to assess whether the data being stored is categorical or continuous variables. 
 
 We will develop a way to obtain these descriptions [here](). The expected result of this part is to export a dataset that contains the variable names as well as the descriptions. This dataset will be used to filter our list of covariates in `raw_covar_data_*`.
 
