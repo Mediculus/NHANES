@@ -150,7 +150,7 @@ accelC %>%
 
 We also merged wave C and D to see if all these data are continuously recorded for the same people. Will utilize nesting as well to minimize load on PC.  
 
-```{r joined_accel_data, results=asis}
+```{r joined_accel_data, results = "hide"}
 
 # combining 2 datasets based on seqn, the unique ID
 joined_accel <- full_join(nested_accelC, nested_accelD, by = "seqn")

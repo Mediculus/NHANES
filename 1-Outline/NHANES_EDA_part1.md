@@ -67,7 +67,7 @@ essentially have “processed” datasets and “raw” datasets. We will
 explore this to find out more about the contents of each of these
 datasets:
 
-  - [Accelrometer Data](#accelerometer-data)
+  - [Accelerometer Data](#accelerometer-data)
   - [Flags Data](#flags-data)
   - [Covariate Data](#covariate-data)
   - [Mortality Data](#mortality-data)
@@ -129,12 +129,6 @@ paxcal has 3 unique values and paxstat has 2 values which suggests that
 some of these values are either “uncalibrated”, “questionable”, or
 “unknown”. This might require further filtering.
 
-``` r
-accelC %>% 
-  select(-min) %>% 
-  skimr::skim_without_charts()
-```
-
 We also merged wave C and D to see if all these data are continuously
 recorded for the same people. Will utilize nesting as well to minimize
 load on PC.
@@ -149,14 +143,6 @@ joined_accel %>%
   distinct(seqn) %>% 
   count()
 ```
-
-# A tibble: 1 x 1
-
-``` 
-  n
-```
-
-<int> 1 14631
 
 Per our “nested” findings, it was surprising to see that the `seqn` are
 all unique from wave C to D. In other words, we have a total of 14631
@@ -354,16 +340,9 @@ raw_covar_data_C <- as_tibble(
     )[[1]] # process_covar outputs a list of 1 containing the tibble, this extracts the "content" and 
   ) %>%    # turn it into tibble
   janitor::clean_names()
-```
 
-| | | 0% Variables with repeated observations per subject found for the
-following variables: PADACTIV,PADLEVEL,PADTIMES,PADDURAT,PADMETS,PAAQUEX
-Note that these variables will be stored with class AsIs() objects in
-resulting data frames. See ?I for details on AsIs class. |
-|======================================================================|
-100%
 
-``` r
+
 raw_covar_data_D <- as_tibble(
   process_covar(
     waves = "D", extractAll = TRUE
@@ -371,13 +350,6 @@ raw_covar_data_D <- as_tibble(
   ) %>%    # turn it into tibble
   janitor::clean_names()
 ```
-
-| | | 0% Variables with repeated observations per subject found for the
-following variables: PADACTIV,PADLEVEL,PADTIMES,PADDURAT,PADMETS,PAAQUEX
-Note that these variables will be stored with class AsIs() objects in
-resulting data frames. See ?I for details on AsIs class. |
-|======================================================================|
-100%
 
 By obtaining all possible covariates from the NHANES .XPT contained in
 the package, we notice that we have 10122 unique observations with
@@ -405,7 +377,7 @@ variables that each contains a “list” of the observations*
 
 Now that we’ve got a slight understanding of the contents of the
 package, we can now move forward to designing and honing our questions.
-There are **three** things that will be needed:
+There are **two** things that will be needed:
 
 ### Codebook and Selection on Covariates of Interest
 
