@@ -41,11 +41,9 @@ theme_set(theme_minimal() +
 
 Now that we've explored the variables, found out what each of them represent, and selected for several variables of interest, we are ready to go to the next step. That is to find any kind of correlation between the variables. This step is important because we want our analysis to be worthwhile, thus requiring that there is at least some correlation between our variables of interest.
 
-# Cleaning and Consolidating Activity Data
+# Merging Activity Data and Flag Data
 
 First, we need to re-arrange our activity data and make it less cumbersome. The current plan is to aggregate all of the activity counts into "daily counts", thus making it easier to parse through.
-
-### Loading dataset
 
 ```{r dataload}
 
@@ -92,22 +90,61 @@ activity_flag_joined <-
     flag_data_D, 
     by = c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr", "min")) 
 
-activity_flag_joined <- activity_flag_joined %>% 
+```
+
+# Filtering Dataset
+
+Once the dataset has been merged, we now proceed to filter out the dataset based on values that are reliable. In this particular case, we filter so that `activity_flag`, `paxstat`, and `paxcal` = 1. This is because 1 indicates that the tracking device are worn, reliable, and calibrated.
+
+```{r}
+
+filtered_activity_flag_joined <- activity_flag_joined %>% 
   rename(activity_count = activ_count.x,
          activity_flag = activ_count.y) %>% 
-  filter(activity_flag == 1)
+  filter(activity_flag == 1,
+         paxcal == 1,
+         paxstat == 1)
 
-total_activity_df <- activity_flag_joined %>% 
-  group_by(seqn, paxcal, paxstat) %>% 
-  summarize(daily_count = sum(activity_count))
+total_activity_df <- filtered_activity_flag_joined %>% 
+  group_by(seqn) %>% 
+  summarize(total_count = sum(activity_count))
 
-total_activity_df <- total_activity_df %>% 
-  filter(paxcal != 2,
-         paxstat != 2)
-  
+#total_activity_df %>% write_csv("./Datasets/total_activ_data.csv")
+
 total_activity_df %>% 
-  ggplot(aes(x = daily_count)) +
-  geom_histogram()
+  ggplot(aes(x = total_count)) +
+  geom_histogram() + 
+  theme(legend.position = "none")
+
+```
+
+Once we filter it out, we can create a dataset out of this. For now, the total activity per subject will suffice to explore some general associations. If we need to obtain a more granular dataset, we could do so with the datasets prior to filtering. Additionally, we could plot the distribution of total activities. We see that the data is highly right-skewed. 
+
+Below, we also would like to evaluate the average count of daily activity. This is obtained by first obtaining the daily average and then averaging it out further. While we're at it, we will also evaluate the distribution of both of these "averages"
+
+```{r}
+
+avg_activity <- filtered_activity_flag_joined %>% 
+  group_by(seqn, weekday) %>% 
+  summarize(avg_daily = mean(activity_count))
+
+avg_activity %>% 
+  ggplot(aes(x = avg_daily, color = weekday, fill = weekday)) +
+  geom_histogram() + 
+  theme(legend.position = "none")
+
+
+
+
+grand_avg_activity <- avg_activity %>% 
+  ungroup() %>% 
+  group_by(seqn) %>% 
+  summarize(grand_avg = mean(avg_daily))
+
+grand_avg_activity %>% 
+  ggplot(aes(x = grand_avg)) +
+  geom_histogram() + 
+  theme(legend.position = "none")
 
 ```
 
