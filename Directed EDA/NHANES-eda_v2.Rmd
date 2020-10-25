@@ -36,7 +36,7 @@ theme_set(theme_minimal() +
 
 ```
 
-# Re-fresh start for NHANES dataset
+# Filtering Covariate Data of Interest
 
 Since we've explored almost all possible datasets that can be found in the `rnhanesdata` package, we can now make a more targeted approach to which dataset we want to work on as well as obtaining particular raw data information. First though, we need to load the package as always.
 
@@ -65,36 +65,13 @@ covar_names <- names(covar_data_d)
 
 We can then filter out these observations to only include those that may be useful for accelerometer and flag data (in case we ever want to explore relationships between these variables).
 
-First, we load up the flag data:
+First, we load up the flag data, `Flags_D` to obtain the unique ID of each participants (`seqn`). The reason why we used flag data is because we only wanted participants who have information on their wearable status (whether it is "reliable" or not at a given minute/time).
 
-```{r flag_data_prep}
+```{r seqn_obtain}
 
-flag_d <- Flags_D %>% 
+identifier <- Flags_D %>% 
   janitor::clean_names() %>% 
-#  pivot_longer(cols = starts_with("MIN"),               # code-line for cases where we want to switch to
-#               names_to = "min",                        # long format
-#               names_prefix = "min",
-#               values_to = "flag_indicator") %>% 
-#  mutate(
-#    min = as.numeric(min)
-#  ) %>% 
-  mutate_at(                                             # convert listed variables to factors
-    .vars = vars("paxcal", "paxstat", "weekday", "sddsrvyr"),
-    .funs = funs(factor)
-  ) %>% 
-  group_by(seqn) %>%                                     # grouping by the unique ID
-  nest(flag_mins = min1:min1440) %>%                     # nesting of the "minutes" for flag
-  nest(wave_D = paxcal:flag_mins)                        # nested the "extra variables". 
-
-```
-
-The purpose of the code above is to prepare a condensed dataset that ready-to-use whenever we need to start investigation on variables of interest. For now though, we will only use `seqn` as an identifier for merging other datasets. Below, we will use `seqn` to essentially filter out all the covariate data to only include those that are in the `flag_d` dataset. 
-
-```{r covar_data_merge}
-
-identifier <- flag_d %>% 
-  select(seqn) %>% 
-  ungroup() %>% 
+  distinct(seqn) %>% 
   mutate(
     seqn = as.integer(seqn)
   )
@@ -140,9 +117,10 @@ na_check_df <- na_check_df %>%
 
 ```
 
-We then evaluate from the remaining `r nrow(na_check_df)` variables and felt that an `NA` amount that is >`r round(100*((7455-1000)/7455), 3)`% would not be a good representative of the variable. Therefore, we filtered all those that have values greater than `r 7455*(7455-1000)/7455`. 
 
 ```{r filter_NA}
+
+#We then evaluate from the remaining `r nrow(na_check_df)` variables and felt that an `NA` amount that is >`r round(100*((7455-1000)/7455), 3)`% would not be a good representative of the variable. Therefore, we filtered all those that have values greater than `r 7455*(7455-1000)/7455`. 
 
 #na_check_df <- na_check_df %>% 
 #  filter( na_count < 6455)
@@ -202,7 +180,10 @@ skimr::skim(covar_d_clean)
 
 ```
 
+
 # Combining Covariates and Activity Data
+
+**MOVE THIS PART TO A NEW RMD**
 
 Now that we have covariates we can work with, it's time to merge these with our activity data. But first, we need to clean our activity records using the flags dataset. 
 
