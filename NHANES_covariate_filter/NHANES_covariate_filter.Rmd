@@ -50,7 +50,7 @@ library(rnhanesdata)
 
 The original package has 2 waves, C and D, that corresponds to surveys sent out between 2003-2004 and 2005-2006, respectively. Working with wave D has advantage because not only is the data more recent, it also has more "raw" observations and thus potentially more datapoints we could work with. 
 
-```{r raw_covar_load}
+```{r raw_covar_load, results = "hide"}
 
 covar_data_d <- as_tibble(
   process_covar(
@@ -86,7 +86,7 @@ In another document, we've succesfully created a .csv file that contained all th
 
 ```{r covar_filtering}
 
-variable_list <- read_csv("variable_list.csv")
+variable_list <- read_csv("./Datasets/variable_list.csv")
 
 covar_d_clean <- select_if(covar_data_d, 
                            names(covar_data_d) %in% pull(variable_list, var_name))
@@ -118,7 +118,7 @@ na_check_df <- na_check_df %>%
 ```
 
 
-```{r filter_NA}
+```{r filter_NA, echo = FALSE, eval = FALSE}
 
 #We then evaluate from the remaining `r nrow(na_check_df)` variables and felt that an `NA` amount that is >`r round(100*((7455-1000)/7455), 3)`% would not be a good representative of the variable. Therefore, we filtered all those that have values greater than `r 7455*(7455-1000)/7455`. 
 
@@ -180,6 +180,15 @@ skimr::skim(covar_d_clean)
 
 ```
 
+Once we check distributions and satisfied with results, we should also make this into another dataset so that we don't have to keep re-running the scripts.
+
+```{r}
+
+# covar_d_clean %>% write_csv("./Datasets/covariates.csv")
+
+```
+
+
 
 # Combining Covariates and Activity Data
 
@@ -187,7 +196,7 @@ skimr::skim(covar_d_clean)
 
 Now that we have covariates we can work with, it's time to merge these with our activity data. But first, we need to clean our activity records using the flags dataset. 
 
-```{r activity_wave_datamerge}
+```{r activity_wave_datamerge, echo = FALSE, eval = FALSE}
 
 activity_data_d <- PAXINTEN_D %>% 
   janitor::clean_names() %>% 

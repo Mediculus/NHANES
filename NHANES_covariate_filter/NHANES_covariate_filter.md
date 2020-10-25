@@ -1,9 +1,9 @@
 Directed EDA for rnhanes Package
 ================
 Kevin S.W. — UNI: ksw2137
-09/20/2020
+10/24/2020
 
-# Re-fresh start for NHANES dataset
+# Filtering Covariate Data of Interest
 
 Since we’ve explored almost all possible datasets that can be found in
 the `rnhanesdata` package, we can now make a more targeted approach to
@@ -29,13 +29,7 @@ covar_data_d <- as_tibble(
     )[[1]] # process_covar outputs a list of 1 containing the tibble, this extracts the "content" and 
   ) %>%    # turn it into tibble
   janitor::clean_names()
-```
 
-    ##   |                                                                              |                                                                      |   0%
-    ##  Variables with repeated observations per subject found for the following variables: PADACTIV,PADLEVEL,PADTIMES,PADDURAT,PADMETS,PAAQUEX Note that these variables will be stored with class AsIs() objects in resulting data frames.  See ?I for details on AsIs class. 
-    ##   |                                                                              |======================================================================| 100%
-
-``` r
 covar_names <- names(covar_data_d)
 ```
 
@@ -43,38 +37,15 @@ We can then filter out these observations to only include those that may
 be useful for accelerometer and flag data (in case we ever want to
 explore relationships between these variables).
 
-First, we load up the flag data:
+First, we load up the flag data, `Flags_D` to obtain the unique ID of
+each participants (`seqn`). The reason why we used flag data is because
+we only wanted participants who have information on their wearable
+status (whether it is “reliable” or not at a given minute/time).
 
 ``` r
-flag_d <- Flags_D %>% 
+identifier <- Flags_D %>% 
   janitor::clean_names() %>% 
-#  pivot_longer(cols = starts_with("MIN"),               # code-line for cases where we want to switch to
-#               names_to = "min",                        # long format
-#               names_prefix = "min",
-#               values_to = "flag_indicator") %>% 
-#  mutate(
-#    min = as.numeric(min)
-#  ) %>% 
-  mutate_at(                                             # convert listed variables to factors
-    .vars = vars("paxcal", "paxstat", "weekday", "sddsrvyr"),
-    .funs = funs(factor)
-  ) %>% 
-  group_by(seqn) %>%                                     # grouping by the unique ID
-  nest(flag_mins = min1:min1440) %>%                     # nesting of the "minutes" for flag
-  nest(wave_D = paxcal:flag_mins)                        # nested the "extra variables". 
-```
-
-The purpose of the code above is to prepare a condensed dataset that
-ready-to-use whenever we need to start investigation on variables of
-interest. For now though, we will only use `seqn` as an identifier for
-merging other datasets. Below, we will use `seqn` to essentially filter
-out all the covariate data to only include those that are in the
-`flag_d` dataset.
-
-``` r
-identifier <- flag_d %>% 
-  select(seqn) %>% 
-  ungroup() %>% 
+  distinct(seqn) %>% 
   mutate(
     seqn = as.integer(seqn)
   )
@@ -91,7 +62,7 @@ file to filter our `covar_data_d`, which will then allow us to proceed
 in analyzing the data.
 
 ``` r
-variable_list <- read_csv("variable_list.csv")
+variable_list <- read_csv("./Datasets/variable_list.csv")
 
 covar_d_clean <- select_if(covar_data_d, 
                            names(covar_data_d) %in% pull(variable_list, var_name))
@@ -123,16 +94,6 @@ data from the package. Thus decision was made to exclude these.
 ``` r
 na_check_df <- na_check_df %>% 
   filter(!(var_name %in% c("padtimes", "padactiv", "padlevel")))
-```
-
-We then evaluate from the remaining 99 variables and felt that an `NA`
-amount that is \>86.586% would not be a good representative of the
-variable. Therefore, we filtered all those that have values greater than
-6455.
-
-``` r
-#na_check_df <- na_check_df %>% 
-#  filter( na_count < 6455)
 ```
 
 ## Re-selecting Viable Variables for Data Analysis
@@ -290,3 +251,19 @@ Data summary
 | smq040         |       5386 |           0.28 |     2.16 |     0.95 |     1.00 |     1.00 |     3.00 |     3.00 |      3.00 | ▆▁▁▁▇ |
 | smq050q        |       6339 |           0.15 |   287.23 |  5179.12 |     1.00 |     6.00 |    15.00 |    29.00 |  99999.00 | ▇▁▁▁▁ |
 | smq050u        |       6342 |           0.15 |     3.84 |     0.48 |     1.00 |     4.00 |     4.00 |     4.00 |      4.00 | ▁▁▁▁▇ |
+
+Once we check distributions and satisfied with results, we should also
+make this into another dataset so that we don’t have to keep re-running
+the scripts.
+
+``` r
+# covar_d_clean %>% write_csv("./Datasets/covariates.csv")
+```
+
+# Combining Covariates and Activity Data
+
+**MOVE THIS PART TO A NEW RMD**
+
+Now that we have covariates we can work with, it’s time to merge these
+with our activity data. But first, we need to clean our activity records
+using the flags dataset.
