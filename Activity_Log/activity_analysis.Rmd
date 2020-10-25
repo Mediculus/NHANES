@@ -128,6 +128,8 @@ avg_activity <- filtered_activity_flag_joined %>%
   group_by(seqn, weekday) %>% 
   summarize(avg_daily = mean(activity_count))
 
+#avg_activity %>% write_csv("./Datasets/avg_daily_activ_data.csv")
+
 avg_activity %>% 
   ggplot(aes(x = avg_daily, color = weekday, fill = weekday)) +
   geom_histogram() + 
@@ -140,6 +142,8 @@ grand_avg_activity <- avg_activity %>%
   ungroup() %>% 
   group_by(seqn) %>% 
   summarize(grand_avg = mean(avg_daily))
+
+#grand_avg_activity %>% write_csv("./Datasets/grand_avg_activ_data.csv")
 
 grand_avg_activity %>% 
   ggplot(aes(x = grand_avg)) +
