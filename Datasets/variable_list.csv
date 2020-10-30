@@ -1,333 +1,336 @@
-var_name,var_desc
-seqn,Respondent sequence number
-sddsrvyr,Data Release Number
-ridstatr,Interview/Examination Status
-riagendr,Gender
-ridageyr,Age at Screening Adjudicated - Recode
-ridreth1,Race/Ethnicity - Recode
-dmdeduc3,Education Level - Children/Youth 6-19
-dmdeduc2,Education Level - Adults 20+
-dmdfmsiz,Total number of people in the Family
-indfminc,Annual Family Income
-indfmpir,Family PIR
-wtint2yr,Full Sample 2 Year Interview Weight
-wtmec2yr,Full Sample 2 Year MEC Exam Weight
-sdmvpsu,Masked Variance Pseudo-PSU
-sdmvstra,Masked Variance Pseudo-Stratum
-dbd100,How often add salt to food at table
-drqsdiet,On special diet?
-drqsdt1,Weight loss/Low cal/Low carb/Hi pro diet
-drqsdt2,Low fat/Low cholesterol diet
-drqsdt3,Low salt/Low sodium diet
-drqsdt4,Sugar free/Low sugar diet
-drqsdt5,Low fiber diet
-drqsdt6,High fiber diet
-drqsdt7,Diabetic diet
-drqsdt8,Weight gain/Muscle building diet
-drqsdt91,Other special diet
-dr1tkcal,Energy (kcal)
-dr1tprot,Protein (gm)
-dr1tcarb,Carbohydrate (gm)
-dr1tsugr,Total sugars (gm)
-dr1tfibe,Dietary fiber (gm)
-dr1ttfat,Total fat (gm)
-dr1tsfat,Total saturated fatty acids (gm)
-dr1tmfat,Total monounsaturated fatty acids (gm)
-dr1tpfat,Total polyunsaturated fatty acids (gm)
-dr1tchol,Cholesterol (mg)
-dr1_320z,Total plain water drank yesterday (gm)
-dr1_330z,Total tap water drank yesterday (gm)
-dr1bwatz,Total bottled water drank yesterday (gm)
-dr2tkcal,Energy (kcal)
-dr2tprot,Protein (gm)
-dr2tcarb,Carbohydrate (gm)
-dr2tsugr,Total sugars (gm)
-dr2tfibe,Dietary fiber (gm)
-dr2ttfat,Total fat (gm)
-dr2tsfat,Total saturated fatty acids (gm)
-dr2tmfat,Total monounsaturated fatty acids (gm)
-dr2tpfat,Total polyunsaturated fatty acids (gm)
-dr2tchol,Cholesterol (mg)
-dr2_320z,Total plain water drank yesterday (gm)
-dr2_330z,Total tap water drank yesterday (gm)
-dr2bwatz,Total bottled water drank yesterday (gm)
-peascst1,Blood Pressure Status
-bpxchr,60 sec HR (30 sec HR * 2)
-bpxpls,60 sec. pulse (30 sec. pulse * 2):
-bpxpuls,Pulse regular or irregular?
-bpxpty,Pulse type:
-bpxsy1,Systolic:  Blood pres (1st rdg) mm Hg
-bpxdi1,Diastolic:  Blood pres (1st rdg) mm Hg
-bpxsy2,Systolic:  Blood pres (2nd rdg) mm Hg
-bpxdi2,Diastolic: Blood pres (2nd rdg) mm Hg
-bpxsy3,Systolic:  Blood pres (3rd rdg) mm Hg
-bpxdi3,Diastolic: Blood pres (3rd rdg) mm Hg
-bpxsy4,Systolic: Blood pres (4th rdg) mm Hg
-bpxdi4,Diastolic:  Blood pres (4th rdg) mm Hg
-bmxwt,Weight (kg)
-bmxht,Standing Height (cm)
-bmxbmi,Body Mass Index (kg/m**2)
-bmxcalf,Maximal Calf Circumference (cm)
-bmxarmc,Arm Circumference (cm)
-bmxwaist,Waist Circumference (cm)
-bmxthicr,Thigh Circumference (cm)
-bmxtri,Triceps Skinfold (mm)
-bmxsub,Subscapular Skinfold (mm)
-urxuma,"Albumin, urine (ug/mL)"
-urxums,"Albumin, urine (mg/L)"
-urxucr,"Creatinine, urine (mg/dL)"
-urxcrs,"Creatinine, urine (umol/L)"
-lbdhdd,Direct HDL-Cholesterol (mg/dL)
-lbdhddsi,Direct HDL-Cholesterol (mmol/L)
-wtsaf2yr,Fasting Subsample 2 Year MEC Weight
-lbxtr,Triglyceride (mg/dL)
-lbdtrsi,Triglyceride (mmol/L)
-lbdldl,LDL-cholesterol (mg/dL)
-lbdldlsi,LDL-cholesterol (mmol/L)
-lbxapb,Apolipoprotein (B) (mg/dL)
-lbdapbsi,Apolipoprotein (B) (g/L)
-lbxtc,Total cholesterol (mg/dL)
-lbdtcsi,Total Cholesterol( mmol/L)
-lbxwbcsi,White blood cell count (1000 cells/uL)
-lbxlypct,Lymphocyte percent (%)
-lbxmopct,Monocyte percent (%)
-lbxnepct,Segmented neutrophils percent (%)
-lbxeopct,Eosinophils percent (%)
-lbxbapct,Basophils percent (%)
-lbdlymno,Lymphocyte number (1000 cells/uL)
-lbdmono,Monocyte number (1000 cells/uL)
-lbdneno,Segmented neutrophils num (1000 cell/uL)
-lbdeono,Eosinophils number (1000 cells/uL)
-lbdbano,Basophils number (1000 cells/uL)
-lbxrbcsi,Red blood cell count (million cells/uL)
-lbxhgb,Hemoglobin (g/dL)
-lbxhct,Hematocrit (%)
-lbxmcvsi,Mean cell volume (fL)
-lbxmchsi,Mean cell hemoglobin (pg)
-lbxmc,MCHC (g/dL)
-lbxrdw,Red cell distribution width (%)
-lbxpltsi,Platelet count SI (1000 cells/uL)
-lbxmpsi,Mean platelet volume (fL)
-lbxcrp,C-reactive protein(mg/dL)
-lbxgh,Glycohemoglobin (%)
-lbxhcy,Homocysteine (umol/L)
-lbxglu,Fasting Glucose (mg/dL)
-lbdglusi,Fasting Glucose (mmol/L)
-lbxin,Insulin (uU/mL )
-lbdinsi,Insulin (pmol/L)
-phafsthr,"Total length of 'food fast', hours"
-phafstmn,"Total length of 'food fast', minutes"
-wtsb2yr,Environmental B 2 year weights
-urxp01,1-hydroxynaphthalene (ng/L)
-urdp01lc,1-hydroxynaphthalene comment code
-urxp02,2-hydroxynaphthalene (ng/L)
-urdp02lc,2-hydroxynaphthalene comment code
-urxp03,3-hydroxyfluorene (ng/L)
-urdp03lc,3-hydroxyfluorene comment code
-urxp04,2-hydroxyfluorene (ng/L)
-urdp04lc,2-hydroxyfluorene comment code
-urxp05,3-hydroxyphenanthrene (ng/L)  
-urdp05lc,3-hydroxyphenanthrene comment code 
-urxp06,1-hydroxyphenanthrene (ng/L) 
-urdp06lc,1-hydroxyphenanthrene comment code
-urxp07,2-hydroxyphenanthrene (ng/L)  
-urdp07lc,2-hydroxyphenanthrene comment code 
-urxp10,1-hydroxypyrene (ng/L)   
-urdp10lc,1-hydroxypyrene comment code  
-urxp17,9-hydroxyfluorene (ng/L)
-urdp17lc,9-hydroxyfluorene comment code
-urxp19,4-hydroxyphenanthrene (ng/L)
-urdp19lc,4-hydroxyphenanthrene comment code 
-urxucr,Urinary creatinine
-lbxsal,Albumin (g/dL)
-lbdsalsi,Albumin (g/L)
-lbxsatsi,Alanine aminotransferase ALT (U/L)
-lbxsassi,Aspartate aminotransferase AST (U/L)
-lbxsapsi,Alkaline phosphotase (U/L)
-lbxsbu,Blood urea nitrogen (mg/dL)
-lbdsbusi,Blood urea nitrogen (mmol/L)
-lbxsca,Total calcium (mg/dL)
-lbdscasi,Total calcium (mmol/L)
-lbxsch,Cholesterol (mg/dL)
-lbdschsi,Cholesterol (mmol/L)
-lbxsc3si,Bicarbonate (mmol/L)
-lbxscr,Creatinine (mg/dL)
-lbdscrsi,Creatinine (umol/L)
-lbxsgtsi,Gamma glutamyl transferase (U/L)
-lbxsgl,"Glucose, serum (mg/dL)"
-lbdsglsi,"Glucose, serum (mmol/L)"
-lbxsir,"Iron, refigerated (ug/dL)"
-lbdsirsi,"Iron, refigerated (umol/L)"
-lbxsldsi,Lactate dehydrogenase LDH (U/L)
-lbxsph,Phosphorus (mg/dL)
-lbdsphsi,Phosphorus (mmol/L)
-lbxstb,Total bilirubin (mg/dL)
-lbdstbsi,"Bilirubin, total (umol/L)"
-lbxstp,Total protein (g/dL)
-lbdstpsi,Total protein (g/L)
-lbxstr,Triglycerides (mg/dL)
-lbdstrsi,Triglycerides (mmol/L)
-lbxsua,Uric acid (mg/dL)
-lbdsuasi,Uric acid (umol/L)
-lbxsnasi,Sodium (mmol/L)
-lbxsksi,Potassium (mmol/L)
-lbxsclsi,Chloride (mmol/L)
-lbxsossi,Osmolality (mmol/Kg)
-lbxsgb,Globulin (g/dL)
-lbdsgbsi,Globulin (g/L)
-lbxalc,Alpha-carotene (ug/dL)
-lbdalcsi,Alpha-carotene (umol/L)
-lbxbec,trans-Beta carotene (ug/dL)
-lbdbecsi,trans-Beta carotene (umol/L)
-lbxcbc,cis-Beta carotene (ug/dL)
-lbdcbcsi,cis-Beta carotene (umol/L)
-lbxcry,b-Cryptoxanthin (ug/dL)
-lbdcrysi,b-Cryptoxanthin (umol/L)
-lbxgtc,g-Tocopherol (ug/dL)
-lbdgtcsi,g-Tocopherol (umol/L)
-lbxluz,Lutein and zeaxanthin (ug/dL)
-lbdluzsi,Lutein and zeaxanthin (umol/L)
-lbxlyc,trans-Lycopene (ug/dL)
-lbdlycsi,trans-Lycopene (umol/L)
-lbxrpl,Retinyl Palmitate (ug/dL)
-lbdrplsi,Retinyl Palmitate (umol/L)
-lbxrst,Retinyl Stearate (ug/dL)
-lbdrstsi,Retinyl Stearate (umol/L)
-lbxvia,Vitamin A (ug/dL)
-lbdviasi,Vitamin A (umol/L)
-lbxvie,Vitamin E (ug/dL)
-lbdviesi,Vitamin E (umol/L)
-lbdtly,Total (cis- and trans-)Lycopene (ug/dL)
-lbdtlysi,Total (cis- and trans-)Lycopene (umol/L)
-lbxb12,Vitamin B12 ( pg/mL)
-lbdb12si,Vitamin B12 (pmol/L)
-lbx4pa,4-pyridoxic acid (nmol/L)
-lbxplp,Pyridoxal 5'-phosphate (nmol/L)
-lbxvic,Vitamin C (mg/dL)
-lbdvicsi,Vitamin C (umol/L)
-alq120q,How often drink alcohol over past 12 mos
-alq120u,"# days drink alcohol per wk, mo, yr"
-bpq040a,Taking prescription for hypertension
-bpq070,When blood cholesterol last checked
-bpq080,Doctor told you - high cholesterol level
-bpq090a,Told to eat less fat for cholesterol
-bpq090b,Told to reduce weight for cholesterol
-bpq090c,Told to exercise more for cholesterol
-bpq090d,Told to take prescriptn for cholesterol
-cdq001,SP ever had pain or discomfort in chest
-cdq002,SP get it walking uphill or in a hurry
-cdq003,During an ordinary pace on level ground
-cdq003a,CHECK ITEM
-cdq004,If so does SP continue or slow down
-cdq005,Does standing relieve pain/discomfort
-cdq006,How soon is the pain relieved
-cdq009a,Pain in right arm
-cdq009b,Pain in right chest
-cdq009c,Pain in neck
-cdq009d,Pain in upper sternum
-cdq009e,Pain in lower sternum
-cdq009f,Pain in left chest
-cdq009g,Pain in left arm
-cdq009h,Pain in epigastric area
-cdq008,Severe pain in chest more than half hour
-cdq010,Shortness of breath on stairs/inclines
-hsd010,General health condition
-diq010,Doctor told you have diabetes
-did040,Age when first told you had diabetes
-diq219,CHECK ITEM
-diq220,When was your diabetes diagnosed
-diq159,CHECK ITEM
-diq160,Ever told you have prediabetes
-diq170,Ever told have health risk for diabetes
-diq180,Had blood tested past three years
-diq190a,Past yr told control weight
-diq190b,Past yr told increase physical activity
-diq190c,Past yr told reduce fat/calories in diet
-diq200a,Are you controlling weight
-diq200b,Are you increasing physical activity
-diq200c,Are you reducing fat/calories in diet
-diq050,Taking insulin now
-did060,How long taking insulin
-diq060u,Unit of measure (month/year)
-did065,CHECK ITEM
-did070,Take diabetic pills to lower blood sugar
-did229,CHECK ITEM
-diq230,How long ago saw a diabetes specialist
-diq240,Is there one Dr you see for diabetes
-did250,Past year how many times seen doctor
-did260,How often check blood for glucose/sugar
-diq260u,Unit of measure (day/week/month/year)
-did270,Past year times checked for A1C
-diq280,What was your last A1C level
-diq290,What does Dr say A1C should be
-diq295,CHECK ITEM
-diq300s,What was your recent SBP
-diq300d,What was your recent DBP
-did310s,What does Dr say SBP should be
-did310d,What does Dr say DBP should be
-did320,What was most recent LDL number
-did330,What does Dr say LDL should be
-did340,Past year times Dr check feet for sores
-did350,How often do you check your feet
-diq350u,Unit of measure (day/week/month/year)
-diq360,Last time had pupils dilated for exam
-diq080,Diabetes affected eyes/had retinopathy
-fsd032a,HH Worried run out of food
-fsd032b,HH Food didn't last
-fsd032c,HH Couldn't afford balanced meals
-fsd032d,HH Relied on low-cost food for child
-fsd032e,HH Couldn't feed child balanced meal
-fsd032f,HH Child not eating enough
-fsd041,HH Adults cut size or skip meals
-fsd052,HH How often adults cut size/skip meals
-fsd061,HH Eat less than should
-fsd071,"HH Hungry, but didn't eat"
-fsd081,"HH Lost weight, no money for food"
-fsd092,HH Adults not eat whole day
-fsd102,HH How often adults not eat for day
-mcq010,Ever been told you have asthma
-mcq025,Age when first had asthma
-mcq035,Still have asthma
-mcq080,Doctor ever said you were overweight
-mcq160b,Ever told had congestive heart failure
-mcq160c,Ever told you had coronary heart disease
-mcq160d,Ever told you had angina/angina pectoris
-mcq160e,Ever told you had heart attack
-mcq160f,Ever told you had a stroke
-mcq160g,Ever told you had emphysema
-mcq180b,Age when told you had heart failure
-mcq180c,Age when told had coronary heart disease
-mcq180d,Age when told you had angina pectoris
-mcq180e,Age when told you had heart attack
-mcq180f,Age when told you had a stroke
-mcq180g,Age when told you had emphysema
-mcq300a,Close relative had heart attack?
-mcq300b,Close relative had asthma?
-mcq300c,Close relative had diabetes?
-padactiv,Leisure time activity
-padlevel,Activity level
-padtimes,# of times did activity in past 30 days
-pfq020,"Crawl, walk, run, play limitations"
-pfq030,Long term impairment/health problem
-smq020,Smoked at least 100 cigarettes in life
-smd030,Age started smoking cigarettes regularly
-smq040,Do you now smoke cigarettes
-smq050q,How long since quit smoking cigarettes
-smq050u,Unit of measure (day/week/month/year)
-whd010,Current self-reported height (inches)
-whd020,Current self-reported weight (pounds)
-whq030,How do you consider your weight
-whq040,"Like to weigh more, less or same"
-whq060,Weight change intentional
-rc2kx,Census 2010 Geocoder General Return Code
-stm2kx,Census 2010 Geocoder Street Matcher RC
-lvl2kx,Census 2010 Geocoder LAT/LONG Geocoding
-lat,Latitude (Decimal)
-lon,Longitude (Decimal)
-state2kx,Census 2010 FIPS State Code
-cnty2kx,Census 2010 FIPS County Code
-cbsa,Core Based Statistical Area (CBSA)
-ur2kx,Urban/Rural Indicator
-tract2kx,Census 2010 Tract
-bg2kx,Census 2010 Block Group
-block2kx,Census 2010 Block ID
+var_name,var_desc,det_var_desc,group_var
+seqn,Respondent sequence number,Respondent sequence number.,NA
+sddsrvyr,Data Release Number,Data Release Number.,NA
+ridstatr,Interview/Examination Status,Interview and Examination Status of the Sample Person.,NA
+riagendr,Gender,Gender of the sample person,NA
+ridageyr,Age at Screening Adjudicated - Recode,Best age in years of the sample person at time of HH screening.  Individuals 85 and over are topcoded at 85 years of age.,NA
+ridreth1,Race/Ethnicity - Recode,Recode of reported race and ethnicity information.,NA
+dmdeduc3,Education Level - Children/Youth 6-19,(SP Interview Version) What is the highest grade or level of school {you have/SP has} completed or the highest degree {you have/s/he has} received?,NA
+dmdeduc2,Education Level - Adults 20+,(SP Interview Version) What is the highest grade or level of school {you have/SP has} completed or the highest degree {you have/s/he has} received?,NA
+dmdfmsiz,Total number of people in the Family,Total number of people in the Family,NA
+indfminc,Annual Family Income,Total family income (reported as a range value in dollars),NA
+indfmpir,Family PIR,Poverty income ratio (PIR) - a ratio of family income to poverty threshold,NA
+wtint2yr,Full Sample 2 Year Interview Weight,Interviewed Sample Persons.,NA
+wtmec2yr,Full Sample 2 Year MEC Exam Weight,Both Interviewed and MEC Examined Sample Persons.,NA
+sdmvpsu,Masked Variance Pseudo-PSU,Masked Variance Unit Pseudo-PSU variable for variance estimation,NA
+sdmvstra,Masked Variance Pseudo-Stratum,Masked Variance Unit Pseudo-Stratum variable for variance estimation,NA
+dbd100,How often add salt to food at table,How often {do you/does SP} add ordinary salt to {your/his/her/SP's} food at the table?  Would you say . . .,"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdiet,On special diet?,"Are you <b>currently</b> on any kind of diet, either to lose weight or for some other health-related reason?","Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt1,Weight loss/Low cal/Low carb/Hi pro diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt2,Low fat/Low cholesterol diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt3,Low salt/Low sodium diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt4,Sugar free/Low sugar diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt5,Low fiber diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt6,High fiber diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt7,Diabetic diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt8,Weight gain/Muscle building diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+drqsdt91,Other special diet,What kind of diet are you on? (Is it a weight loss or low calorie diet: low fat or cholesterol diet; low salt or sodium diet; sugar free or low sugar diet; low fiber diet; high fiber diet; diabetic diet; or another type of diet?),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tkcal,Energy (kcal),Energy (kcal),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tprot,Protein (gm),Protein (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tcarb,Carbohydrate (gm),Carbohydrate (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tsugr,Total sugars (gm),Total sugars (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tfibe,Dietary fiber (gm),Dietary fiber (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1ttfat,Total fat (gm),Total fat (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tsfat,Total saturated fatty acids (gm),Total saturated fatty acids (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tmfat,Total monounsaturated fatty acids (gm),Total monounsaturated fatty acids (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tpfat,Total polyunsaturated fatty acids (gm),Total polyunsaturated fatty acids (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1tchol,Cholesterol (mg),Cholesterol (mg),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1_320z,Total plain water drank yesterday (gm),"Total plain water drank yesterday - including plain tap water, water from a drinking fountain, water from a water cooler, bottled water, and spring water.","Dietary Interview - Total Nutrient Intakes, First Day"
+dr1_330z,Total tap water drank yesterday (gm),Total tap water drank yesterday - including filtered tap water and water from a drinking fountain.,"Dietary Interview - Total Nutrient Intakes, First Day"
+dr1bwatz,Total bottled water drank yesterday (gm),Total bottled water drank yesterday (gm),"Dietary Interview - Total Nutrient Intakes, First Day"
+dr2tkcal,Energy (kcal),Energy (kcal),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2tprot,Protein (gm),Protein (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2tcarb,Carbohydrate (gm),Carbohydrate (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2tsugr,Total sugars (gm),Total sugars (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2tfibe,Dietary fiber (gm),Dietary fiber (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2ttfat,Total fat (gm),Total fat (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2tsfat,Total saturated fatty acids (gm),Total saturated fatty acids (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2tmfat,Total monounsaturated fatty acids (gm),Total monounsaturated fatty acids (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2tpfat,Total polyunsaturated fatty acids (gm),Total polyunsaturated fatty acids (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2tchol,Cholesterol (mg),Cholesterol (mg),"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2_320z,Total plain water drank yesterday (gm),"Total plain water drank yesterday - including plain tap water, water from a drinking fountain, water from a water cooler, bottled water, and spring water.","Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2_330z,Total tap water drank yesterday (gm),Total tap water drank yesterday - including filtered tap water and water from a drinking fountain.,"Dietary Interview - Total Nutrient Intakes, Second Day"
+dr2bwatz,Total bottled water drank yesterday (gm),Total bottled water drank yesterday. (gm),"Dietary Interview - Total Nutrient Intakes, Second Day"
+peascst1,Blood Pressure Status,Blood Pressure Status,Blood Pressure
+bpxchr,60 sec HR (30 sec HR * 2),60 sec HR (30 sec HR * 2),Blood Pressure
+bpxpls,60 sec. pulse (30 sec. pulse * 2):,60 sec. pulse (30 sec. pulse * 2):,Blood Pressure
+bpxpuls,Pulse regular or irregular?,Pulse regular or irregular?,Blood Pressure
+bpxpty,Pulse type:,Pulse type:,Blood Pressure
+bpxsy1,Systolic:  Blood pres (1st rdg) mm Hg,Systolic:  Blood pressure (first reading) mm Hg,Blood Pressure
+bpxdi1,Diastolic:  Blood pres (1st rdg) mm Hg,Diastolic:  Blood pressure (first reading) mm Hg,Blood Pressure
+bpxsy2,Systolic:  Blood pres (2nd rdg) mm Hg,Systolic:  Blood pressure (second reading) mm Hg,Blood Pressure
+bpxdi2,Diastolic: Blood pres (2nd rdg) mm Hg,Diastolic: Blood pressure (second reading) mm Hg,Blood Pressure
+bpxsy3,Systolic:  Blood pres (3rd rdg) mm Hg,Systolic:  Blood pressure (third reading) mm Hg,Blood Pressure
+bpxdi3,Diastolic: Blood pres (3rd rdg) mm Hg,Diastolic: Blood pressure (third reading) mm Hg,Blood Pressure
+bpxsy4,Systolic: Blood pres (4th rdg) mm Hg,Systolic:  Blood pressure (fourth reading if necessary) mm Hg,Blood Pressure
+bpxdi4,Diastolic:  Blood pres (4th rdg) mm Hg,Diastolic:  Blood pressure (fourth reading if necessary) mm Hg,Blood Pressure
+bmxwt,Weight (kg),Weight (kg),Body Measures
+bmxht,Standing Height (cm),Standing Height (cm),Body Measures
+bmxbmi,Body Mass Index (kg/m**2),Body Mass Index (kg/m**2),Body Measures
+bmxcalf,Maximal Calf Circumference (cm),Maximal Calf Circumference (cm),Body Measures
+bmxarmc,Arm Circumference (cm),Arm Circumference (cm),Body Measures
+bmxwaist,Waist Circumference (cm),Waist Circumference (cm),Body Measures
+bmxthicr,Thigh Circumference (cm),Thigh Circumference (cm),Body Measures
+bmxtri,Triceps Skinfold (mm),Triceps Skinfold (mm),Body Measures
+bmxsub,Subscapular Skinfold (mm),Subscapular Skinfold (mm),Body Measures
+urxuma,"Albumin, urine (ug/mL)","Albumin, urine (ug/mL)",Albumin & Creatinine - Urine
+urxums,"Albumin, urine (mg/L)","Albumin, urine (mg/L)",Albumin & Creatinine - Urine
+urxucr,"Creatinine, urine (mg/dL)","Creatinine, urine (mg/dL)",Albumin & Creatinine - Urine
+urxcrs,"Creatinine, urine (umol/L)","Creatinine, urine (umol/L)",Albumin & Creatinine - Urine
+lbdhdd,Direct HDL-Cholesterol (mg/dL),Direct HDL-Cholesterol (mg/dL),Cholesterol - HDL
+lbdhddsi,Direct HDL-Cholesterol (mmol/L),Direct HDL-Cholesterol (mmol/L),Cholesterol - HDL
+wtsaf2yr,Fasting Subsample 2 Year MEC Weight,Fasting Subsample 2 Year MEC Weight,"Cholesterol - LDL, Triglyceride & Apoliprotein (ApoB)"
+lbxtr,Triglyceride (mg/dL),Triglyceride (mg/dL),"Cholesterol - LDL, Triglyceride & Apoliprotein (ApoB)"
+lbdtrsi,Triglyceride (mmol/L),Triglyceride (mmol/L),"Cholesterol - LDL, Triglyceride & Apoliprotein (ApoB)"
+lbdldl,LDL-cholesterol (mg/dL),LDL-cholesterol (mg/dL),"Cholesterol - LDL, Triglyceride & Apoliprotein (ApoB)"
+lbdldlsi,LDL-cholesterol (mmol/L),LDL-cholesterol (mmol/L),"Cholesterol - LDL, Triglyceride & Apoliprotein (ApoB)"
+lbxapb,Apolipoprotein (B) (mg/dL),Apolipoprotein (B) (mg/dL),"Cholesterol - LDL, Triglyceride & Apoliprotein (ApoB)"
+lbdapbsi,Apolipoprotein (B) (g/L),Apolipoprotein (B) (g/L),"Cholesterol - LDL, Triglyceride & Apoliprotein (ApoB)"
+lbxtc,Total cholesterol (mg/dL),Total cholesterol (mg/dL),Cholesterol - Total
+lbdtcsi,Total Cholesterol( mmol/L),Total Cholesterol( mmol/L),Cholesterol - Total
+lbxwbcsi,White blood cell count (1000 cells/uL),White blood cell count (1000 cells/uL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxlypct,Lymphocyte percent (%),Lymphocyte percent (%),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxmopct,Monocyte percent (%),Monocyte percent (%),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxnepct,Segmented neutrophils percent (%),Segmented neutrophils percent (%),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxeopct,Eosinophils percent (%),Eosinophils percent (%),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxbapct,Basophils percent (%),Basophils percent (%),Complete Blood Count with 5-Part Differential - Whole Blood
+lbdlymno,Lymphocyte number (1000 cells/uL),Lymphocyte number (1000 cells/uL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbdmono,Monocyte number (1000 cells/uL),Monocyte number (1000 cells/uL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbdneno,Segmented neutrophils num (1000 cell/uL),Segmented neutrophils num (1000 cell/uL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbdeono,Eosinophils number (1000 cells/uL),Eosinophils number (1000 cells/uL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbdbano,Basophils number (1000 cells/uL),Basophils number (1000 cells/uL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxrbcsi,Red blood cell count (million cells/uL),Red blood cell count (million cells/uL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxhgb,Hemoglobin (g/dL),Hemoglobin (g/dL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxhct,Hematocrit (%),Hematocrit (%),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxmcvsi,Mean cell volume (fL),Mean cell volume (fL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxmchsi,Mean cell hemoglobin (pg),Mean cell hemoglobin (pg),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxmc,MCHC (g/dL),Mean cell hemoglobin concentration (g/dL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxrdw,Red cell distribution width (%),Red cell distribution width (%),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxpltsi,Platelet count SI (1000 cells/uL),Platelet count SI (1000 cells/uL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxmpsi,Mean platelet volume (fL),Mean platelet volume (fL),Complete Blood Count with 5-Part Differential - Whole Blood
+lbxcrp,C-reactive protein(mg/dL),C-reactive protein (mg/dL),C-Reactive Protein (CRP)
+lbxgh,Glycohemoglobin (%),Glycohemoglobin (%),Glycohemoglobin
+lbxhcy,Homocysteine (umol/L),Homocysteine (umol/L),Homocysteine
+lbxglu,Fasting Glucose (mg/dL),Fasting Glucose (mg/dL),Plasma Fasting Glucose & Insulin
+lbdglusi,Fasting Glucose (mmol/L),Fasting Glucose (mmol/L),Plasma Fasting Glucose & Insulin
+lbxin,Insulin (uU/mL ),Insulin (uU/mL ),Plasma Fasting Glucose & Insulin
+lbdinsi,Insulin (pmol/L),Insulin (pmol/L),Plasma Fasting Glucose & Insulin
+phafsthr,"Total length of 'food fast', hours","Total length of 'food fast', hours",Plasma Fasting Glucose & Insulin
+phafstmn,"Total length of 'food fast', minutes","Total length of 'food fast', minutes",Plasma Fasting Glucose & Insulin
+wtsb2yr,Environmental B 2 year weights,Environmental B 2 year weights,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp01,1-hydroxynaphthalene (ng/L),1-hydroxynaphthalene (ng/L),Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp01lc,1-hydroxynaphthalene comment code,1-hydroxynaphthalene comment code,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp02,2-hydroxynaphthalene (ng/L),2-hydroxynaphthalene (ng/L),Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp02lc,2-hydroxynaphthalene comment code,2-hydroxynaphthalene comment code,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp03,3-hydroxyfluorene (ng/L),3-hydroxyfluorene (ng/L),Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp03lc,3-hydroxyfluorene comment code,3-hydroxyfluorene comment code,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp04,2-hydroxyfluorene (ng/L),2-hydroxyfluorene (ng/L),Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp04lc,2-hydroxyfluorene comment code,2-hydroxyfluorene comment code,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp05,3-hydroxyphenanthrene (ng/L)  ,3-hydroxyphenanthrene (ng/L),Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp05lc,3-hydroxyphenanthrene comment code ,3-hydroxyphenanthrene comment code ,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp06,1-hydroxyphenanthrene (ng/L) ,1-hydroxyphenanthrene (ng/L) ,Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp06lc,1-hydroxyphenanthrene comment code,1-hydroxyphenanthrene comment code,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp07,2-hydroxyphenanthrene (ng/L)  ,2-hydroxyphenanthrene (ng/L)  ,Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp07lc,2-hydroxyphenanthrene comment code ,2-hydroxyphenanthrene comment code ,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp10,1-hydroxypyrene (ng/L)   ,1-hydroxypyrene (ng/L)   ,Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp10lc,1-hydroxypyrene comment code  ,1-hydroxypyrene comment code  ,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp17,9-hydroxyfluorene (ng/L),9-hydroxyfluorene (ng/L),Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp17lc,9-hydroxyfluorene comment code,9-hydroxyfluorene comment code,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxp19,4-hydroxyphenanthrene (ng/L),4-hydroxyphenanthrene (ng/L),Polyaromatic Hydrocarbons (PAHs) - Urine
+urdp19lc,4-hydroxyphenanthrene comment code ,4-hydroxyphenanthrene comment code ,Polyaromatic Hydrocarbons (PAHs) - Urine
+urxucr,Urinary creatinine,Urinary creatinine,Polyaromatic Hydrocarbons (PAHs) - Urine
+lbxsal,Albumin (g/dL),Albumin (g/dL),Standard Biochemistry Profile
+lbdsalsi,Albumin (g/L),Albumin (g/L),Standard Biochemistry Profile
+lbxsatsi,Alanine aminotransferase ALT (U/L),Alanine aminotransferase ALT (U/L),Standard Biochemistry Profile
+lbxsassi,Aspartate aminotransferase AST (U/L),Aspartate aminotransferase AST (U/L),Standard Biochemistry Profile
+lbxsapsi,Alkaline phosphotase (U/L),Alkaline phosphotase (U/L),Standard Biochemistry Profile
+lbxsbu,Blood urea nitrogen (mg/dL),Blood urea nitrogen (mg/dL),Standard Biochemistry Profile
+lbdsbusi,Blood urea nitrogen (mmol/L),Blood urea nitrogen (mmol/L),Standard Biochemistry Profile
+lbxsca,Total calcium (mg/dL),Total calcium (mg/dL),Standard Biochemistry Profile
+lbdscasi,Total calcium (mmol/L),Total calcium (mmol/L),Standard Biochemistry Profile
+lbxsch,Cholesterol (mg/dL),Cholesterol (mg/dL),Standard Biochemistry Profile
+lbdschsi,Cholesterol (mmol/L),Cholesterol (mmol/L),Standard Biochemistry Profile
+lbxsc3si,Bicarbonate (mmol/L),Bicarbonate (mmol/L),Standard Biochemistry Profile
+lbxscr,Creatinine (mg/dL),Creatinine (mg/dL),Standard Biochemistry Profile
+lbdscrsi,Creatinine (umol/L),Creatinine (umol/L),Standard Biochemistry Profile
+lbxsgtsi,Gamma glutamyl transferase (U/L),Gamma glutamyl transferase (U/L),Standard Biochemistry Profile
+lbxsgl,"Glucose, serum (mg/dL)","Glucose, serum (mg/dL)",Standard Biochemistry Profile
+lbdsglsi,"Glucose, serum (mmol/L)","Glucose, serum (mmol/L)",Standard Biochemistry Profile
+lbxsir,"Iron, refigerated (ug/dL)","Iron, refigerated (ug/dL)",Standard Biochemistry Profile
+lbdsirsi,"Iron, refigerated (umol/L)","Iron, refigerated (umol/L)",Standard Biochemistry Profile
+lbxsldsi,Lactate dehydrogenase LDH (U/L),Lactate dehydrogenase LDH (U/L),Standard Biochemistry Profile
+lbxsph,Phosphorus (mg/dL),Phosphorus (mg/dL),Standard Biochemistry Profile
+lbdsphsi,Phosphorus (mmol/L),Phosphorus (mmol/L),Standard Biochemistry Profile
+lbxstb,Total bilirubin (mg/dL),Total bilirubin (mg/dL),Standard Biochemistry Profile
+lbdstbsi,"Bilirubin, total (umol/L)","Bilirubin, total (umol/L)",Standard Biochemistry Profile
+lbxstp,Total protein (g/dL),Total protein (g/dL),Standard Biochemistry Profile
+lbdstpsi,Total protein (g/L),Total protein (g/L),Standard Biochemistry Profile
+lbxstr,Triglycerides (mg/dL),Triglycerides (mg/dL),Standard Biochemistry Profile
+lbdstrsi,Triglycerides (mmol/L),Triglycerides (mmol/L),Standard Biochemistry Profile
+lbxsua,Uric acid (mg/dL),Uric acid (mg/dL),Standard Biochemistry Profile
+lbdsuasi,Uric acid (umol/L),Uric acid (umol/L),Standard Biochemistry Profile
+lbxsnasi,Sodium (mmol/L),Sodium (mmol/L),Standard Biochemistry Profile
+lbxsksi,Potassium (mmol/L),Potassium (mmol/L),Standard Biochemistry Profile
+lbxsclsi,Chloride (mmol/L),Chloride (mmol/L),Standard Biochemistry Profile
+lbxsossi,Osmolality (mmol/Kg),Osmolality (mmol/Kg),Standard Biochemistry Profile
+lbxsgb,Globulin (g/dL),Globulin (g/dL),Standard Biochemistry Profile
+lbdsgbsi,Globulin (g/L),Globulin (g/L),Standard Biochemistry Profile
+lbxalc,Alpha-carotene (ug/dL),Alpha-carotene (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdalcsi,Alpha-carotene (umol/L),Alpha-carotene (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxbec,trans-Beta carotene (ug/dL),trans-Beta carotene (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdbecsi,trans-Beta carotene (umol/L),trans-Beta carotene (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxcbc,cis-Beta carotene (ug/dL),cis-Beta carotene (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdcbcsi,cis-Beta carotene (umol/L),cis-Beta carotene (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxcry,b-Cryptoxanthin (ug/dL),b-Cryptoxanthin (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdcrysi,b-Cryptoxanthin (umol/L),b-Cryptoxanthin (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxgtc,g-Tocopherol (ug/dL),g-Tocopherol (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdgtcsi,g-Tocopherol (umol/L),g-Tocopherol (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxluz,Lutein and zeaxanthin (ug/dL),Lutein and zeaxanthin (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdluzsi,Lutein and zeaxanthin (umol/L),Lutein and zeaxanthin (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxlyc,trans-Lycopene (ug/dL),trans-Lycopene (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdlycsi,trans-Lycopene (umol/L),trans-Lycopene (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxrpl,Retinyl Palmitate (ug/dL),Retinyl Palmitate (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdrplsi,Retinyl Palmitate (umol/L),Retinyl Palmitate (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxrst,Retinyl Stearate (ug/dL),Retinyl Stearate (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdrstsi,Retinyl Stearate (umol/L),Retinyl Stearate (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxvia,Vitamin A (ug/dL),Vitamin A (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdviasi,Vitamin A (umol/L),Vitamin A (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxvie,Vitamin E (ug/dL),Vitamin E (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdviesi,Vitamin E (umol/L),Vitamin E (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbdtly,Total (cis- and trans-)Lycopene (ug/dL),Total (cis- and trans-)Lycopene (ug/dL),"Vitamin A, Vitamin E & Carotenoids"
+lbdtlysi,Total (cis- and trans-)Lycopene (umol/L),Total (cis- and trans-)Lycopene (umol/L),"Vitamin A, Vitamin E & Carotenoids"
+lbxb12,Vitamin B12 ( pg/mL),Vitamin B12 ( pg/mL),Vitamin B12
+lbdb12si,Vitamin B12 (pmol/L),Vitamin B12 (pmol/L),Vitamin B12
+lbx4pa,4-pyridoxic acid (nmol/L),4-pyridoxic acid (nmol/L),Vitamin B6
+lbxplp,Pyridoxal 5'-phosphate (nmol/L),Pyridoxal 5'-phosphate (nmol/L),Vitamin B6
+lbxvic,Vitamin C (mg/dL),Vitamin C (mg/dL),Vitamin C
+lbdvicsi,Vitamin C (umol/L),Vitamin C (umol/L),Vitamin C
+alq120q,How often drink alcohol over past 12 mos,"In the past 12 months, how often did {you/SP} drink any type of alcoholic beverage? PROBE: How many days per week, per month, or per year did {you/SP} drink?",Alcohol Use
+alq120u,"# days drink alcohol per wk, mo, yr",UNIT OF MEASURE.,Alcohol Use
+bpq040a,Taking prescription for hypertension,"Because of {your/SP's} (high blood pressure/hypertension), {have you/has s/he} ever been told to . . . take prescribed medicine?",Blood Pressure & Cholesterol
+bpq070,When blood cholesterol last checked,About how long has it been since {you/SP} last had {your/his/her} blood cholesterol checked?  Has it been...,Blood Pressure & Cholesterol
+bpq080,Doctor told you - high cholesterol level,{Have you/Has SP} ever been told by a doctor or other health professional that {your/his/her} blood cholesterol level was high?,Blood Pressure & Cholesterol
+bpq090a,Told to eat less fat for cholesterol,"To lower (your/his/her) blood cholesterol, (have/has) (you/SP) ever been told by a doctor or other health professional... to eat fewer high fat or high cholesterol foods?",Blood Pressure & Cholesterol
+bpq090b,Told to reduce weight for cholesterol,"[To lower (your/his/her) blood cholesterol, (have/has) (you/SP) ever been told by a doctor or other health professional]... to control (your/his/her) weight or lose weight?",Blood Pressure & Cholesterol
+bpq090c,Told to exercise more for cholesterol,"[To lower (your/his/her) blood cholesterol, (have/has) (you/SP) ever been told by a doctor or other health professional]... to increase (your/his/her) physical activity or exercise?",Blood Pressure & Cholesterol
+bpq090d,Told to take prescriptn for cholesterol,"[To lower (your/his/her) blood cholesterol, (have/has) (you/SP) ever been told by a doctor or other health professional]... to take prescribed medicine?",Blood Pressure & Cholesterol
+cdq001,SP ever had pain or discomfort in chest,{Have you/Has SP} ever had any pain or discomfort in {your/her/his} chest?,Cardiovascular Health
+cdq002,SP get it walking uphill or in a hurry,{Do you/Does she/Does he} get it when {you/she/he} walk uphill or hurry?,Cardiovascular Health
+cdq003,During an ordinary pace on level ground,{Do you/Does she/Does he} get it when {you/she/he} walk at an ordinary pace on level ground?,Cardiovascular Health
+cdq003a,CHECK ITEM,NA,Cardiovascular Health
+cdq004,If so does SP continue or slow down,What {do you/does she/does he} do if {you/she/he} get it while {you/she/he} are walking?  {Do you/Does she/Does he} stop or slow down or continue at the same pace?,Cardiovascular Health
+cdq005,Does standing relieve pain/discomfort,"If {you/she/he} stand still, what happens to it?  Is the pain or discomfort relieved or not relieved?",Cardiovascular Health
+cdq006,How soon is the pain relieved,How soon is the pain relieved?  Would you say...,Cardiovascular Health
+cdq009a,Pain in right arm,Please look at this card and show me where the pain or discomfort is located.,Cardiovascular Health
+cdq009b,Pain in right chest,Please look at this card and show me where the pain or discomfort is located.,Cardiovascular Health
+cdq009c,Pain in neck,Please look at this card and show me where the pain or discomfort is located.,Cardiovascular Health
+cdq009d,Pain in upper sternum,Please look at this card and show me where the pain or discomfort is located.,Cardiovascular Health
+cdq009e,Pain in lower sternum,Please look at this card and show me where the pain or discomfort is located.,Cardiovascular Health
+cdq009f,Pain in left chest,Please look at this card and show me where the pain or discomfort is located.,Cardiovascular Health
+cdq009g,Pain in left arm,Please look at this card and show me where the pain or discomfort is located.,Cardiovascular Health
+cdq009h,Pain in epigastric area,Please look at this card and show me where the pain or discomfort is located.,Cardiovascular Health
+cdq008,Severe pain in chest more than half hour,Have {you/she/he} ever had a severe pain across the front of {your/her/his} chest lasting for half an hour or more?,Cardiovascular Health
+cdq010,Shortness of breath on stairs/inclines,{Have you/Has SP} had shortness of breath either when hurrying on the level or walking up a slight hill?,Cardiovascular Health
+hsd010,General health condition,{First/Next} I have some general questions about {your/SP's} health.  Would you say {your/SP's} health in general is . . .,Current Health Status
+diq010,Doctor told you have diabetes,"The next questions are about specific medical conditions. {Other than during pregnancy, {have you/has SP}/{Have you/Has SP}} ever been told by a doctor or health professional that {you have/{he/she/SP} has} diabetes or sugar diabetes?",Diabetes
+did040,Age when first told you had diabetes,How old {was SP/were you} when a doctor or other health professional first told {you/him/her} that {you/he/she} had diabetes or sugar diabetes?,Diabetes
+diq219,CHECK ITEM,NA,Diabetes
+diq220,When was your diabetes diagnosed,Was {your/his/her} diabetes diagnosed...,Diabetes
+diq159,CHECK ITEM,NA,Diabetes
+diq160,Ever told you have prediabetes,"{Have you/Has SP} ever been told by a doctor or other health professional that {you have/SP has} any of the following:  prediabetes, impaired fasting glucose, impaired glucose tolerance, borderline diabetes or that {your/her/his} blood sugar is higher than normal but not high enough to be called diabetes or sugar diabetes?",Diabetes
+diq170,Ever told have health risk for diabetes,{Have you/Has SP} ever been told by a doctor or other health professional that {you have/s/he has} health conditions or a medical or family history that increases {your/his/her} risk for diabetes?,Diabetes
+diq180,Had blood tested past three years,{Have you/Has SP} had a blood test for high blood sugar or diabetes within the past three years?,Diabetes
+diq190a,Past yr told control weight,"To lower {your/his/her} risk for certain diseases, during the past 12 months {have you/has s/he} ever been told by a doctor or health professional to:   control {your/his/her} weight or lose weight?",Diabetes
+diq190b,Past yr told increase physical activity,"To lower {your/his/her} risk for certain diseases, during the past 12 months {have you/has s/he} ever been told by a doctor or health professional to:   increase {your/his/her} physical activity or exercise?",Diabetes
+diq190c,Past yr told reduce fat/calories in diet,"To lower {your/his/her} risk for certain diseases, during the past 12 months {have you/has s/he} ever been told by a doctor or health professional to:  reduce the amount of fat or calories in {your/his/her} diet?",Diabetes
+diq200a,Are you controlling weight,"To lower {your/his/her} risk for certain diseases, {are you/is s/he} now doing any of the following:  controlling {your/his/her} weight or losing weight?",Diabetes
+diq200b,Are you increasing physical activity,"To lower {your/his/her} risk for certain diseases, {are you/is s/he} now doing any of the following:  increasing {your/his/her} physical activity or exercise?",Diabetes
+diq200c,Are you reducing fat/calories in diet,"To lower {your/his/her} risk for certain diseases, {are you/is s/he} now doing any of the following:  reducing the amount of fat or calories in {your/his/her} diet?",Diabetes
+diq050,Taking insulin now,{Is SP/Are you} now taking insulin,Diabetes
+did060,How long taking insulin,For how long {have you/has SP} been taking insulin?,Diabetes
+diq060u,Unit of measure (month/year),UNIT OF MEASURE,Diabetes
+did065,CHECK ITEM,NA,Diabetes
+did070,Take diabetic pills to lower blood sugar,{Is SP/Are you} now taking diabetic pills to lower {{his/her}/your} blood sugar?  These are sometimes called oral agents or oral hypoglycemic agents.,Diabetes
+did229,CHECK ITEM,NA,Diabetes
+diq230,How long ago saw a diabetes specialist,When was the last time {you/SP} saw a diabetes nurse educator or dietitian or nutritionist for {your/his/her} diabetes?  Do not include doctors or other health professionals.,Diabetes
+diq240,Is there one Dr you see for diabetes,"Is there one doctor or other health professional {you usually see/SP usually sees} for {your/his/her} diabetes?  Do not include specialists to whom {you have/SP has} been referred such as diabetes educators, dieticians or foot and eye doctors.",Diabetes
+did250,Past year how many times seen doctor,How many times {have you/has SP} seen this doctor or other health professional in the past 12 months?,Diabetes
+did260,How often check blood for glucose/sugar,"How often {do you check your/does SP check his/her} blood for glucose or sugar?  Include times when checked by a family member or friend, but do not include times when checked by a doctor or other health professional.",Diabetes
+diq260u,Unit of measure (day/week/month/year),"How often {do you check your/does SP check his/her} blood for glucose or sugar?  Include times when checked by a family member or friend, but do not include times when checked by a doctor or other health professional.",Diabetes
+did270,Past year times checked for A1C,"Glycosylated (GLY-CO-SYL-AT-ED) hemoglobin or the ""A one C"" test measures the average level of blood sugar over the past 3 months, and usually ranges between 5 and 14.  During the past 12 months, how many times has a doctor or other health professional checked {you/SP} for glycosylated hemoglobin or ""A one C""?",Diabetes
+diq280,What was your last A1C level,"What was {your/SP's} last ""A one C"" level?",Diabetes
+diq290,What does Dr say A1C should be,"What does {your/SP's} doctor or other health professional say {your/his/her} ""A one C"" level  should be?  (Pick the lowest level recommended by your health care professional.)",Diabetes
+diq295,CHECK ITEM,NA,Diabetes
+diq300s,What was your recent SBP,Blood pressure is usually given as one number over another.  What was {your/SP's} most recent blood pressure in numbers?,Diabetes
+diq300d,What was your recent DBP,Blood pressure is usually given as one number over another.  What was {your/SP's} most recent blood pressure in numbers?,Diabetes
+did310s,What does Dr say SBP should be,What does {your/SP's} doctor or other health professional say {your/his/her} blood pressure should be?,Diabetes
+did310d,What does Dr say DBP should be,What does {your/SP's} doctor or other health professional say {your/his/her} blood pressure should be?,Diabetes
+did320,What was most recent LDL number,"One part of total serum cholesterol in {your/SP's} blood is a bad cholesterol, called LDL, which builds up and clogs {your/his/her} arteries.  What was {your/his/her} most recent LDL cholesterol number?",Diabetes
+did330,What does Dr say LDL should be,What does {your/SP's} doctor or other health professional say {your/his/her} LDL cholesterol should be?,Diabetes
+did340,Past year times Dr check feet for sores,"During the past 12 months, about how many times has a doctor or other health professional checked {your/SP's} feet for any sores or irritations?",Diabetes
+did350,How often do you check your feet,"How often {do you check your feet/does SP check (his/her) feet} for sores or irritations?  Include times when checked by a family member or friend, but do not include times when checked by a doctor or other health professional.",Diabetes
+diq350u,Unit of measure (day/week/month/year),"How often {do you check your feet/does SP check (his/her) feet} for sores or irritations?  Include times when checked by a family member or friend, but do not include times when checked by a doctor or other health professional.",Diabetes
+diq360,Last time had pupils dilated for exam,When was the last time {you/SP} had an eye exam in which the pupils were dilated?  This would have made {you/SP} temporarily sensitive to bright light.,Diabetes
+diq080,Diabetes affected eyes/had retinopathy,Has a doctor ever told {you/SP} that diabetes has affected {your/his/her} eyes or that {you/s/he} had retinopathy (ret-in-op-ath-ee)?,Diabetes
+fsd032a,HH Worried run out of food,"Now I am going to read you several statements that people have made about their food situation. For these statements, please tell me whether the statement was often true, sometimes true, or never true for {you/your household} in the last 12 months, that is since last {DISPLAY CURRENT MONTH}. The first statement is . . .  {I/we} worried whether {my/our} food would run out before {I/we} got money to buy more.",Food Security
+fsd032b,HH Food didn't last,"[The next statement is . . .]  The food that {I/we} bought just didn't last, and {I/we} didn't have money to get more.",Food Security
+fsd032c,HH Couldn't afford balanced meals,[The next statement is . . .]  {I/we} couldn't afford to eat balanced meals.,Food Security
+fsd032d,HH Relied on low-cost food for child,[The next statement is . . .] (I/we) relied on only a few kinds of low-cost food to feed {CHILD'S NAME / THE CHILDREN} because (I was/we were) running out of money to buy food.,Food Security
+fsd032e,HH Couldn't feed child balanced meal,"[The next statement is . . .] (I/we) couldn't feed {CHILD'S NAME / THE CHILDREN} a balanced meal, because (I/we) couldn't afford that.",Food Security
+fsd032f,HH Child not eating enough,[The next statement is . . .] {CHILD'S NAME WAS /THE CHILDREN WERE} not eating enough because (I/we) just couldn't afford enough food.,Food Security
+fsd041,HH Adults cut size or skip meals,"In the last 12 months, since last {DISPLAY CURRENT MONTH}, did {you/you or other adults in your household} ever cut the size of your meals or skip meals because there wasn't enough money for food?",Food Security
+fsd052,HH How often adults cut size/skip meals,How often did this happen?,Food Security
+fsd061,HH Eat less than should,"In the last 12 months, did you ever eat less than you felt you should because there wasn't enough money to buy food?",Food Security
+fsd071,"HH Hungry, but didn't eat","[In the last 12 months], were you ever hungry but didn't eat because you couldn't afford enough food?",Food Security
+fsd081,"HH Lost weight, no money for food","[In the last 12 months], did you lose weight because you didn't have enough money for food?",Food Security
+fsd092,HH Adults not eat whole day,"[In the last 12 months], did {you/you or other adults in your household} ever not eat for a whole day because there wasn't enough money for food?",Food Security
+fsd102,HH How often adults not eat for day,How often did this happen?  Would you say . . .,Food Security
+mcq010,Ever been told you have asthma,Has a doctor or other health professional ever told {you/SP} that {you have/s/he/SP has} asthma?,Medical Conditions
+mcq025,Age when first had asthma,How old {were you/was SP} when {you were/s/he was} first told {he/she} had asthma?,Medical Conditions
+mcq035,Still have asthma,{Do you/Does SP} still have asthma?,Medical Conditions
+mcq080,Doctor ever said you were overweight,Has a doctor or other health professional ever told {you/SP} that {you were/s/he/SP was} overweight? ,Medical Conditions
+mcq160b,Ever told had congestive heart failure,Has a doctor or other health professional ever told {you/SP}  that {you/s/he} . . .had congestive heart failure?,Medical Conditions
+mcq160c,Ever told you had coronary heart disease,Has a doctor or other health professional ever told {you/SP}  that {you/s/he} . . .had coronary heart disease?,Medical Conditions
+mcq160d,Ever told you had angina/angina pectoris,"Has a doctor or other health professional ever told {you/SP}  that {you/s/he} . . .had angina, also called angina pectoris?",Medical Conditions
+mcq160e,Ever told you had heart attack,Has a doctor or other health professional ever told {you/SP}  that {you/s/he} . . .had a heart attack (also called myocardial infarction)?,Medical Conditions
+mcq160f,Ever told you had a stroke,Has a doctor or other health professional ever told {you/SP}  that {you/s/he} . . .had a stroke?,Medical Conditions
+mcq160g,Ever told you had emphysema,Has a doctor or other health professional ever told {you/SP}  that {you/s/he} . . .had emphysema?,Medical Conditions
+mcq180b,Age when told you had heart failure,How old {were you/was SP} when {you were/s/he was} first told {you/s/he} . . .had congestive heart failure?,Medical Conditions
+mcq180c,Age when told had coronary heart disease,How old {were you/was SP} when {you were/s/he was} first told {you/s/he} . . .had coronary heart disease?,Medical Conditions
+mcq180d,Age when told you had angina pectoris,"How old {were you/was SP} when {you were/s/he was} first told {you/s/he} . . .had angina, also called angina pectoris?",Medical Conditions
+mcq180e,Age when told you had heart attack,How old {were you/was SP} when {you were/s/he was} first told {you/s/he} . . .had a heart attack (also called myocardial infarction)?,Medical Conditions
+mcq180f,Age when told you had a stroke,How old {were you/was SP} when {you were/s/he was} first told {you/s/he} . . .had a stroke?,Medical Conditions
+mcq180g,Age when told you had emphysema,How old {were you/was SP} when {you were/s/he was} first told {you/s/he} . . .had emphysema?,Medical Conditions
+mcq300a,Close relative had heart attack?,"Including living and deceased, were any of {SP's/your} close biological that is, blood relatives including father, mother, sisters or brothers, ever told by a health professional that they had a heart attack or angina (an-gi-na) before the age of 50?",Medical Conditions
+mcq300b,Close relative had asthma?,"Including living and deceased, were any of {SP's/your} close biological that is, blood relatives including father, mother, sisters or brothers, ever told by a health professional that they had asthma (az-ma)?",Medical Conditions
+mcq300c,Close relative had diabetes?,"Including living and deceased, were any of {SP's/your} close biological that is, blood relatives including father, mother, sisters or brothers, ever told by a health professional that they had diabetes?",Medical Conditions
+padactiv,Leisure time activity,"[Over the past 30 days], what {vigorous/moderate} activities did {you/SP} do?",Physical Activity - Individual Activities
+padlevel,Activity level,Reported intensity level of activity.,Physical Activity - Individual Activities
+padtimes,# of times did activity in past 30 days,"[Over the past 30 days], how often did {you/SP} do {activity}?",Physical Activity - Individual Activities
+pfq020,"Crawl, walk, run, play limitations","{Do you/Does SP} have an impairment or health problem that limits {your/his/her} ability to {crawl, walk or play} {walk, run or play} {walk or run}?",Physical Functioning
+pfq030,Long term impairment/health problem,"Is this an impairment or health problem that has lasted, or is expected to last 12 months or longer?",Physical Functioning
+smq020,Smoked at least 100 cigarettes in life,These next questions are about cigarette smoking and other tobacco use. {Have you/Has SP} smoked at least 100 cigarettes in {your/his/her} entire life?,Smoking - Cigarette Use
+smd030,Age started smoking cigarettes regularly,How old {were you/was SP} when {you/s/he} first started to smoke cigarettes fairly regularly?,Smoking - Cigarette Use
+smq040,Do you now smoke cigarettes,{Do you/Does SP} now smoke cigarettes . .,Smoking - Cigarette Use
+smq050q,How long since quit smoking cigarettes,How long has it been since {you/SP} quit smoking cigarettes?,Smoking - Cigarette Use
+smq050u,Unit of measure (day/week/month/year),UNIT OF MEASURE,Smoking - Cigarette Use
+whd010,Current self-reported height (inches),These next questions ask about {your/SP's} height and weight at different times in {your/his/her} life.  How tall {are you/is SP} without shoes?,Weight History
+whd020,Current self-reported weight (pounds),"How much {do you/does SP} weigh without clothes or shoes?
+",Weight History
+whq030,How do you consider your weight,"{Do you/Does SP} consider {your/his/her}self now to be . . . [If {you are/she is} currently pregnant, what did {you/she} consider {your/her}self to be before {you were/she was} pregnant?]",Weight History
+whq040,"Like to weigh more, less or same",Would {you/SP} like to weigh . . .,Weight History
+whq060,Weight change intentional,Was the change between {your/SP's} current weight and {your/his/her} weight a year ago intentional?,Weight History
+rc2kx,Census 2010 Geocoder General Return Code,Reference Census 2010 Geocoder RCs (Return Codes) tab,"Geocoded Data, NHANES 1999-2016, Census 2010"
+stm2kx,Census 2010 Geocoder Street Matcher RC,"Census 2010 Geocoder Street Matcher Return Code
+","Geocoded Data, NHANES 1999-2016, Census 2010"
+lvl2kx,Census 2010 Geocoder LAT/LONG Geocoding,Reference Census 2010 Geocoder RCs (Return Codes) tab,"Geocoded Data, NHANES 1999-2016, Census 2010"
+lat,Latitude (Decimal),Latitude in decimal format with up to 6 decimal precision,"Geocoded Data, NHANES 1999-2016, Census 2010"
+lon,Longitude (Decimal),"
+Longitude in decimal format with up to 6 decimal precision","Geocoded Data, NHANES 1999-2016, Census 2010"
+state2kx,Census 2010 FIPS State Code,Census 2010 FIPS State Code (2-digit numeric with leading zeros significant),"Geocoded Data, NHANES 1999-2016, Census 2010"
+cnty2kx,Census 2010 FIPS County Code,Census 2010 FIPS County Code (3-digit numeric with leading zeros significant),"Geocoded Data, NHANES 1999-2016, Census 2010"
+cbsa,Core Based Statistical Area (CBSA),CBSA Lowest Level Code. Contains the first of: Metropolitan Division; Micropolitan Area; Metropolitan Area; in this order,"Geocoded Data, NHANES 1999-2016, Census 2010"
+ur2kx,Urban/Rural Indicator,"Urban/Rural Indicator (U = Urban, R = Rural, blank = unknown)[TIGER/Line RcdType 'S'; UR value]","Geocoded Data, NHANES 1999-2016, Census 2010"
+tract2kx,Census 2010 Tract,Census 2010 Tract (contains leader zeros with the decimal point implied),"Geocoded Data, NHANES 1999-2016, Census 2010"
+bg2kx,Census 2010 Block Group,Census 2010 Block Group,"Geocoded Data, NHANES 1999-2016, Census 2010"
+block2kx,Census 2010 Block ID,Census 2010 Block ID - first character is the Census Block Group,"Geocoded Data, NHANES 1999-2016, Census 2010"

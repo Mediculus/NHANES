@@ -145,16 +145,55 @@ Revising the variables, these are the ones we decide to NOT include:
 * mcq300a: close relative had MI?
 * mcq300b: close relative had asthma?
 * mcq300c: close relative had diabetes?
-* bmxsub: subscapular skinfold (mm)
-* dmdeduc3: education level - children 6-19
+* bmx***: 
+  * sub: subscapular skinfold (mm)
+  * armc: arm circumference
+  * calf: calf circumference
+  * thicr: thigh circumference
+  * tri: triceps skinfold
+* bpxchr: Heart rate measurements for 0-7 yrs old
+* bpxpty: extra variable
 * dmdfmsiz: total # of people in the family
-* sdmvpsu: masked variance pseudo-psu
-* sdmvstra: masked variance pseuda-stratum
+* wtint2yr: total weight over 2 years follow-up based on report
+* wtmec2yr: total weight over 2 years follow-up based on exam
+* did040: age first told by clinician that subject had diabetes
+* diq180: had blood tested in past 3 years
+* did060: how long on insulin
+* diq060u: units for `did060`
+* did070: taking diabetic medications
+* diq230
+* diq240
+* did250
+* did260
+* diq260u
+* did270
+* diq280
+* diq290
+* diq300
+* did310
+* did320
+* did330
+* did340
+* did350
+* diq350u
+* diq360
+* diq080
+* mcq025
+* mcq300a
+* mcq300b
+* mcq300c
 
 ```{r 2nd_var_remove}
 
 filter_remove_list <- 
-  c("mcq010", "mcq025", "mcq035", "mcq300a", "mcq300b", "mcq300c", "bmxsub", "dmdfmsiz", "sdmvpsu", "sdmvstra")
+  c("mcq010", "mcq025", "mcq035", "mcq300a", "mcq300b", "mcq300c", 
+    "bmxsub", "bmxarmc", "bmxcalf", "bmxthicr", "bmxtri", "bmxsub",
+    "bpxchr", "bpxpty", "wtint2yr", "wtmec2yr", "did040", "diq180", "did060",
+    "diq060u", "did070", "diq230", "diq240", "did250", "did260", "diq260u",
+    "did270", "diq280", "diq290", "diq300", "did310", "did320", "did330", 
+    "did340", "did350", "diq350u", "diq360", "diq080", "mcq025", "mcq300a",
+    "mcq300b", "mcq300c", 
+    "dmdfmsiz", "sdmvpsu", "sdmvstra")
 
 clean_variable_list <- clean_variable_list %>% 
   filter(!(str_detect(var_name, 
@@ -172,11 +211,58 @@ covar_d_clean <- select_if(covar_data_d,
 
 ```
 
+## Further Dimension Reduction
+
+Evaluating the covariates further, we can now begin to properly assess whether we could average, total, or modify these covariates of interest to whittle down at the sheer number of it. 
+
+For one, we have `bpxsy` and `bpxdi` variables, which are blood pressure measurements over 4 days. We could average these out and create and `avg_bp` variable.
+
+### Averaging Blood Pressure Measures
+
+Since we have 4 measures of blood pressure systolic/diastolic, we decided to average this to reduce the amount of covariates. There are some data that are missing and these will be "ignored" (i.e. average out of available data).
+
+```{r}
+
+processed_covar_d_clean <- covar_d_clean %>% 
+  mutate(
+    bpxsy_avg = round(rowMeans(.[, c("bpxsy1", "bpxsy2", "bpxsy3", "bpxsy4")], na.rm = TRUE), 3),
+    bpxdi_avg = round(rowMeans(.[, c("bpxdi1", "bpxdi2", "bpxdi3", "bpxdi4")], na.rm = TRUE), 3)
+  ) %>% 
+  select(seqn, sddsrvyr, ridstatr, riagendr, ridageyr, ridreth1, everything(), -bpxsy1, -bpxsy2, -bpxsy3, -bpxsy4, -bpxdi1, -bpxdi2, -bpxdi3, -bpxdi4)
+
+names(processed_covar_d_clean)
+
+processed_covar_d_clean %>% 
+  drop_na(bpxsy_avg) %>% 
+  filter(diq010 %in% c(1, 2, 3)) %>% 
+  mutate(
+    diq010 = factor(diq010)
+  ) %>% 
+  ggplot(aes(color = diq010, fill = diq010)) +
+    geom_density(aes(x = bpxsy_avg), alpha = 0.5)
+
+processed_covar_d_clean %>% 
+  drop_na(bpxdi_avg) %>% 
+  filter(diq010 %in% c(1, 2, 3)) %>% 
+  mutate(
+    diq010 = factor(diq010)
+  ) %>% 
+  ggplot(aes(color = diq010, fill = diq010)) +
+    geom_density(aes(x = bpxdi_avg), alpha = 0.5)
+
+```
+
+### Combining Questionnaire Values for "DIQ190"
+
+The questionnaires DIQ190a/b/c are all related to respondents' clinicians suggesting them to control weight, increase physical activity, or reduce fat/calories in diet in the past year (2004-2005) respectively. 
+
+## Final Touches to Covariate Dataset
+
 We now check for any distributions, min-max and so on using `skimr`
 
 ```{r skim_data}
 
-skimr::skim(covar_d_clean)
+skimr::skim(processed_covar_d_clean)
 
 ```
 
@@ -184,56 +270,9 @@ Once we check distributions and satisfied with results, we should also make this
 
 ```{r}
 
-# covar_d_clean %>% write_csv("./Datasets/covariates.csv")
+#processed_covar_d_clean %>% write_csv("./Datasets/covariates.csv")
 
 ```
 
-
-
-# Combining Covariates and Activity Data
-
-**MOVE THIS PART TO A NEW RMD**
-
-Now that we have covariates we can work with, it's time to merge these with our activity data. But first, we need to clean our activity records using the flags dataset. 
-
-```{r activity_wave_datamerge, echo = FALSE, eval = FALSE}
-
-activity_data_d <- PAXINTEN_D %>% 
-  janitor::clean_names() %>% 
-  pivot_longer(cols = starts_with("MIN"), 
-               names_to = "min",
-               names_prefix = "min",
-               values_to = "activ_count") %>% 
-  mutate(
-    min = as.numeric(min)
-  ) %>% 
-  mutate_at(                                             # convert listed variables to factors
-    .vars = vars("paxcal", "paxstat", "weekday", "sddsrvyr"),
-    .funs = funs(factor)
-  )
-
-
-
-flag_d <- unnest(flag_d) %>% 
-  unnest() %>% 
-  pivot_longer(cols = starts_with("MIN"), 
-               names_to = "min",
-               names_prefix = "min",
-               values_to = "flag_indicator") %>% 
-  mutate(
-    min = as.numeric(min)
-  )
-
-
-activity_flag_joined <- 
-  left_join(
-    activity_data_d, 
-    flag_d, 
-    by = c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr", "min")) 
-
-activity_flag_joined <- activity_flag_joined %>%
-  filter(flag_indicator != 0)
-  
-```
 
 

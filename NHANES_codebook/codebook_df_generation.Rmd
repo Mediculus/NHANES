@@ -720,11 +720,11 @@ Now that we've isolated the variables, we can merge them together to create a `.
 final_df <- bind_rows(demo_survey, diet_survey, exam_survey, lab_survey, que_survey, lim_survey)
 
 final_df <- final_df %>% 
-  distinct(var_name, var_desc)
+  distinct(var_name, var_desc, .keep_all = TRUE)
 
 final_df <- final_df %>% 
   mutate(var_name = str_to_lower(var_name)) 
-#%>% write_csv("./Datasets/variable_list.csv")
+# %>% write_csv("./Datasets/variable_list.csv")
 
 view(final_df)
 
