@@ -192,7 +192,7 @@ filter_remove_list <-
     "diq060u", "did070", "diq230", "diq240", "did250", "did260", "diq260u",
     "did270", "diq280", "diq290", "diq300", "did310", "did320", "did330", 
     "did340", "did350", "diq350u", "diq360", "diq080", "mcq025", "mcq300a",
-    "mcq300b", "mcq300c", 
+    "mcq300b", "mcq300c", "pfq030", "smq020", "smd030", 
     "dmdfmsiz", "sdmvpsu", "sdmvstra")
 
 clean_variable_list <- clean_variable_list %>% 
@@ -230,7 +230,7 @@ processed_covar_d_clean <- covar_d_clean %>%
   ) %>% 
   select(seqn, sddsrvyr, ridstatr, riagendr, ridageyr, ridreth1, everything(), -bpxsy1, -bpxsy2, -bpxsy3, -bpxsy4, -bpxdi1, -bpxdi2, -bpxdi3, -bpxdi4)
 
-names(processed_covar_d_clean)
+
 
 processed_covar_d_clean %>% 
   drop_na(bpxsy_avg) %>% 

@@ -9,6 +9,7 @@ output: github_document
 
 # global default settings for chunks
 knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, message = FALSE,
                       fig.dim = c(10, 4), 
                       fig.align = "center",
                       results = "asis"
@@ -44,7 +45,9 @@ Now that we've explored the codebook, covariates dataset, and the activity datas
 
 ## Merging Datasets
 
-We first merge our covariate dataset with the total activity count dataset. 
+We first merge our covariate dataset with the total activity count dataset. We should also change the data type to their corresponding variable. Details on the non-numeric variables can be found [here](#re-categorizing-data-types).
+
+Since we've isolated our dataset, we should also remove several variables that have now became irrelevant.
 
 ```{r}
 
@@ -54,17 +57,23 @@ total_activity_df <- read_csv("./Datasets/total_activ_data.csv") %>%
     seqn = as_factor(seqn)
   )
 
+
 covar_df <- read_csv("./Datasets/covariates.csv") %>% 
   janitor::clean_names() %>% 
   mutate(
     seqn = as_factor(seqn)
   )
 
-merged_df <- inner_join(total_activity_df, covar_df, by = "seqn")
 
-skimr::skim(merged_df)
-
-names(merged_df)
+merged_df <- inner_join(total_activity_df, covar_df, by = "seqn") %>% 
+  mutate_at(
+    .vars = vars("ridstatr", "riagendr", "ridreth1", "alq120u", "peascst1", "bpxpuls", "dmdeduc2", "dmdeduc3", "indfminc", 
+                 "diq010", "diq220", "diq160", "diq170", "diq190a", "diq190b", "diq190c", "diq200a", "diq200b", "diq200c", 
+                 "diq050", "mcq080", "mcq160b", "mcq160c", "mcq160d", "mcq160e", "mcq160f", "mcq160g", "pfq020", "smq040", 
+                 "smq050u"),
+    .funs = funs(factor)
+  ) %>% 
+  select(-sddsrvyr)
 
 ```
 
@@ -72,44 +81,91 @@ We should also import our codebook just in case we need to look back on which va
 
 ```{r}
 
-codebook_df <- read_csv("./Datasets/variable_list.csv")
-
-view(codebook_df)
+codebook_df <- read_csv("./Datasets/variable_list.csv") %>% 
+  filter(str_detect(var_name, paste(names(merged_df), collapse = "|")))
 
 ```
 
+## Converting and/or Removing "NA" values
 
-## Removing Now-Irrelevant Variables
+Per CDC's codebook, certain variables contain numbers such as "77" or "99" or "99999" to indicate that respondents either refused to provide information or they don't know. As such, we should treat these values as `NA`s since these values does not add any information to our data. We will either remove or convert these values so that our variable distribution is more reflective of the relevant datapoints. 
 
-Since we've isolated our dataset, now there are several variables that became irrelevant. We should remove this to reduce our datasets.
+First, removing those with large amounts of NA values and likely not "relevant" to our interest. 
+
+`ridstatr` is removed as this was an indicator between interview only vs. interview + exam. Based on our summary results, all datapoints received interview + exam.
 
 ```{r}
 
-merged_df %>% 
-  select(-sddsrvyr, )
+remove_list <- c("ridstatr", "bmxwaist", "diq160", "diq170", "diq190", "diq220", "mcq080", "mcq160", "pfq020", "mcq180", "smq040", "smq050", "alq120", "dmdeduc")
+
+new_merged_df <- select_if(merged_df, 
+                       !str_detect(names(merged_df), paste(remove_list, collapse = "|"))
+                       )
+
+skimr::skim(new_merged_df)
 
 ```
 
 
-## Re-categorizing Data Types
+## Evaluating associations
 
-Now that we've minimized our covariates further, we can then begin selecting which ones are `factor` vs. `numeric`. These are the findings:
+We first evaluate using correlation plot for all the numeric variables to look for 
 
-* `seqn`: `factor`; identifier for survey respondents
+```{r, fig.dim = c(10, 10)}
+
+matrix_plot <- new_merged_df %>% 
+  select_if(is.numeric) %>% 
+  ggpairs(
+      lower = list(
+        continuous = wrap(ggally_points, 
+                          color = "#EC0557", alpha = 0.4, size = 0.5)),
+      diag = list(
+        continuous = wrap(ggally_densityDiag, 
+                          color = "steelblue2", fill = "steelblue2",alpha = 0.4)),
+      upper = list(
+        continuous = wrap(ggally_cor, size = 3)
+      )
+      ) + 
+  theme_bw() +
+  theme(axis.text.x = 
+          element_text(hjust = 1, vjust = 0.5,
+                       angle = 45),
+        plot.caption = element_text(hjust = 0, size = 8)
+        )
+
+matrix_plot
+
+```
+
+We also utilized GLM to check any kinds of association with all the variables.
+
+```{r, results = "markup"}
+
+saturated_model <- new_merged_df %>% 
+  glm(diq010 ~ . -diq010 -seqn, family = binomial, data = ., na.action = na.omit)
+
+summary(saturated_model)
+
+```
+
+# Re-categorizing Data Types
+
+Now that we've minimized our covariates further, we can then begin selecting which ones are `factor` vs. `numeric`. These are the variables which are non-numeric (i.e. `factor`s or any other special formats):
+
+* `seqn`: identifier for survey respondents
 * `ridstatr`: interview + exam status.  
   1 = interview only  
   2 = interview + exam  
 * `riagendr`: Gender.  
   1 = male  
   2 = female  
-* `ridageyr`: Age in years
 * `ridreth1`: Ethnicity/race.  
   1 = Mexican American  
   2 = Other Hispanic  
   3 = Non-Hispanic White  
   4 = Non-Hispanic Black  
   5 = Other (incl. multi-racial)  
-* `alq120q`: `numeric`  
+* `alq120q`: `numeric`  but some values should be noted as `factor`
   0-365 as range of values  
   777 = refused  
   999 = don't know  
@@ -123,7 +179,6 @@ Now that we've minimized our covariates further, we can then begin selecting whi
   1 = complete  
   2 = partial  
   3 = not done  
-* `bpxpls`: value of pulse for ages 8+
 * `bpxpuls`: quality of pulse  
   1 = regular  
   2 = irregular  
@@ -172,29 +227,26 @@ Now that we've minimized our covariates further, we can then begin selecting whi
   13	= Under $20,000  
   77	= Refused  
   99	= Don't know  
-
-## Evaluating associations
-
-```{r}
-
-matrix_plot <- merged_df %>% 
-  select_if(is.numeric) %>% 
-  ggpairs(
-      lower = list(
-         continuous = wrap(ggally_points, 
-                           color = "#EC0557", alpha = 0.4, size = 0.5)),
-      diag = list(
-         continuous = wrap(ggally_densityDiag, 
-                           color = "steelblue2", fill = "steelblue2",alpha = 0.4))
-      ) + 
-  theme_bw() +
-  theme(axis.text.x = 
-          element_text(hjust = 1, vjust = 0.5,
-                       angle = 45),
-        plot.caption = element_text(hjust = 0, size = 8)
-        )
-
-matrix_plot
-
-```
+* `diq010`: Told by doctor to have diabetes
+* `diq220`: days?
+* `diq160`: Told by doctor to have pre-diabetes
+* `diq170`: Told by doctor to have health risk of diabetes
+* `diq190a`: Told by doctor to control weight
+* `diq190b`: Told by doctor to increase physical activity
+* `diq190c`: Told by doctor to reduce calorie intake
+* `diq200a`: Is the subject controlling weight
+* `diq200b`: Is the subject increasing physical activity
+* `diq200c`: Is the subject reducing caloric intake
+* `diq050`: Is subject taking insulin currently
+* `mcq080`: Told by doctor as overweight
+* `mcq160*`: Presence of cardiac-related history
+  * `b`: CHF
+  * `c`: CHD
+  * `d`: angina/angina pectoris
+  * `e`: MI
+  * `f`: Stroke
+  * `g`: emphysema
+* `pfq020`: impairment/health problem that limits ability to crawl/walk/run/play
+* `smq040`: Is subject currently smoking cigarettes
+* `smq050u`: Units of measure for `smq050q`, which is an integer for "if not smoking, how long since subject last smoked".
 
