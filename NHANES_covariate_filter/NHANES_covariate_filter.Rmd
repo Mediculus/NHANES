@@ -193,7 +193,7 @@ filter_remove_list <-
     "did270", "diq280", "diq290", "diq300", "did310", "did320", "did330", 
     "did340", "did350", "diq350u", "diq360", "diq080", "mcq025", "mcq300a",
     "mcq300b", "mcq300c", "pfq030", "smq020", "smd030", 
-    "dmdfmsiz", "sdmvpsu", "sdmvstra")
+    "dmdfmsiz")
 
 clean_variable_list <- clean_variable_list %>% 
   filter(!(str_detect(var_name, 
@@ -252,10 +252,6 @@ processed_covar_d_clean %>%
 
 ```
 
-### Combining Questionnaire Values for "DIQ190"
-
-The questionnaires DIQ190a/b/c are all related to respondents' clinicians suggesting them to control weight, increase physical activity, or reduce fat/calories in diet in the past year (2004-2005) respectively. 
-
 ## Final Touches to Covariate Dataset
 
 We now check for any distributions, min-max and so on using `skimr`
@@ -266,7 +262,7 @@ skimr::skim(processed_covar_d_clean)
 
 ```
 
-Once we check distributions and satisfied with results, we should also make this into another dataset so that we don't have to keep re-running the scripts.
+Once we check distributions and satisfied with results, we should also make this into another dataset so that we don't have to keep re-running the scripts. Do note that this is just the very first iteration of what our covariates of interest are.
 
 ```{r}
 

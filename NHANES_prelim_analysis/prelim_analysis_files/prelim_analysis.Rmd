@@ -16,8 +16,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       )
 
 # loaded packages; placed here to be able to load global settings
-Packages <- c("tidyverse", "dplyr", "readxl", "GGally",
-              "arsenal", "patchwork")
+Packages <- c("tidyverse", "dplyr", "readxl")
 invisible(lapply(Packages, library, character.only = TRUE))
 
 
@@ -131,14 +130,12 @@ merged_df <- merged_df %>%
                          dmdeduc3 %in% c(9:12) | dmdeduc2 == 2 ~ 2,
                          dmdeduc3 %in% c(13:14) | dmdeduc2 == 3 ~ 3,
                          dmdeduc2 == 4 ~ 4,
-                         dmdeduc2 == 5 ~ 5,
-                         TRUE ~ dmdeduc3),
+                         dmdeduc2 == 5 ~ 5),
+                         #TRUE ~ dmdeduc3),
     tot_educ_3cat = case_when(tot_educ %in% c(0:2) ~ 0,
                               tot_educ %in% c(3) ~ 1,
-                              tot_educ %in% c(4:5, 15) ~ 2,
-                              TRUE ~ tot_educ)) 
-
-skimr::skim(new_merged_df)
+                              tot_educ %in% c(4:5, 15) ~ 2))
+                              #TRUE ~ tot_educ)) 
 
 ```
 
@@ -162,7 +159,7 @@ We also created a slightly more granular factor variable `tot_educ` but this var
 
 ## Removing "NA" values or other variables
 
-We now proceed to removing variables which causes issue to our preliminary model. These are typically variable-pairs with large amounts of `NA` that comprised of > 80% of our participants. 
+We now proceed to removing variables which are highly likely to cause issue to our preliminary model. These are typically variable-pairs with large amounts of `NA` that comprised of > 80% of our participants. 
 
 ```{r}
 
@@ -174,27 +171,24 @@ new_merged_df <- select_if(merged_df,
                        ) %>% 
   select(-tot_educ)
 
-skimr::skim_without_charts(new_merged_df)
+#skimr::skim_without_charts(new_merged_df)
 
 ```
 
 `indfminc` was removed because we were comparing this variable with `indfmpir` and per CDC's Analysis Guide, it was recommended to use `indfmpir` instead. 
 
-# Data Exploration
+# Converting Data Types, Renaming Variables, and Further Cleanup
 
-Now that we've minimized our covariates further, we can then begin selecting which ones are `factor` vs. `numeric`. We are especially interested in exploring the other factor covariates (besides education) and evaluating their distribution before committing to our models.
-
-## Converting Data Types and Renaming Variables
+Now that we've minimized our covariates further, we can then begin selecting which ones are `factor` vs. `numeric`. Afterwards, we could start renaming variables or factor levels to make it more understandable.
 
 First, converting variables into their proper datatypes (primarily converting them into factors).
 
 ```{r}
 
 new_merged_df <- new_merged_df %>% 
-  mutate_at(
-    .vars = vars("riagendr", "ridreth1", "peascst1", "bpxpuls", "diq010", "diq190a", "diq190b", 
-                 "diq190c", "diq200a", "diq200b", "diq200c", "diq050", "mcq080", "tot_educ_3cat"),
-    .funs = funs(factor)) %>% 
+  mutate(across(c("riagendr", "ridreth1", "peascst1", "bpxpuls", "diq010", "diq190a", "diq190b", 
+                 "diq190c", "diq200a", "diq200b", "diq200c", "diq050", "mcq080", "tot_educ_3cat"), 
+                factor)) %>% 
   select(-dmdeduc2, -dmdeduc3)
 
 ```
@@ -224,7 +218,7 @@ new_merged_df <- new_merged_df %>%
          insulin = diq050
          )
 
-skimr::skim_without_charts(new_merged_df)
+#skimr::skim_without_charts(new_merged_df)
 
 ```
 
@@ -251,152 +245,38 @@ revised_merged_df <- new_merged_df %>%
 
 Note that there were warnings output when completing this step because our code assumes all levels were available, which was not the case on some of the variables (namely the `diq***` variables and `diabetes`). 
 
-* 0 - Less than high school grad/GED (merging 0-12 and 66 from `dmdeduc3` as well as 1-2 from `dmdeduc2`)
-* 1 - High school grad/GED (merging 13-14 from `dmdeduc3` and 3 from `dmdeduc2`)
-* 2 - More than high school grad/GED (merging 15 from `dmdeduc3` and 4-5 from `dmdeduc2`)
-
-## Exploration of Data Distribution by Outcome Variable
-
-### Continuous Variables
-
-
-
-### Categorical Variables
-
-#### Gender
-
-This variable is to identify the gender. Coded as `1=male` and `2=female` but we recoded this for easier interpretation. We then observe the difference of diabetes prevalence between the two groups
+After evaluating our revised dataframe, we also revised our choice of variables and felt that the remaining `diq190*`, `diq200*`, and `mcq080` does not fit well with our data and we decided to remove these variables. We further note that there are still some `NA` in the dataset. Let's attempt to `drop_na()` and see if we still have some datasets remaining. 
 
 ```{r}
 
-revised_merged_df %>% 
-  group_by(gender) %>% 
-  count(diabetes) %>% 
-  ggplot(aes(x = diabetes, y = n, color = gender, fill = gender)) + 
-  geom_bar(stat = "identity", alpha = 0.5, position = "dodge")
+final_df <- revised_merged_df %>% 
+  # drops columns with diq190/diq200/mcq080 in their names
+  select_if(., !str_detect(names(.), "diq190|diq200|mcq080")) %>% 
+  drop_na() %>% 
+  filter(!(diabetes %in% ("don't know"))) %>% 
+  select(-sdmvpsu, -sdmvstra, -bp_status) %>% 
+  # combine yes/borderline into yes factor
+  mutate(diabetes = fct_collapse(diabetes, yes = c("yes", "borderline"))) %>% 
+  # applies fct_drop() function across all columns that are factors
+  mutate(across(where(is.factor), fct_drop))
 
 ```
 
+Not detailed here but after dropping the `NA` values, we were left with certain datapoints that were not useful and thus we dropped these variables (`sdmvpsu`, `sdmvstra`, `bp_status`). Furthermore, we also noted that the amount of "don't know" variable in diabetes is extremely small compared to the dataset, so we removed those.
 
-#### `ridreth1`: Ethnicity/race.  
+We then also merged both "yes" and "borderline" values for diabetes because we felt borderline errs towards "yes" and we probably apply similar risk-prevention treatments to these "groups" similarly. 
 
-This is the variable to describe race. The categories are:
-  
-1. Mexican American  
-2. Other Hispanic  
-3. Non-Hispanic White  
-4. Non-Hispanic Black  
-5. Other (incl. multi-racial)  
+Finally, we applied a `fct_drop()` function for all factor variables to drop any unused factors.
 
-```{r}
+# Evaluating Potential Associations
 
-revised_merged_df %>% count(race_eth)
-
-```
-
-As seen above, it seems that we have a "complete" data for this variable.
-
-```{r}
-
-revised_merged_df %>% 
-  group_by(race_eth) %>% 
-  count(diabetes) %>% 
-  ggplot(aes(x = diabetes, y = n, color = race_eth, fill = race_eth)) + 
-  geom_bar(stat = "identity", alpha = 0.5, position = "dodge")
-
-```
-
-#### `peascst1`: BP measure status.  
-
-This variable is an indicator for the blood pressure measurement. Coded as follows:
-
-1. complete  
-2. partial  
-3. not done  
-
-```{r}
-
-revised_merged_df %>% count(bp_status)
-
-revised_merged_df %>% 
-  group_by(bp_status) %>% 
-  count(diabetes) %>% 
-  ggplot(aes(x = diabetes, y = n, color = bp_status, fill = bp_status)) + 
-  geom_bar(stat = "identity", position = "dodge")
-
-```
-
-As seen above, it seems that we have several datapoints which only has partial BP measurement as well as "not done". Nevertheless, we are unlikely to remove these from our dataset because this could reflect on the "real-world" occurrences and thus might be valuable. 
-
-#### `bpxpuls`: quality of pulse  
-
-An indicator for the kind of pulse for our heart; it is either:
-
-1. regular  
-2. irregular  
-
-```{r}
-
-revised_merged_df %>% count(pulse)
-
-revised_merged_df %>% 
-  group_by(pulse) %>% 
-  count(diabetes) %>% 
-  ggplot(aes(x = diabetes, y = n, color = pulse, fill = pulse)) + 
-  geom_bar(stat = "identity", position = "dodge")
-
-```
-
-Exploring our dataset, we notice that there are some `NA` values contained in this variable. These likely correspond to participants that did not have their vitals measured. These will likely be removed. 
-
-
-
-* `diq010`: Told by doctor to have diabetes
-  * 1 = Yes
-  * 2 = No
-  * 3 = Borderline 
-  * 7 = refused
-  * 9 = don't know
-* `diq160`: Told by doctor to have pre-diabetes (note that from `diq160` - `pfq020`, they all have the same value code)
-  * 1 = Yes
-  * 2 = No
-  * 7 = Refused
-  * 9 = Don't know
-* `diq190a`: Told by doctor to control weight
-* `diq190b`: Told by doctor to increase physical activity
-* `diq190c`: Told by doctor to reduce calorie intake
-* `diq200a`: Is the subject controlling weight
-* `diq200b`: Is the subject increasing physical activity
-* `diq200c`: Is the subject reducing caloric intake
-* `diq050`: Is subject taking insulin currently
-* `mcq080`: Told by doctor as overweight
-
-First, we'll evaluate the amount of "don't know", "refused" or similar in each of these categorical variables. For most categorical variables, we can achieve this using the `skim()` function from `skimr` package since most of the levels are around 3. Two exceptions are `ridreth1` and `indfminc` variables. 
-
-```{r}
-
-skimr::skim_without_charts(new_merged_df)
-
-new_merged_df %>% count(ridreth1)
-new_merged_df %>% count(indfminc)
-
-```
-
-
-We then convert these variables into the corresponding data type in our dataset. 
-
-
-# Evaluating associations
-
-To see whether or not pursuing some sort of predictive modeling is even worth our endeavor, we would use a simple GLM to model a saturated model based on our remaining covariates to estimate diabetic status (i.e. a logistic model). We removed `diq010` and `seqn` because `diq010` is our outcome variable while `seqn` is participant ID, which doesn't make sense to include in the model. 
+To see whether or not pursuing some sort of predictive modeling is even worth our endeavor, we would use a simple GLM to model a saturated model based on our remaining covariates to estimate diabetic status (i.e. a logistic model). We removed `diabetes` and `pid` because `diabetes` is our outcome variable while `pid` is participant ID, which doesn't make sense to include in the model. 
 
 ```{r, results = "markup"}
 
-saturated_model <- glm(diabetes ~ . -diabetes -pid, family = binomial, data = revised_merged_df, na.action = na.omit)
+saturated_model <- glm(diabetes ~ . -diabetes -pid, family = binomial, data = final_df, na.action = na.omit)
 
 summary(saturated_model)
-
-names(revised_merged_df)
 
 ```
 
@@ -406,7 +286,9 @@ As such, we should save this cleaned dataset so that we can begin working with o
 
 ```{r}
 
-#revised_merged_df %>% write_csv("./Datasets/cleaned_dataset.csv")
+#skimr::skim(final_df)
+
+#final_df %>% write_csv("./Datasets/cleaned_dataset.csv")
 
 ```
 

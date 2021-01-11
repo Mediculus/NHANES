@@ -1,0 +1,238 @@
+---
+title: "NHANES Data Analysis"
+author: "Kevin S.W. --- UNI: ksw2137"
+date: "`r format(Sys.time(), '%x')`"
+output: github_document
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+
+# global default settings for chunks
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, message = FALSE,
+                      fig.dim = c(10, 4), 
+                      fig.align = "center",
+                      results = "asis"
+                      )
+
+# loaded packages; placed here to be able to load global settings
+Packages <- c("tidyverse", "dplyr", "readxl")
+invisible(lapply(Packages, library, character.only = TRUE))
+
+
+
+# global settings for color palettes
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+# theme global setting for ggplot
+theme_set(theme_minimal() + 
+            theme(legend.position = "bottom") +
+            theme(plot.title = element_text(hjust = 0.5, size = 12),
+                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+          )
+
+#setwd(str_c(getwd(), "/Desktop/iWorld/Coding/Projects/NHANES/"))
+
+```
+
+# Exploration on Filtered, Consolidated Datasets
+
+Now that we've explored the codebook, covariates dataset, and the activity dataset, we can now proceed to merging our covariate dataset and activity dataset.
+
+## Merging Datasets
+
+We first merge our covariate dataset with the total activity count dataset. We should also change the data type to their corresponding variable. Details on the non-numeric variables can be found [here](#re-categorizing-data-types).
+
+Since we've isolated our dataset, we should also remove several variables that have now became irrelevant.
+
+```{r}
+
+total_activity_df <- read_csv("./Datasets/total_activ_data.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    seqn = as_factor(seqn)
+  )
+
+
+covar_df <- read_csv("./Datasets/covariates.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    seqn = as_factor(seqn)
+  )
+
+
+merged_df <- inner_join(total_activity_df, covar_df, by = "seqn") %>% 
+  select(-sddsrvyr) %>% 
+  mutate(total_count = total_count/1000)
+
+```
+
+We should also import our codebook just in case we need to look back on which variable is which.
+
+```{r}
+
+codebook_df <- read_csv("./Datasets/variable_list.csv") %>% 
+  filter(str_detect(var_name, paste(names(merged_df), collapse = "|")))
+
+```
+
+## Re-check on Variables' Relationships
+
+Per CDC's codebook, certain variables contain numbers such as "77" or "99" or "99999" to indicate that respondents either refused to provide information or they don't know. As such, we should treat these values as `NA`s since these values does not add any information to our data. We will either remove or convert these values so that our variable distribution is more reflective of the relevant datapoints. 
+
+`ridstatr` is removed as this was an indicator between interview only vs. interview + exam. Based on our summary results, all datapoints received interview + exam.
+
+```{r}
+
+merged_df <- merged_df %>% 
+  select(-ridstatr)
+
+```
+
+## Removing "NA" values or other variables
+
+We now proceed to removing variables which are highly likely to cause issue to our preliminary model. These are typically variable-pairs with large amounts of `NA` that comprised of > 80% of our participants. 
+
+```{r}
+
+remove_list <- c("indfminc", "diq160", "diq170", "diq220", "mcq160", "pfq020", "mcq180", 
+                 "smq040", "smq050", "alq120")
+
+new_merged_df <- select_if(merged_df, 
+                       !str_detect(names(merged_df), paste(remove_list, collapse = "|"))
+                       )
+
+#skimr::skim_without_charts(new_merged_df)
+
+```
+
+`indfminc` was removed because we were comparing this variable with `indfmpir` and per CDC's Analysis Guide, it was recommended to use `indfmpir` instead. 
+
+# Converting Data Types, Renaming Variables, and Further Cleanup
+
+Now that we've minimized our covariates further, we can then begin selecting which ones are `factor` vs. `numeric`. Afterwards, we could start renaming variables or factor levels to make it more understandable.
+
+First, converting variables into their proper datatypes (primarily converting them into factors).
+
+```{r}
+
+new_merged_df <- new_merged_df %>% 
+  mutate(across(c("riagendr", "ridreth1", "peascst1", "bpxpuls", "diq010", "diq190a", "diq190b", 
+                 "diq190c", "diq200a", "diq200b", "diq200c", "diq050", "mcq080", "dmdeduc2"), 
+                factor)) %>% 
+  select(-dmdeduc3)
+
+```
+
+We then convert the variable names to something more understandable on ones that require clarification or where it makes sense to rename these variables. 
+
+```{r}
+
+new_merged_df <- new_merged_df %>% 
+  select(seqn, riagendr, ridageyr, ridreth1, total_count, bmxwt, bmxht, 
+         bmxbmi, bmxwaist, bpxsy_avg, bpxdi_avg, everything(), sdmvpsu, sdmvstra) %>% 
+  rename(pid = seqn,
+         gender = riagendr,
+         age_yrs = ridageyr,
+         race_eth = ridreth1,
+         education_group = dmdeduc2, 
+         activity_totcountper1k = total_count,
+         weight = bmxwt,
+         height = bmxht,
+         bmi = bmxbmi,
+         waist_circum = bmxwaist,
+         bp_status = peascst1,
+         hr = bpxpls,
+         pulse = bpxpuls,
+         family_pir = indfmpir,
+         diabetes = diq010,
+         insulin = diq050
+         )
+
+skimr::skim_without_charts(new_merged_df)
+
+```
+
+We then recode the categorical variables' levels to make it more readable as well.
+
+```{r}
+
+revised_merged_df <- new_merged_df %>% 
+  mutate(
+   gender = fct_recode(gender, male = "1", female = "2"),
+   race_eth = fct_recode(race_eth, "mexican american" = "1", "other hispanic" = "2", "non-hispanic white" = "3",
+                         "non-hispanic black" = "4", other = "5"),
+   bp_status = fct_recode(bp_status, complete = "1", partial = "2", "not done" = "3"),
+   pulse = fct_recode(pulse, regular = "1", irregular = "2"),
+   diabetes = fct_recode(diabetes, yes = "1", no = "2", borderline = "3", refused = "7", "don't know" = "9"),
+   education_group = fct_recode(education_group, "less than 9th grade" = "1", 
+                                "9-11th grade" = "2", 
+                                "high school grad/ged" = "3",
+                                "some college or AA degree" = "4",
+                                "college grad or above" = "5",
+                                "refused" = "7",
+                                "don't know" = "9")
+  ) %>% 
+  mutate(
+    across(c("diq190a", "diq190b", "diq190c", "diq200a", "diq200b", "diq200c", "insulin", "mcq080"), 
+           ~ fct_recode(.x, yes = "1", no = "2", refused = "7", "don't know" = "9"))
+  ) %>% 
+  drop_na(education_group)
+
+```
+
+Note that there were warnings output when completing this step because our code assumes all levels were available, which was not the case on some of the variables (namely the `diq***` variables and `diabetes`). 
+
+After evaluating our revised dataframe, we also revised our choice of variables and felt that the remaining `diq190*`, `diq200*`, and `mcq080` does not fit well with our data and we decided to remove these variables. We further note that there are still some `NA` in the dataset. Let's attempt to `drop_na()` and see if we still have some datasets remaining. 
+
+```{r}
+
+final_df <- revised_merged_df %>% 
+  # drops columns with diq190/diq200/mcq080 in their names
+  select_if(., !str_detect(names(.), "diq190|diq200|mcq080")) %>% 
+  drop_na() %>% 
+  filter(!(diabetes %in% c("don't know"))) %>% 
+  select(-sdmvpsu, -sdmvstra, -bp_status) %>% 
+  # combine yes/borderline into yes factor
+  mutate(diabetes = fct_collapse(diabetes, yes = c("yes", "borderline"))) %>% 
+  # applies fct_drop() function across all columns that are factors
+  mutate(across(where(is.factor), fct_drop))
+
+```
+
+Not detailed here but after dropping the `NA` values, we were left with certain datapoints that were not useful and thus we dropped these variables (`sdmvpsu`, `sdmvstra`, `bp_status`). Furthermore, we also noted that the amount of "don't know" variable in diabetes is extremely small compared to the dataset, so we removed those.
+
+We then also merged both "yes" and "borderline" values for diabetes because we felt borderline errs towards "yes" and we probably apply similar risk-prevention treatments to these "groups" similarly. 
+
+Finally, we applied a `fct_drop()` function for all factor variables to drop any unused factors.
+
+# Evaluating Potential Associations
+
+To see whether or not pursuing some sort of predictive modeling is even worth our endeavor, we would use a simple GLM to model a saturated model based on our remaining covariates to estimate diabetic status (i.e. a logistic model). We removed `diabetes` and `pid` because `diabetes` is our outcome variable while `pid` is participant ID, which doesn't make sense to include in the model. 
+
+```{r, results = "markup"}
+
+saturated_model <- glm(diabetes ~ . -diabetes -pid, family = binomial, data = final_df, na.action = na.omit)
+
+summary(saturated_model)
+
+```
+
+Though our resulting model is definitely not useful in the real world, we can see that there are some variables that are shown to be significant with p-value < 0.05. This suggests that pursuing a predictive model could work. 
+
+As such, we should save this cleaned dataset so that we can begin working with our predictive model building and comparison.
+
+```{r}
+
+#skimr::skim(final_df)
+
+#final_df %>% write_csv("./Datasets/cleaned_dataset_v2.csv")
+
+```
+
+

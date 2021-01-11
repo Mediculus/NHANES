@@ -1,0 +1,114 @@
+---
+title: "Cleaned Dataset Exploration"
+author: "Kevin S.W. --- UNI: ksw2137"
+date: "`r format(Sys.time(), '%x')`"
+output: github_document
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+
+# global default settings for chunks
+knitr::opts_chunk$set(echo = TRUE, 
+                      fig.dim = c(10, 4), 
+                      fig.align = "center",
+                      results = "asis"
+                      )
+
+# loaded packages; placed here to be able to load global settings
+Packages <- c("tidyverse", "dplyr")
+invisible(lapply(Packages, library, character.only = TRUE))
+
+
+
+# global settings for color palettes
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+# theme global setting for ggplot
+theme_set(theme_minimal() + 
+            theme(legend.position = "bottom") +
+            theme(plot.title = element_text(hjust = 0.5, size = 12),
+                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+          )
+
+```
+
+
+# Exploration of Data Distribution by Outcome Variable
+
+```{r}
+
+nhanes_df <- read_csv("./Datasets/cleaned_dataset.csv") %>% 
+  mutate(across(where(is.character), factor))
+
+```
+
+## Continuous Variables
+
+## Categorical Variables
+
+### Gender
+
+This variable is to identify the gender. Coded as `1=male` and `2=female` but we recoded this for easier interpretation. We then observe the difference of diabetes prevalence between the two groups
+
+```{r}
+
+nhanes_df %>% 
+  group_by(gender) %>% 
+  count(diabetes) %>% 
+  ggplot(aes(x = diabetes, y = n, color = gender, fill = gender)) + 
+  geom_bar(stat = "identity", alpha = 0.5, position = "dodge")
+
+```
+
+
+### `ridreth1`: Ethnicity/race.  
+
+This is the variable to describe race. The categories are:
+  
+1. Mexican American  
+2. Other Hispanic  
+3. Non-Hispanic White  
+4. Non-Hispanic Black  
+5. Other (incl. multi-racial)  
+
+```{r}
+
+nhanes_df %>% count(race_eth)
+
+```
+
+As seen above, it seems that we have a "complete" data for this variable.
+
+```{r}
+
+nhanes_df %>% 
+  group_by(race_eth) %>% 
+  count(diabetes) %>% 
+  ggplot(aes(x = diabetes, y = n, color = race_eth, fill = race_eth)) + 
+  geom_bar(stat = "identity", alpha = 0.5, position = "dodge") +
+  facet_wrap(~ race_eth)
+
+```
+
+### `bpxpuls`: quality of pulse  
+
+```{r}
+
+nhanes_df %>% count(pulse)
+
+nhanes_df %>% 
+  group_by(pulse) %>% 
+  count(diabetes) %>% 
+  ggplot(aes(x = diabetes, y = n, color = pulse, fill = pulse)) + 
+  geom_bar(stat = "identity", alpha = 0.5, position = "dodge")
+
+```
+
+Exploring our dataset, we notice that there are some `NA` values contained in this variable. These likely correspond to participants that did not have their vitals measured. These will likely be removed. 
+
+# `diq050`: Is subject taking insulin currently
