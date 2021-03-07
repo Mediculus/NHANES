@@ -2,7 +2,14 @@
 title: "rnhanesdata Package EDA"
 author: "Kevin S.W. --- UNI: ksw2137"
 date: "`r format(Sys.time(), '%x')`"
-output: github_document
+output: 
+  html_document:
+    theme: flatly
+    highlight: pygments
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
 ---
 
 ```{r setup, include = FALSE, message = FALSE, warning = FALSE}
