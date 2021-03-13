@@ -1,0 +1,74 @@
+---
+title: "NHANES Data Analysis Project"
+author: "Kevin S.W. --- UNI: ksw2137"
+date: "`r format(Sys.time(), '%x')`"
+output: 
+  html_document:
+    theme: flatly
+    highlight: pygments
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+
+# global default settings for chunks
+knitr::opts_chunk$set(echo = TRUE, 
+                      fig.dim = c(10, 4), 
+                      fig.align = "center",
+                      results = "asis"
+                      )
+
+# loaded packages; placed here to be able to load global settings
+Packages <- c("tidyverse", "dplyr")
+invisible(lapply(Packages, library, character.only = TRUE))
+
+
+
+# global settings for color palettes
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+# theme global setting for ggplot
+theme_set(theme_minimal() + 
+            theme(legend.position = "bottom") +
+            theme(plot.title = element_text(hjust = 0.5, size = 12),
+                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+          )
+
+```
+
+# Project Background
+
+## Preamble
+
+Hi! This project was initially an attempt to explore the `rnhanesdata` package and its contents. Due to some unexpected development however, this project developed into building a predictive model for my disease of interest--diabetes. Over the development of this project, I faced various challenges and issues that became an opportunity to learn more about survey data, machine-learning, imbalanced class, sub-sampling methods, and metrics associated with these approaches. A proper report of this project can be found [here](./NHANES_report/report.html). This page however, will give you a brief overview of what I learned throughout this whole endeavor. It will be divided into several major sections:
+
+* [`rnhanesdata` Package](#rnhanesdata-package)
+* [NHANES Survey Dataset](#nhanes-survey-dataset)
+* [Machine Learning Using `tidymodels`](#machine-learning-using-tidymodels)
+* [Imbalanced Class Problem and How to Mitigate Them](#imbalanced-class-problem-and-how-to-mitigate-them)
+
+# [`rnhanesdata` Package](#preamble)
+
+The package housed 2 major datasets from NHANES that was associated with activity measures. They were the 2003-2004 and 2005-2006 survey waves (labeled C and D respectively). There are 6 datasets in total; 2 for activity measures, 2 for activity flags, and 2 for covariates, corresponding to each waves. 
+
+The activity measures dataset contained records of daily minute-by-minute activity measures (intensity) for the duration of 1 week. It appears that these activities are recorded through some wearable device. Similarly, the activity flags recorded daily minute-by-minute activity measures but these are binary measures of 0/1 indicating whether or not the wearable device was actually worn. The function `exclude_accel()` from the package allows us to compare the two datasets and keep only the activity datapoints which were deemed "reliable". 
+
+The other datasets contained an already-processed covariate dataset. Some of the variables include `BMI`, `Race`, `Gender`, or `DrinkStatus`. In its original state, there are 16 variables included in the covariate datasets, not including survey-design-related variables. However, the package does provide a function to extract more covariates, if needed, using the function `process_covar()`. The function also has an option to `extractAll = TRUE` if we decided to just get all possible covariates but this is defaulted to `FALSE`.
+
+More details can be read [here](./NHANES_rnhanesdata/NHANES_package_explore.html)
+
+# [NHANES Survey Dataset](#preamble)
+
+Since this was also my first time being exposed to any kind of survey-dataset, NHANES was an incredibly overwhelming source for me. After I attempted to extract all covariates using the `rnhanesdata::process_covar()` function, I was surprised to see that there's 300+ variables from NHANES. 
+
+# [Machine Learning using `tidymodels`](#preamble)
+
+# [Imbalanced Class Problem and How to Mitigate Them](#preamble)
