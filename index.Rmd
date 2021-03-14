@@ -1,7 +1,5 @@
 ---
 title: "NHANES Data Analysis Project"
-author: "Kevin S.W. --- UNI: ksw2137"
-date: "`r format(Sys.time(), '%x')`"
 output: 
   html_document:
     theme: flatly
@@ -9,53 +7,27 @@ output:
     toc: true
     toc_depth: 3
     toc_float: true
-    number_sections: true
 ---
 
 ```{r setup, include = FALSE, message = FALSE, warning = FALSE}
 
 # global default settings for chunks
-knitr::opts_chunk$set(echo = TRUE, 
-                      fig.dim = c(10, 4), 
-                      fig.align = "center",
-                      results = "asis"
-                      )
-
-# loaded packages; placed here to be able to load global settings
-Packages <- c("tidyverse", "dplyr")
-invisible(lapply(Packages, library, character.only = TRUE))
-
-
-
-# global settings for color palettes
-options(
-  ggplot2.continuous.colour = "viridis",
-  ggplot2.continuous.fill = "viridis"
-)
-scale_colour_discrete = scale_colour_viridis_d
-scale_fill_discrete = scale_fill_viridis_d
-
-# theme global setting for ggplot
-theme_set(theme_minimal() + 
-            theme(legend.position = "bottom") +
-            theme(plot.title = element_text(hjust = 0.5, size = 12),
-                  plot.subtitle = element_text(hjust = 0.5, size = 8))
-          )
-
+knitr::opts_chunk$set(echo = TRUE, fig.dim = c(10, 4), fig.align = "center", results = "asis")
 ```
 
-# Project Background
+<br></br>
+<br></br>
 
-## Preamble
+## About This Project
 
 Hi! This project was initially an attempt to explore the `rnhanesdata` package and its contents. Due to some unexpected development however, this project developed into building a predictive model for my disease of interest--diabetes. Over the development of this project, I faced various challenges and issues that became an opportunity to learn more about survey data, machine-learning, imbalanced class, sub-sampling methods, and metrics associated with these approaches. A proper report of this project can be found [here](./NHANES_report/report.html). This page however, will give you a brief overview of what I learned throughout this whole endeavor. It will be divided into several major sections:
 
-* [`rnhanesdata` Package](#rnhanesdata-package)
-* [NHANES Survey Dataset](#nhanes-survey-dataset)
-* [Machine Learning Using `tidymodels`](#machine-learning-using-tidymodels)
-* [Imbalanced Class Problem and How to Mitigate Them](#imbalanced-class-problem-and-how-to-mitigate-them)
+* `rnhanesdata` Package
+* NHANES Survey Dataset
+* Machine Learning Using `tidymodels`
+* Imbalanced Class Problem and How to Mitigate Them
 
-# [`rnhanesdata` Package](#preamble)
+## `rnhanesdata` Package
 
 The package housed 2 major datasets from NHANES that was associated with activity measures. They were the 2003-2004 and 2005-2006 survey waves (labeled C and D respectively). There are 6 datasets in total; 2 for activity measures, 2 for activity flags, and 2 for covariates, corresponding to each waves. 
 
@@ -65,7 +37,7 @@ The other datasets contained an already-processed covariate dataset. Some of the
 
 More details can be read [here](./NHANES_rnhanesdata/NHANES_package_explore.html)
 
-# [NHANES Survey Dataset](#preamble)
+## NHANES Survey Dataset
 
 Since this was also my first time being exposed to any kind of survey-dataset, NHANES was an incredibly overwhelming source for me. After I attempted to extract all covariates using the `rnhanesdata::process_covar()` function, I was surprised to see that there's 300+ variables from NHANES. This led me to build a scraping function that pulls the variable names and their descriptions. 
 
@@ -73,7 +45,7 @@ In the process, I learned that NHANES divided their variables into demographic, 
 
 More can be read [here](./NHANES_codebook/codebook_df_generation.md)
 
-# [Machine Learning using `tidymodels`](#preamble)
+## Machine Learning using `tidymodels`
 
 As the project developed into building predictive models, I had to re-orient myself with all the tools available in R. My supervisor advised me that LASSO and/or Random Forest are likely good starting points for a predictive model. At first, I attempted to use `caret` but this proved quite confusing as the function language was something that I wasn't used to. My supervisor recommended me to use the actual packages instead (`glmnet` and `ranger`). 
 
@@ -81,10 +53,14 @@ While I eventually managed to use all these packages, I also came across `tidymo
 
 You can check my [report]() to see how I've combined both `tidyverse` and `tidymodels` techniques to answer my project questions!
 
-# [Imbalanced Class Problem and How to Mitigate Them](#preamble)
+## Imbalanced Class Problem and How to Mitigate Them
 
 During my learning about predictive modeling, I came across an issue that, even until now, puzzles me. Up to this point, my supervisor and I couldn't figure out the cause behind it, except that my outcome being "imbalanced" and/or the variables I selected were weakly predictive for diabetes. What happened was my early models had incredibly poor predictive performance. It boasted a 99% accuracy but when you assess its prediction, it actually has 100% specificity and 0% sensitivity. 
 
-As I dug deeper on what may cause the issue, I found that this issue--imbalanced class--has been a quite well-known problem with machine learning. It occurs when (assuming binary outcome) a class has an uneven distribution. In my case, those with diabetes accounts for ~15% of my dataset. Further research on how to mitigate this issue led me to sub-sampling methods. Examples include random over-sampling/under-sampling, SMOTE, or ADASYN. 
+As I dug deeper on what may cause the issue, I found that this issue--imbalanced class--has been a quite well-known problem with machine learning. It occurs when (assuming binary outcome) a class has an uneven distribution. In my case, those with diabetes accounts for ~15% of my dataset. Further research on how to mitigate this issue led me to sub-sampling methods. Examples include random over-sampling/under-sampling, SMOTE, or ADASYN. Part of this project is to assess the improvement gained after applying these sub-sampling methods. 
 
-In the end however, I have quite a strong suspicion that part of the reason was because my dataset had variables that were not strongly predictive of diabetes, further worsened by the imbalance in the dataset. Part of the next step for this project would likely explore modeling using boosted models such as XGBoost. 
+Additionally, I also learned that the conventional metrics such as accuracy or even ROC-AUC may not adequately detect changes/improvements in the model because some of these metrics may not fully account for the class imbalance. Some articles suggest that we use other metrics such as precision, recall, F-measure, J-index, G-mean, or precision-recall-AUC. As such, in this project, we also tried to compare different metrics and see which one could detect changes in a model's performance given this imbalanced class problem. 
+
+Ultimately, we found that G-mean was one of the metrics that was able to reasonably detect changes in performance given the imbalance. Furthermore, certain sub-sampling methods did perform worse but overall, they improved the default model. Nevertheless, I have quite a strong suspicion that part of the reason for my default model's poor performance was because my dataset had variables that were not strongly predictive of diabetes, further worsened by the imbalance in the dataset. Next step after this project would likely explore modeling using boosted models such as XGBoost. 
+
+You can check my [report]() to see how I utilized sub-sampling methods, obtained these alternate metrics, and evaluated them to arrive at my final model.

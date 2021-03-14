@@ -9,9 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Kevin S.W. — UNI: ksw2137" />
 
-<meta name="date" content="2021-03-13" />
 
 <title>NHANES Data Analysis Project</title>
 
@@ -249,49 +247,47 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">NHANES Data Analysis Project</h1>
-<h4 class="author">Kevin S.W. — UNI: ksw2137</h4>
-<h4 class="date">03/13/2021</h4>
 
 </div>
 
 
-<div id="project-background" class="section level1" number="1">
-<h1 number="1"><span class="header-section-number">1</span> Project Background</h1>
-<div id="preamble" class="section level2" number="1.1">
-<h2 number="1.1"><span class="header-section-number">1.1</span> Preamble</h2>
+<p><br /> <br /></p>
+<div id="about-this-project" class="section level2">
+<h2>About This Project</h2>
 <p>Hi! This project was initially an attempt to explore the <code>rnhanesdata</code> package and its contents. Due to some unexpected development however, this project developed into building a predictive model for my disease of interest–diabetes. Over the development of this project, I faced various challenges and issues that became an opportunity to learn more about survey data, machine-learning, imbalanced class, sub-sampling methods, and metrics associated with these approaches. A proper report of this project can be found <a href="./NHANES_report/report.html">here</a>. This page however, will give you a brief overview of what I learned throughout this whole endeavor. It will be divided into several major sections:</p>
 <ul>
-<li><a href="#rnhanesdata-package"><code>rnhanesdata</code> Package</a></li>
-<li><a href="#nhanes-survey-dataset">NHANES Survey Dataset</a></li>
-<li><a href="#machine-learning-using-tidymodels">Machine Learning Using <code>tidymodels</code></a></li>
-<li><a href="#imbalanced-class-problem-and-how-to-mitigate-them">Imbalanced Class Problem and How to Mitigate Them</a></li>
+<li><code>rnhanesdata</code> Package</li>
+<li>NHANES Survey Dataset</li>
+<li>Machine Learning Using <code>tidymodels</code></li>
+<li>Imbalanced Class Problem and How to Mitigate Them</li>
 </ul>
 </div>
-</div>
-<div id="rnhanesdata-package" class="section level1" number="2">
-<h1 number="2"><span class="header-section-number">2</span> <a href="#preamble"><code>rnhanesdata</code> Package</a></h1>
+<div id="rnhanesdata-package" class="section level2">
+<h2><code>rnhanesdata</code> Package</h2>
 <p>The package housed 2 major datasets from NHANES that was associated with activity measures. They were the 2003-2004 and 2005-2006 survey waves (labeled C and D respectively). There are 6 datasets in total; 2 for activity measures, 2 for activity flags, and 2 for covariates, corresponding to each waves.</p>
 <p>The activity measures dataset contained records of daily minute-by-minute activity measures (intensity) for the duration of 1 week. It appears that these activities are recorded through some wearable device. Similarly, the activity flags recorded daily minute-by-minute activity measures but these are binary measures of 0/1 indicating whether or not the wearable device was actually worn. The function <code>exclude_accel()</code> from the package allows us to compare the two datasets and keep only the activity datapoints which were deemed “reliable”.</p>
 <p>The other datasets contained an already-processed covariate dataset. Some of the variables include <code>BMI</code>, <code>Race</code>, <code>Gender</code>, or <code>DrinkStatus</code>. In its original state, there are 16 variables included in the covariate datasets, not including survey-design-related variables. However, the package does provide a function to extract more covariates, if needed, using the function <code>process_covar()</code>. The function also has an option to <code>extractAll = TRUE</code> if we decided to just get all possible covariates but this is defaulted to <code>FALSE</code>.</p>
 <p>More details can be read <a href="./NHANES_rnhanesdata/NHANES_package_explore.html">here</a></p>
 </div>
-<div id="nhanes-survey-dataset" class="section level1" number="3">
-<h1 number="3"><span class="header-section-number">3</span> <a href="#preamble">NHANES Survey Dataset</a></h1>
+<div id="nhanes-survey-dataset" class="section level2">
+<h2>NHANES Survey Dataset</h2>
 <p>Since this was also my first time being exposed to any kind of survey-dataset, NHANES was an incredibly overwhelming source for me. After I attempted to extract all covariates using the <code>rnhanesdata::process_covar()</code> function, I was surprised to see that there’s 300+ variables from NHANES. This led me to build a scraping function that pulls the variable names and their descriptions.</p>
 <p>In the process, I learned that NHANES divided their variables into demographic, dietary, exam, laboratory, questionnaire, and “limited” data. Ultimately though, by collecting these variables’ descriptions into a dataframe, it really helped me get a much better sense of what NHANES recorded and quickly select which variables I’d like to focus more on. Additionally, I was also able to quickly assess which variables might be named differently but measured the same thing.</p>
 <p>More can be read <a href="./NHANES_codebook/codebook_df_generation.md">here</a></p>
 </div>
-<div id="machine-learning-using-tidymodels" class="section level1" number="4">
-<h1 number="4"><span class="header-section-number">4</span> <a href="#preamble">Machine Learning using <code>tidymodels</code></a></h1>
+<div id="machine-learning-using-tidymodels" class="section level2">
+<h2>Machine Learning using <code>tidymodels</code></h2>
 <p>As the project developed into building predictive models, I had to re-orient myself with all the tools available in R. My supervisor advised me that LASSO and/or Random Forest are likely good starting points for a predictive model. At first, I attempted to use <code>caret</code> but this proved quite confusing as the function language was something that I wasn’t used to. My supervisor recommended me to use the actual packages instead (<code>glmnet</code> and <code>ranger</code>).</p>
 <p>While I eventually managed to use all these packages, I also came across <code>tidymodels</code>, the apparent successor to <code>caret</code> and appeared to play extremely well with the <code>tidyverse</code> package. With a copious amount of Google-ing, watching YouTube videos, and/or reading blogs that showcases its use, I became much more comfortable with <code>tidymodels</code> and ended up using this package to do my modeling instead.</p>
 <p>You can check my <a href>report</a> to see how I’ve combined both <code>tidyverse</code> and <code>tidymodels</code> techniques to answer my project questions!</p>
 </div>
-<div id="imbalanced-class-problem-and-how-to-mitigate-them" class="section level1" number="5">
-<h1 number="5"><span class="header-section-number">5</span> <a href="#preamble">Imbalanced Class Problem and How to Mitigate Them</a></h1>
+<div id="imbalanced-class-problem-and-how-to-mitigate-them" class="section level2">
+<h2>Imbalanced Class Problem and How to Mitigate Them</h2>
 <p>During my learning about predictive modeling, I came across an issue that, even until now, puzzles me. Up to this point, my supervisor and I couldn’t figure out the cause behind it, except that my outcome being “imbalanced” and/or the variables I selected were weakly predictive for diabetes. What happened was my early models had incredibly poor predictive performance. It boasted a 99% accuracy but when you assess its prediction, it actually has 100% specificity and 0% sensitivity.</p>
-<p>As I dug deeper on what may cause the issue, I found that this issue–imbalanced class–has been a quite well-known problem with machine learning. It occurs when (assuming binary outcome) a class has an uneven distribution. In my case, those with diabetes accounts for ~15% of my dataset. Further research on how to mitigate this issue led me to sub-sampling methods. Examples include random over-sampling/under-sampling, SMOTE, or ADASYN.</p>
-<p>In the end however, I have quite a strong suspicing that part of the reason was because my dataset had variables that were not strongly predictive of diabetes, further worsened by the imbalance in the dataset. Part of the next step for this project would likely explore modeling using boosted models such as XGBoost.</p>
+<p>As I dug deeper on what may cause the issue, I found that this issue–imbalanced class–has been a quite well-known problem with machine learning. It occurs when (assuming binary outcome) a class has an uneven distribution. In my case, those with diabetes accounts for ~15% of my dataset. Further research on how to mitigate this issue led me to sub-sampling methods. Examples include random over-sampling/under-sampling, SMOTE, or ADASYN. Part of this project is to assess the improvement gained after applying these sub-sampling methods.</p>
+<p>Additionally, I also learned that the conventional metrics such as accuracy or even ROC-AUC may not adequately detect changes/improvements in the model because some of these metrics may not fully account for the class imbalance. Some articles suggest that we use other metrics such as precision, recall, F-measure, J-index, G-mean, or precision-recall-AUC. As such, in this project, we also tried to compare different metrics and see which one could detect changes in a model’s performance given this imbalanced class problem.</p>
+<p>Ultimately, we found that G-mean was one of the metrics that was able to reasonably detect changes in performance given the imbalance. Furthermore, certain sub-sampling methods did perform worse but overall, they improved the default model. Nevertheless, I have quite a strong suspicion that part of the reason for my default model’s poor performance was because my dataset had variables that were not strongly predictive of diabetes, further worsened by the imbalance in the dataset. Next step after this project would likely explore modeling using boosted models such as XGBoost.</p>
+<p>You can check my <a href>report</a> to see how I utilized sub-sampling methods, obtained these alternate metrics, and evaluated them to arrive at my final model.</p>
 </div>
 
 
