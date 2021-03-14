@@ -1,7 +1,6 @@
 name: "Global Settings"
 output_dir: "."
 navbar:
-  type: inverse
   title: "NHANES Predictive Modeling"
   right:
   - icon: fas fa-user-ninja fa-lg
