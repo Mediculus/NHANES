@@ -7,12 +7,13 @@ output:
     toc: true
     toc_depth: 3
     toc_float: true
+    number_sections: true
 ---
 
 ```{r setup, include = FALSE, message = FALSE, warning = FALSE}
 
 # global default settings for chunks
-knitr::opts_chunk$set(echo = TRUE, eval = TRUE,
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE, warning = FALSE, 
                       fig.dim = c(10, 4), 
                       fig.align = "center"
                       )
@@ -234,3 +235,30 @@ Obtaining the processed mortality table shows a number of unique subjects of `r 
 rm(list=c("mort_2015_c", "mort_2015_d"))
 ```
 
+# Obtaining All Covariates
+
+Now that we've assessed the processed datasets, we will evaluate the capability of the functions in obtaining all the covariates. 
+
+```{r get all covariates, eval = FALSE, results = 'hide'}
+covar_data <- process_covar(extractAll = TRUE)
+
+all_covar_c <- covar_data$Covariate_C
+all_covar_d <- covar_data$Covariate_D
+
+rm(list=c("covar_data"))
+
+`r length(names(all_covar_c))` and `r length(names(all_covar_d))`
+```
+
+Obtaining all covariates reveal that we have *** variables for wave C and D, respectively. This is a huge amount of variables and we won't be able to filter this efficiently if we evaluate them directly. As such, we will likely build a scraping function to obtain names and descriptions for these variables to make evaluation easier. 
+
+To check out how I built the scraping function and what I did with it, go [here]()
+
+```{r remove all covar df, include = FALSE}
+rm(list=c("all_covar_c", "all_covar_d"))
+```
+
+
+<br></br>
+
+[Return to Homepage](../index.html)

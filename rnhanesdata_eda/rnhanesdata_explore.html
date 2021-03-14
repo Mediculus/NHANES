@@ -344,13 +344,13 @@ div.tocify {
 
 
 <p>This section details my exploration of the <code>rnhanesdata</code> package that was the initial objective of my project (which evolved into something else eventually). This was the earliest attempt to explore what the dataset contains and whether or not I could develop something out of the provided dataset.</p>
-<div id="loading-dataset" class="section level1">
-<h1>Loading Dataset</h1>
+<div id="loading-dataset" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Loading Dataset</h1>
 <p>We first install/load the <code>rnhanesdata</code> package.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># devtools::install_github(&quot;andrew-leroux/rnhanesdata&quot;)</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rnhanesdata)</span></code></pre></div>
-<div id="datasets" class="section level2">
-<h2>Datasets</h2>
+<div id="datasets" class="section level2" number="1.1">
+<h2 number="1.1"><span class="header-section-number">1.1</span> Datasets</h2>
 <p>The package contains 2 waves of NHANES dataset; 2003-2004 and 2005-2006 (labeled wave C and D, respectively). There are two main categories, “processed” and “raw” datasets. Details below:</p>
 <ul>
 <li>Processed:
@@ -375,19 +375,19 @@ div.tocify {
 </ul></li>
 </ul>
 </div>
-<div id="functions" class="section level2">
-<h2>Functions</h2>
+<div id="functions" class="section level2" number="1.2">
+<h2 number="1.2"><span class="header-section-number">1.2</span> Functions</h2>
 <p>In addition to these datasets, the package also contains several functions that are useful to further clean the dataset, re-calculate survey weights, etc. Firstly, the function <code>process_covar()</code> allows us to obtain raw data on chosen variables or, if we apply the option <code>extractAll = TRUE</code>, to obtain raw data from all possible variables in NHANES waves C &amp; D.</p>
 <p>The function <code>reweight_accel()</code> re-calculates 2-year and 4-year survey weights for a dataset after processing/cleaning has been done.</p>
 <p>The function <code>exclude_accel()</code> takes in the activity and flag datasets to return indices of days which were considered “good datapoints” from a combination of wear/non-wear flag and NHANES’s criteria for data quality.</p>
 <p>They also had other functions, <code>process_accel()</code> and <code>process_flags()</code> with the purpose of downloading accelerometry and flag data from NHANES and formatting the data into a 1440+ format (minute-by-minute).</p>
 </div>
 </div>
-<div id="processed-data-exploration" class="section level1">
-<h1>Processed Data Exploration</h1>
+<div id="processed-data-exploration" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Processed Data Exploration</h1>
 <p>Having seen the contents and functions of <code>rnhanesdata</code> package, we will explore the processed data further. Note that we won’t explore the raw data.</p>
-<div id="accelerometer-data" class="section level2">
-<h2>Accelerometer Data</h2>
+<div id="accelerometer-data" class="section level2" number="2.1">
+<h2 number="2.1"><span class="header-section-number">2.1</span> Accelerometer Data</h2>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;PAXINTEN_C&quot;</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;PAXINTEN_D&quot;</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -508,8 +508,8 @@ div.tocify {
 </tbody>
 </table>
 </div>
-<div id="flags-data" class="section level2">
-<h2>Flags Data</h2>
+<div id="flags-data" class="section level2" number="2.2">
+<h2 number="2.2"><span class="header-section-number">2.2</span> Flags Data</h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load flag data</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;Flags_C&quot;</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;Flags_D&quot;</span>)</span>
@@ -527,8 +527,8 @@ div.tocify {
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">&quot;min&quot;</span>))</span></code></pre></div>
 <p>The flags data appear to contain similar primary variables as in <code>PAXINTEN_C</code> &amp; <code>PAXINTEN_D</code>. Slightly different to the activity dataset however, is the measures within the 1440+ format. While the activity dataset has numeric variables, the flags are binary with only <code>0</code> (non-wear) or <code>1</code> (wear), though there are some <code>NA</code> values.</p>
 </div>
-<div id="covariate-data" class="section level2">
-<h2>Covariate Data</h2>
+<div id="covariate-data" class="section level2" number="2.3">
+<h2 number="2.3"><span class="header-section-number">2.3</span> Covariate Data</h2>
 <p>These covariate datasets appear to only contain a very small portion of all available NHANES data that were selected by the package creator. Nevertheless, it has functions to obtain all possible covariates from wave C &amp; D.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>covarC <span class="ot">&lt;-</span> Covariate_C <span class="sc">%&gt;%</span> </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
@@ -577,8 +577,8 @@ div.tocify {
 <li><code>Smoke_Cigs</code>: Cigarette smoking status; Never, Former, Current</li>
 </ul>
 </div>
-<div id="mortality-data" class="section level2">
-<h2>Mortality Data</h2>
+<div id="mortality-data" class="section level2" number="2.4">
+<h2 number="2.4"><span class="header-section-number">2.4</span> Mortality Data</h2>
 <p>Processed mortality data for NHANES, released in 2011 for waves C and D. They have mortality data from 2011 and 2015. We will explore the more recent 2015 data for now.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>mort_2015_c <span class="ot">&lt;-</span> Mortality_2015_C <span class="sc">%&gt;%</span> </span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
@@ -596,6 +596,22 @@ div.tocify {
 <li><code>hyperten_mcod</code>: hypertension flag from multiple cause of death</li>
 </ul>
 </div>
+</div>
+<div id="obtaining-all-covariates" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> Obtaining All Covariates</h1>
+<p>Now that we’ve assessed the processed datasets, we will evaluate the capability of the functions in obtaining all the covariates.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>covar_data <span class="ot">&lt;-</span> <span class="fu">process_covar</span>(<span class="at">extractAll =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>all_covar_c <span class="ot">&lt;-</span> covar_data<span class="sc">$</span>Covariate_C</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>all_covar_d <span class="ot">&lt;-</span> covar_data<span class="sc">$</span>Covariate_D</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">&quot;covar_data&quot;</span>))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="st">`</span><span class="at">r length(names(all_covar_c))</span><span class="st">`</span> and <span class="st">`</span><span class="at">r length(names(all_covar_d))</span><span class="st">`</span></span></code></pre></div>
+<p>Obtaining all covariates reveal that we have *** variables for wave C and D, respectively. This is a huge amount of variables and we won’t be able to filter this efficiently if we evaluate them directly. As such, we will likely build a scraping function to obtain names and descriptions for these variables to make evaluation easier.</p>
+<p>To check out how I built the scraping function and what I did with it, go <a href>here</a></p>
+<p><br /></p>
+<p><a href="../index.html">Return to Homepage</a></p>
 </div>
 
 
