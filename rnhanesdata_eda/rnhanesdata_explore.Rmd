@@ -84,7 +84,7 @@ They also had other functions, `process_accel()` and `process_flags()` with the 
 
 # Processed Data Exploration
 
-Having seen the contents and functions of `rnhanesdata` package, we will explore them further.
+Having seen the contents and functions of `rnhanesdata` package, we will explore the processed data further. Note that we won't explore the raw data. 
 
 ## Accelerometer Data
 
@@ -114,16 +114,18 @@ Both of these datasets contain similar variables:
 * `WEEKDAY`: Day of the week with 1 as Sunday, 7 as Saturday
 * `MIN1`- `MIN1440`: Activity count at each minute of the day (1440+ format)
 
-The `SEQN` variable ranges between `r min(PAXINTEN_C$SEQN)` - `r max(PAXINTEN_C$SEQN)` for wave C and ranges between `r min(PAXINTEN_D$SEQN)` - `r max(PAXINTEN_D$SEQN)` for wave D. As noted from the range between these two waves, it appears that NHANES assumes none of the individuals are repeat-measures i.e. they're all assumed different individuals. 
+There are `r accelC_id %>% distinct(seqn) %>% count()` unique subjects with the ID ranging between `r min(PAXINTEN_C$SEQN)` - `r max(PAXINTEN_C$SEQN)` for wave C. 
 
-A quick summary below using the `skimr::skim_without_charts()` function for wave C
+Wave D has `r accelD_id %>% distinct(seqn) %>% count()` unique subjects with the ID ranging between `r min(PAXINTEN_D$SEQN)` - `r max(PAXINTEN_D$SEQN)`. 
+
+As noted from the range between these two waves, it appears that NHANES assumes none of the individuals are repeat-measures i.e. they're all assumed different individuals. A quick summary below using the `skimr::skim_without_charts()` function for wave C
 
 ```{r skim accel}
 accelC_id %>% skimr::skim_without_charts()
 ```
 
 ```{r remove accel data, include = FALSE}
-rm(list=c("accelC_id", "accelD_id", "PAXINTEN_C", "PAXINTEN_D"))
+rm(list=c("PAXINTEN_C", "PAXINTEN_D"))
 ```
 
 ## Flags Data
@@ -148,85 +150,87 @@ flagD_id <- Flags_D %>%
 
 The flags data appear to contain similar primary variables as in `PAXINTEN_C` & `PAXINTEN_D`. Slightly different to the activity dataset however, is the measures within the 1440+ format. While the activity dataset has numeric variables, the flags are binary with only `0` (non-wear) or `1` (wear), though there are some `NA` values. 
 
-```{r remove flag data}
+```{r remove flag data, include = FALSE}
 rm(list=c("flagC_id", "flagD_id", "Flags_C", "Flags_D"))
 ```
 
+## Covariate Data
 
-## [Covariate Data](#processed-data-exploration)
+These covariate datasets appear to only contain a very small portion of all available NHANES data that were selected by the package creator. Nevertheless, it has functions to obtain all possible covariates from wave C & D. 
 
-Based on the vignette? it appears that the raw NHANES data beyond accelerometry are collated within the "covariates data". This will be explored further below.
-
-```{r covar_data}
-
+```{r covar data}
 covarC <- Covariate_C %>% 
-  janitor::clean_names() %>% 
-  nest(wave_C_covar = sddsrvyr:smoke_cigs)
+  janitor::clean_names()
   
-
 covarD <- Covariate_D %>% 
-  janitor::clean_names() %>% 
-  nest(wave_D_covar = sddsrvyr:smoke_cigs)
-
-
-joined_covar <- full_join(covarC, covarD, by = 'seqn')
-
+  janitor::clean_names()
 ```
 
-Unlike flag and accelerometer data, these covar data are not structured similarly to the other two and therefore might benefit from being a separate dataset. Unique identifier still exist and thus can be joined if necessary. This will be easily possible if we can maintain nested dataset of both flag and accelerometer. 
+Interestingly, the covariate datasets have more unique subjects than the accelerometry datasets. Wave C has `r covarC %>% distinct(seqn) %>% count()` unique subjects as opposed to `r accelC_id %>% distinct(seqn) %>% count()` while wave D has `r covarD %>% distinct(seqn) %>% count()` unique subjects as opposed to `r accelD_id %>% distinct(seqn) %>% count()`.
 
-Additionally, the amount of `seqn` observations in the covariates are more than `seqn` within flag and accelerometer. With both wave C and D combined, we have `r nrow(joined_covar)` observations. We should left join this if we plan to merge the datasets. 
-
-Furthermore, the covariates inside were not the complete covariates from the NHANES raw data. In these "cleaned" dataset, covariates are:
+Covariates included in these datasets are: 
 
 * `SDDSRVYR`: Wave indicator as in other datasets
-* `SDMVPSU`: Masked variance pseudo probability sampling units. Used for variance estimation??
-* `SDMVSTRA`: Masked variance pseudo stratum. Used for variance estimation??
-* `WTINT2YR`: Full sample interviewed weight (likely reported weight)
-* `WTMEC2YR`: Full sample examination weight (likely observed weight)
+* `SDMVPSU`: Masked variance pseudo probability sampling units used for variance estimation
+* `SDMVSTRA`: Masked variance pseudo stratum used for variance estimation
+* `WTINT2YR`: Full sample interviewed weight
+* `WTMEC2YR`: Full sample examination weight
 * `RIDAGEMN`: Age in months at screening date for those < 85 years. >= 85 is coded as NA
 * `RIDAGEEX`: Age in months at examination date for those < 85 years. >= 85 is coded as NA
 * `RIDAGEYR`: Age in years at date of screening
-* `BMI`: BMI in kg/m^2. A copy of BMXBMI variable.
-* `BMI_cat`: Category for the BMI values. underweight (<= 18.5), normal (18.5 < x <= 25), overweight (25 < x <= 30), obese (> 30)
-* Self-reported survey answers:
-  * `Race`: ethnicity
-  * `Gender`: gender for M/F
-  * `Diabetes`: diagnosed diabetes, categorized to Yes, No, Borderline, Refused, Don't know. 
-  * `CHF`: diagnosed CHF, categorized as yes, no, refused, don't know (variable MCQ160B in raw)
-  * `CHD`: diagnosed CHD, categorized as yes, no refused, don't know (variable MCQ160C)
-  * `Cancer`: diagnosed history of any cancer. Categorized as yes, no, refused, don't know (MCQ220)
-  * `Stroke`: diagnosed history of stroke, categorized as yes, no, refused, or don't know. (MCQ160F)
-  * `Education_adult`: Present only in wave D
-  * `Mobility_Problem`: mobility issue categorized into any vs. no difficulty. Derived from responses of (PFQ-049, -054, -057, -059, -061B, -61C). Details in vignette.
-  * `Drink_Status`: current alcohol consumption categorized as non-, moderate-, or heavy-drinker. Details in vignette
-  * `Drinks_Per_Week`: number of drinks per week. Details in vignette
-  * `Smoke_Cigs`: cigarette smoking status categorized as never, former, or current. Details in vignette. 
+* `BMI`: BMI in $kg/m^2$
+* `BMI_cat`: Category for the BMI values
+  * Underweight (<= 18.5)
+  * Normal (18.5 < x <= 25)
+  * Overweight (25 < x <= 30)
+  * Obese (> 30)
+* `Race`: Ethnicity; White, Mexican American, Other Hispanic, Black, Other
+* `Gender`: Male/female
+* `Diabetes`: Diagnosis of diabetes; yes, No, Borderline, Refused, or Don't know
+* `CHF`: Diagnosis of CHF; Yes, No, Refused, or Don't know
+* `CHD`: Diagnosis of CHD; Yes, No, Refused, or Don't know
+* `Cancer`: Diagnosis of any cancer; Yes, No, Refused, or Don't know
+* `Stroke`: Diagnosis of stroke; Yes, No, Refused, or Don't know
+* `Education_adult`: Education level of adults
+  * Less than 9th grade
+  * 9th-11th grade
+  * High school grad/GED or equivalent
+  * Some College or AA degree
+  * College graduate or above
+  * Refused
+  * Don't know
+* `Mobility_Problem`: Mobility issues; Any or No difficulty
+* `Drink_Status`: Current alcohol consumption; non-, moderate-, or heavy-drinker
+* `Drinks_Per_Week`: Number of drinks per week (0 for non-drinker in `Drink_Status`)
+* `Smoke_Cigs`: Cigarette smoking status; Never, Former, Current
 
-## [Mortality Data](#processed-data-exploration)
+```{r remove covars, include = FALSE}
+rm(list=c("accelC_id", "accelD_id", "covarC", "covarD"))
+```
 
-Processed mortality data for NHANES, released in 2011 for waves C and D. 
+## Mortality Data
 
-They have mortality data from 2011 and 2015. We will explore the more recent 2015 data for now. 
+Processed mortality data for NHANES, released in 2011 for waves C and D. They have mortality data from 2011 and 2015. We will explore the more recent 2015 data for now. 
 
-```{r}
-
+```{r mortality data}
 mort_2015_c <- Mortality_2015_C %>% 
   janitor::clean_names()
 
-
 mort_2015_d <- Mortality_2015_D %>% 
   janitor::clean_names()
-
-
 ```
 
-Obtaining the processed mortality table shows a number of unique observations of `r nrow(mort_2015_d)`, similar to the number found in covariates data. As such, we should likely `left_join` this table to accel or flag dataset to have consistent data throughout. Checking on the mortality table, we see several new variables besides `seqn`:
+Obtaining the processed mortality table shows a number of unique subjects of `r mort_2015_c %>% distinct(seqn) %>% count()` for wave C and `r mort_2015_d %>% distinct(seqn) %>% count()` for wave D--similar to the number found in covariates data. We also note several new variables besides `SEQN`:
 
 * `eligstat`: eligibility for mortality follow-up. 1 = eligible, 2 = <18 yrs (not available for public), 3 = ineligible
-* `mortstat`: indicator for mortality status at f/u time from permth_exm and permth_int. 0 = assumed alive, 1 = assumed deceased, NA = <18 yrs (not available)
+* `MORTSTAT`: indicator for mortality status at f/u time from permth_exm and permth_int. 0 = assumed alive, 1 = assumed deceased, NA = <18 yrs (not available)
 * `permth_exm`: time in months when mortality assessment was done (date of mortality assessment)
 * `permth_int`: time in months from interview to mortality assessment
-* `ucod_leading`: underlying cause of death (recoded from UCOD_113). Details in vignette
-* `diabetes_mcod`: diabetes flag from multiple cause of death (dm part of cause?)
-* `hyperten_mcod`: hypertension flag from multiple cause of death (htn part of cause?)
+* `ucod_leading`: underlying cause of death
+* `diabetes_mcod`: diabetes flag from multiple cause of death
+* `hyperten_mcod`: hypertension flag from multiple cause of death
+
+```{r remove mortality data, include = FALSE}
+rm(list=c("mort_2015_c", "mort_2015_d"))
+```
+
