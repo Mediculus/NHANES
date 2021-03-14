@@ -29,7 +29,7 @@ Hi! This project was initially an attempt to explore the `rnhanesdata` package a
 
 ## `rnhanesdata` Package
 
-The package housed 2 major datasets from NHANES that was associated with activity measures. They were the 2003-2004 and 2005-2006 survey waves (labeled C and D respectively). There are 6 datasets in total; 2 for activity measures, 2 for activity flags, and 2 for covariates, corresponding to each waves. 
+The package housed 2 major datasets from NHANES that was associated with activity measures. They were the 2003-2004 and 2005-2006 survey waves (labeled C and D respectively). There are 6 major datasets in total; 2 for activity measures, 2 for activity flags, and 2 for covariates, corresponding to each waves. 
 
 The activity measures dataset contained records of daily minute-by-minute activity measures (intensity) for the duration of 1 week. It appears that these activities are recorded through some wearable device. Similarly, the activity flags recorded daily minute-by-minute activity measures but these are binary measures of 0/1 indicating whether or not the wearable device was actually worn. The function `exclude_accel()` from the package allows us to compare the two datasets and keep only the activity datapoints which were deemed "reliable". 
 
