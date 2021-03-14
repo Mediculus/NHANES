@@ -2,7 +2,6 @@
 title: "NHANES Data Analysis Project"
 output: 
   html_document:
-    theme: flatly
     highlight: pygments
     toc: true
     toc_depth: 3
@@ -13,9 +12,12 @@ output:
 
 # global default settings for chunks
 knitr::opts_chunk$set(echo = TRUE, fig.dim = c(10, 4), fig.align = "center", results = "asis")
+
+
 ```
 
-<br></br>
+<center><a href=""><img src="img/nhanes_apple_color_tagline.png"></a></center>
+
 <br></br>
 
 ## About This Project

@@ -1,0 +1,27 @@
+name: "Global Settings"
+output_dir: "."
+navbar:
+  type: inverse
+  title: "NHANES Predictive Modeling"
+  right:
+  - icon: fas fa-user-ninja fa-lg
+    href: about.html
+  - icon: fab fa-telegram-plane fa-lg
+    href: mailto:<ksw2137@columbia.edu> 
+  - icon: fa fa-linkedin-square fa-lg
+    href: https://www.linkedin.com/in/kwongso/
+  - icon: fa fa-github-alt fa-lg
+    href: https://github.com/Mediculus   # setup a link to your github page
+output:
+  html_document:
+    theme: 
+      version: 4
+      bootswatch: flatly
+    includes:
+      after_body: _suffix.html
+   
+
+# when adding footer:
+# knit the Rmd then delete it. Afterwards, remove <head></head> as it interferes 
+# with tabbed contents and dropdown menu. 
+# Also delete the bottom 3 sections after </div> that contains your footer.
