@@ -35,7 +35,7 @@ The activity measures dataset contained records of daily minute-by-minute activi
 
 The other datasets contained an already-processed covariate dataset. Some of the variables include `BMI`, `Race`, `Gender`, or `DrinkStatus`. In its original state, there are 16 variables included in the covariate datasets, not including survey-design-related variables. However, the package does provide a function to extract more covariates, if needed, using the function `process_covar()`. The function also has an option to `extractAll = TRUE` if we decided to just get all possible covariates but this is defaulted to `FALSE`.
 
-More details can be read [here](./NHANES_rnhanesdata/NHANES_package_explore.html)
+More details can be read [here](./rnhanesdata_eda/rnhanesdata_explore.html)
 
 ## NHANES Survey Dataset
 
