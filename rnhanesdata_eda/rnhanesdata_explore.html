@@ -605,13 +605,13 @@ div.tocify {
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>all_covar_c <span class="ot">&lt;-</span> covar_data<span class="sc">$</span>Covariate_C</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>all_covar_d <span class="ot">&lt;-</span> covar_data<span class="sc">$</span>Covariate_D</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">&quot;covar_data&quot;</span>))</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="st">`</span><span class="at">r length(names(all_covar_c))</span><span class="st">`</span> and <span class="st">`</span><span class="at">r length(names(all_covar_d))</span><span class="st">`</span></span></code></pre></div>
-<p>Obtaining all covariates reveal that we have *** variables for wave C and D, respectively. This is a huge amount of variables and we won’t be able to filter this efficiently if we evaluate them directly. As such, we will likely build a scraping function to obtain names and descriptions for these variables to make evaluation easier.</p>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">&quot;covar_data&quot;</span>))</span></code></pre></div>
+<p>Obtaining all covariates reveal that we have 383 and 325 variables for wave C and D, respectively. This is a huge amount of variables and we won’t be able to filter this efficiently if we evaluate them directly. As such, we will likely build a scraping function to obtain names and descriptions for these variables to make evaluation easier.</p>
 <p>To check out how I built the scraping function and what I did with it, go <a href>here</a></p>
 <p><br /></p>
-<p><a href="../index.html">Return to Homepage</a></p>
+<div style="text-align: right">
+<a href="../index.html">Return to Homepage</a>
+</div>
 </div>
 
 
