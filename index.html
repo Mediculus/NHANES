@@ -345,7 +345,8 @@ div.tocify {
 <p><br></br></p>
 <div id="about-this-project" class="section level2">
 <h2>About This Project</h2>
-<p>Hi! This project was initially an attempt to explore the <code>rnhanesdata</code> package and its contents. Due to some unexpected development however, this project developed into building a predictive model for my disease of interest–diabetes. Over the development of this project, I faced various challenges and issues that became an opportunity to learn more about survey data, machine-learning, imbalanced class, sub-sampling methods, and metrics associated with these approaches. A proper report of this project can be found <a href="">here</a>. This page however, will give you a brief overview of what I learned throughout this whole endeavor. It will be divided into several major sections:</p>
+<p>Hi! This project was initially an attempt to explore the <code>rnhanesdata</code> package and its contents. Due to some unexpected development however, this project developed into building a predictive model for my disease of interest–diabetes–using resources from the <code>rnhanesdata</code> package.</p>
+<p>Over the development of this project, I faced various challenges and issues that became an opportunity to learn more about survey data, machine-learning, imbalanced class, sub-sampling methods, and metrics associated with these approaches. A proper report of this project can be found <a href="">here</a>. This page however, will give you a brief overview of what I learned throughout this whole endeavor. It will be divided into several major sections:</p>
 <ul>
 <li><code>rnhanesdata</code> Package</li>
 <li>NHANES Survey Dataset</li>
@@ -364,7 +365,7 @@ div.tocify {
 <h2>NHANES Survey Dataset</h2>
 <p>Since this was also my first time being exposed to any kind of survey-dataset, NHANES was an incredibly overwhelming source for me. After I attempted to extract all covariates using the <code>rnhanesdata::process_covar()</code> function, I was surprised to see that there’s 300+ variables from NHANES. This led me to build a scraping function that pulls the variable names and their descriptions.</p>
 <p>In the process, I learned that NHANES divided their variables into demographic, dietary, exam, laboratory, questionnaire, and “limited” data. Ultimately though, by collecting these variables’ descriptions into a dataframe, it really helped me get a much better sense of what NHANES recorded and quickly select which variables I’d like to focus more on. Additionally, I was also able to quickly assess which variables might be named differently but measured the same thing.</p>
-<p>More can be read <a href="">here</a></p>
+<p>More can be read <a href="./codebook_scrape/codebook_data.Rmd">here</a></p>
 </div>
 <div id="machine-learning-using-tidymodels" class="section level2">
 <h2>Machine Learning using <code>tidymodels</code></h2>

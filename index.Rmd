@@ -1,5 +1,4 @@
 ---
-title: ""
 output: 
   html_document:
     highlight: pygments
@@ -24,7 +23,9 @@ knitr::opts_chunk$set(echo = TRUE, fig.dim = c(10, 4), fig.align = "center", res
 
 ## About This Project
 
-Hi! This project was initially an attempt to explore the `rnhanesdata` package and its contents. Due to some unexpected development however, this project developed into building a predictive model for my disease of interest--diabetes. Over the development of this project, I faced various challenges and issues that became an opportunity to learn more about survey data, machine-learning, imbalanced class, sub-sampling methods, and metrics associated with these approaches. A proper report of this project can be found [here](). This page however, will give you a brief overview of what I learned throughout this whole endeavor. It will be divided into several major sections:
+Hi! This project was initially an attempt to explore the `rnhanesdata` package and its contents. Due to some unexpected development however, this project developed into building a predictive model for my disease of interest--diabetes--using resources from the `rnhanesdata` package. 
+
+Over the development of this project, I faced various challenges and issues that became an opportunity to learn more about survey data, machine-learning, imbalanced class, sub-sampling methods, and metrics associated with these approaches. A proper report of this project can be found [here](). This page however, will give you a brief overview of what I learned throughout this whole endeavor. It will be divided into several major sections:
 
 * `rnhanesdata` Package
 * NHANES Survey Dataset
@@ -47,7 +48,7 @@ Since this was also my first time being exposed to any kind of survey-dataset, N
 
 In the process, I learned that NHANES divided their variables into demographic, dietary, exam, laboratory, questionnaire, and "limited" data. Ultimately though, by collecting these variables' descriptions into a dataframe, it really helped me get a much better sense of what NHANES recorded and quickly select which variables I'd like to focus more on. Additionally, I was also able to quickly assess which variables might be named differently but measured the same thing. 
 
-More can be read [here]()
+More can be read [here](./codebook_scrape/codebook_data.Rmd)
 
 ## Machine Learning using `tidymodels`
 
@@ -68,3 +69,4 @@ Additionally, I also learned that the conventional metrics such as accuracy or e
 Ultimately, we found that G-mean was one of the metrics that was able to reasonably detect changes in performance given the imbalance. Furthermore, certain sub-sampling methods did perform worse but overall, they improved the default model. Nevertheless, I have quite a strong suspicion that part of the reason for my default model's poor performance was because my dataset had variables that were not strongly predictive of diabetes, further worsened by the imbalance in the dataset. Next step after this project would likely explore modeling using boosted models such as XGBoost. 
 
 You can check my [report]() to see how I utilized sub-sampling methods, obtained these alternate metrics, and evaluated them to arrive at my final model.
+

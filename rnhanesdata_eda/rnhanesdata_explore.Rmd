@@ -2,7 +2,6 @@
 title: "`rnhanesdata` Exploration"
 output: 
   html_document:
-    theme: flatly
     highlight: pygments
     toc: true
     toc_depth: 3
@@ -260,3 +259,4 @@ rm(list=c("all_covar_c", "all_covar_d"))
 <br></br>
 
 <div style="text-align: right">[Return to Homepage](../index.html)</div>
+
