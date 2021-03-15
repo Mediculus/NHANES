@@ -1,0 +1,407 @@
+---
+title: "CDC NHANES Codebook Scraping"
+output: 
+  html_document:
+    highlight: pygments
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    code_folding: hide
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+
+# global default settings for chunks
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.dim = c(10, 4), 
+                      fig.align = "center"
+                      )
+
+# loaded packages; placed here to be able to load global settings
+Packages <- c("tidyverse", "dplyr", "rvest", "httr")
+invisible(lapply(Packages, library, character.only = TRUE))
+
+
+
+# global settings for color palettes
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+# theme global setting for ggplot
+theme_set(theme_minimal() + 
+            theme(legend.position = "bottom") +
+            theme(plot.title = element_text(hjust = 0.5, size = 12),
+                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+          )
+
+```
+
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
+<br></br>
+
+Purpose of this document is to obtain descriptions on the variables that is collected for NHANES. For my project in particular, we are interested in variables that might be associated with diabetes in addition to those already included in the `rnhanesdata` package. While we won't select all of the possible variables, we will try to search for those that are most commonly known to affect this disease.
+
+# Scraping NHANES Codebook
+
+## Obtaining Variable Descriptions
+
+By consulting CDC's [NHANES website](https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Demographics&CycleBeginYear=2005), we could check 1-by-1 which variables are actually relevant to our interest. As tedious as it was, unfortunately this is the only method that can be done without further assistance or access to their API.
+
+Given CDC's structure of data organization, we will give label to these structure so that the process can be followed along. CDC's data organization is as follows:
+
+> Category/Group Variable/Variable
+
+In other words, take the `examination` **category**, within it, we will have **group variables** such as "Audiometry", which will contain various **variables** that is associated with "Audiometry".
+
+Notes on removed variables:
+
+* `All Years`, `VID_D`: These variables have different links
+* `DSBI`, `DSII`, `DSPI`, `RXQ_DRUG`: These data are likely from 1999-2000 (i.e. likely aggregate data and too difficult to process)
+
+To be able to understand our dataset, first we need a function to grab the descriptions for all of the variable-levels from the CDC web.
+
+```{r info grab function, class.source = 'fold-show'}
+# page-reader function
+read_page <- function(url, tag) {
+  
+  h = read_html(url)               # reads url input
+  
+  data_name = h %>%
+    html_nodes(tag) %>%            # pulls the specific html tag (for titles)
+    html_text()
+  
+  return(tibble(data_name))        # turns scraped data into a dataframe
+  
+}
+```
+
+Now that we have a page-reader function, first we will scrape all the available "survey" documents' names. To do this, we create a tibble containing the links to each of this categories (demographics, dietary, examination, laboratory, questionnaire, and limited data "surveys").
+
+The code below creates our first dataframe that scrapes the group variables as well as the .doc filenames associated with it.
+
+```{r NHANES_groupvar_scrape}
+# obtaining survey type/and its topic-contents
+survey_df <- 
+  tibble(
+    survey_link = c(
+      # demographics
+      "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Demographics&CycleBeginYear=2005",
+      # dietary
+      "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Dietary&CycleBeginYear=2005",
+      # examination
+      "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Examination&CycleBeginYear=2005",
+      # laboratory
+      "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Laboratory&CycleBeginYear=2005",
+      # questionnaire
+      "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Questionnaire&CycleBeginYear=2005",
+      # limited data
+      "https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Non-Public&CycleBeginYear=2005"
+      ),
+    # categorizing based on CDC's classification of survey
+    category = c("demographics", "dietary", "examination", "laboratory", "questionnaire", "limited data")
+  ) %>% 
+  mutate(
+    category = factor(category),
+    # Obtaining the group variable descriptors
+    group_var = map(.x = survey_link,
+                     ~read_page(url = .x, tag = "td.text-left")),
+    # Obtaining the filenames for each group variables
+    group_filename = map(.x = survey_link,
+                          ~read_page(url = .x, tag = ".text-center:nth-child(2) a"))
+    ) %>% 
+  unnest(cols = c(group_var, group_filename), names_repair = tidyr_legacy) %>%   
+  rename(
+    # Rename to proper descriptors (Group variable name)
+    group_var = data_name,
+    # Rename to proper descriptors (filename for group variables)
+    group_filename = data_name1                          
+  ) %>% 
+  mutate(
+    # remove the "Doc" text at the end of every filename in group_filename
+    group_filename = gsub(" Doc", "", group_filename)    
+    ) %>% 
+  # remove the odd-one-out survey links
+  filter(!(group_filename %in%
+             c("All Years", "VID_D", "DSBI", "DSII", "DSPI", "RXQ_DRUG"))) %>% 
+  # creating url for each group variables; prep for scraping the individual variables. 
+  mutate(
+    var_url = case_when(category != "limited data" ~ 
+                          str_c("https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/", group_filename, ".htm"),
+                        category == "limited data" ~ 
+                          str_c("https://wwwn.cdc.gov/Nchs/Nhanes/limited_access/", group_filename, ".htm"))
+  ) %>% 
+  mutate(
+    # mapping our scraper to obtain the individual variables, nested by group variable.
+    var_content = map2(.x = var_url,                     
+                       .y = "#CodebookLinks a", 
+                       ~read_page(url = .x, tag = .y))
+  ) %>% 
+  # remove unneeded column
+  select(-survey_link, -var_url)
+```
+
+Now that we have the "list of descriptions", we could scan which variables/topics are of interest to us. We are particularly interested in variables potentially related to diabetes.
+
+Before we move forward, we should check for potential duplicate group variables.
+
+```{r surveydf_dupe_check, class.source = 'fold-show'}
+janitor::get_dupes(survey_df, group_filename)
+```
+
+As we can see, these duplicates are likely from slightly different descriptions of the HPV tests. Thankfully we aren't interested in these variables so we can "remove the duplicates" later.
+
+## Obtaining Detailed Version of Descriptions
+
+Another step we need to do is the add clarifying descriptions as some of these variables are still unclear. Code is below (folded)
+
+```{r detailed_var_desc_scrape}
+# unnest the variable cols
+survey_df <- survey_df %>% 
+  unnest(cols = c(var_content))
+
+# get a different df for detailed descriptions
+detailed_var_desc <- survey_df %>% 
+  select(category) %>% 
+  # obtaining the survey type variables
+  distinct(category, .keep_all = TRUE) %>%
+  # adding url for each survey type
+  mutate(
+    detailed_var_url = 
+      case_when(category != "limited data" ~ 
+                  str_c("https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?Component=", 
+                        category, "&CycleBeginYear=2005"),
+                category == "limited data" ~
+                  "https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?CycleBeginYear=2005&Component=Non-Public")
+    ) %>% 
+  # obtaining variable ID and the detailed descriptions
+  mutate(
+    var_name = map(.x = detailed_var_url, ~read_page(url = .x, tag = "td:nth-child(1)")),
+    detailed_var_content = map(.x = detailed_var_url, ~read_page(url = .x, tag = "td:nth-child(2)")),
+    group_filename = map(.x = detailed_var_url, ~read_page(url = .x, tag = "td:nth-child(3)"))
+  ) %>% 
+  select(-detailed_var_url) %>% 
+  unnest(cols = c(var_name, detailed_var_content, group_filename), names_repair = tidyr_legacy) %>% 
+  rename("var_name" = data_name,
+         "det_var_desc" = data_name1,
+         "group_filename" = data_name2)
+```
+
+We will keep this dataframe to be used for later, once we remove variables that we are NOT interested in.
+
+# Selecting Variables of Interest
+
+Unfortunately, this is one of the more time-consuming portion and tedious as we need to evaluate each variable by eye to determine which variables are of specific interest. 
+
+On first glance, there is an incredible amount of variables we can choose from. Nevertheless, we will aim to select variables that are typically commonly associated with diabetes. CDC reported some common factors associated with diabetes are smoking, obesity, physical inactivity, hypertension, HbA1c levels, and high cholesterol. 
+
+## Variables of Interest under Demographic Category
+
+```{r demo_survey}
+demo_survey <- survey_df %>% 
+  filter(category == "demographics") %>% 
+  select(-category, -group_filename)
+```
+
+Under demographic survey data, we see that variables of interest are:
+
+* `SEQN`: Sequence number
+* `SDDSRVYR`: Data release number (likely "wave" ID)
+* `RIDSTATR`: Interview (1) or interview + exam (2), NA otherwise
+* `RIAGENDR`: Gender
+* `RIDAGEYR`: Age at screening in years
+* `RIDRETH1`: Ethnicity
+* `DMDEDUC2`: Education level (aged 20+)
+* `RIDEXPRG`: Pregnancy status
+* `INDFMPIR`: Family Poverty Income Ratio (PIR; family income:poverty threshold)
+* `WTINT2YR`: Full sample 2-year interview weight
+* `WTMEC2YR`: Full sample 2-year MEC exam weight
+* `SDMVPSU`: Masked variance pseudo-PSU
+* `SDMVSTRA`: Masked variance pseudo-stratum
+
+Most of these variables are already included in the processed datasets within `rnhanesdata` package, except for `ridexprg`. To get these, we will try using `process_covar()` function but if not available, we will download the `.xpt` file from NHANES. 
+
+```{r remove demo df, include = FALSE}
+rm(list=c("demo_survey"))
+```
+
+
+## Variables of Interest under Dietary Category
+
+We can do similar steps with our dietary data.
+
+```{r diet_survey}
+diet_survey <- survey_df %>% 
+  filter(category == "dietary") %>% 
+  select(-category, -group_filename)
+
+# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
+#distinct(diet_survey, var_name)
+```
+
+While we had some variables of interest from the dietary category, it was quite difficult incorporating the sample weights to these variables and we unfortunately **did not include any of the variables from this dietary category**. Our original variables of interest are:
+
+* Dietary Interview - Total Nutrient Intakes, First Day:
+  * `DR1TKCAL`: energy (kcal)
+  * `DR1TPROT`: protein (gm)
+  * `DR1TCARB`: carbs (gm)
+  * `DR1TSUGR`: total sugars (gm)
+  * `DR1TFIBE`: dietary fibers (gm)
+  * `DR1TTFAT`: total fat (gm)
+  * `DR1TSFAT`: total sat. FA (gm)
+  * `DR1TCHOL`: cholesterol (mg)
+* Dietary Interview - Total Nutrient Intakes, Second Day:
+  * `DR2TKCAL`: energy (kcal)
+  * `DR2TPROT`: protein (gm)
+  * `DR2TCARB`: carbs (gm)
+  * `DR2TSUGR`: total sugars (gm)
+  * `DR2TFIBE`: dietary fibers (gm)
+  * `DR2TTFAT`: total fat (gm)
+  * `DR2TSFAT`: total sat. FA (gm)
+  * `DR2TCHOL`: cholesterol (mg)
+  
+The plan was to obtain an average of these variables over 2 days and either only use the total-energy variable or pick specific macro-nutrients (such as carbohydrates, total sugars, or fat/cholesterol)
+
+```{r remove diet df, include = FALSE}
+rm(list=c("diet_survey"))
+```
+
+## Variables of Interest under Examination Category
+
+```{r exam_survey}
+exam_survey <- survey_df %>% 
+  filter(category == "examination") %>% 
+  select(-category, -group_filename)
+
+# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
+#janitor::get_dupes(exam_survey, var_name)
+
+#exam_survey %>% 
+#  distinct(var_name)
+```
+
+Variables of interest in this category are:
+
+* Blood Pressure:
+  * `BPXPLS`: 60 sec pulse (30s x2)
+  * `BPXSY*`: systolic BP readings:
+    * 1: 1st reading
+    * 2: 2nd reading
+    * 3: 3rd reading
+    * 4: 4th reading (if 3rd reading was not successful)
+  * `BPXDI*`: diastolic BP readings:
+    * 1: 1st reading
+    * 2: 2nd reading
+    * 3: 3rd reading
+    * 4: 4th reading (if 3rd reading was not successful)
+
+* Body Measures:
+  * `BMXWT`: weight (kg)
+  * `BMXHT`: standing height (cm)
+  * `BMXBMI`: BMI (kg/m\^2)
+  * `BMXWAIST`: waist circumference (cm)
+  
+* Physical Activity Monitor
+  * `PAXSTAT`: Data reliability status flag
+  * `PAXCAL`: Device calibration indicator
+  * `PAXDAY`: Day of the week
+  * `PAXN`: Sequential observation number
+  * `PAXHOUR`: Hour of the day
+  * `PAXMINUT`: Minute of the hour
+  * `PAXINTEN`: Device intensity value
+
+The variables under Blood Pressure and Body Measure group variable are not readily available from the `rnhanesdata`, so it was gathered from NHANES using the package's `process_covar()` function. The values from the Physical Activity Monitor group variable are stored under the `PAXINTEN_C` and `PAXINTEN_D` dataset from the package, so we will use those. 
+
+```{r remove exam df, include = FALSE}
+rm(list=c("exam_survey"))
+```
+
+## Variables of Interest under Laboratory Category
+
+```{r lab_survey}
+lab_survey <- survey_df %>% 
+  filter(category == "laboratory") %>% 
+  select(-category, -group_filename)
+
+# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
+#janitor::get_dupes(lab_survey, var_name)
+```
+
+One laboratory test that was typically used to support diagnosis of diabetes is the glycohemoglobin test (HbA1c). NHANES has these lab test results as well, so we will obtain the variable. There are other variables that are potentially of interest (such as cholesterol levels) but since we are aiming for common predictors, we'd like to minimize our lab-test variables. 
+
+-   `LBXGH`: HbA1c (glycohemoglobin) measures
+
+```{r remove lab df, include = FALSE}
+rm(list=c("lab_survey"))
+```
+
+## Keeping Variables of Interest under Questionnaire Category
+
+```{r que_survey}
+que_survey <- survey_df %>% 
+  filter(category == "questionnaire") %>% 
+  select(-category, -group_filename)
+
+# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
+#janitor::get_dupes(que_survey, var_name)
+```
+
+Questionnaires of interest:
+
+* Alcohol Use:
+  * `ALQ120Q`: how often drinking alcohol over the past 12 months.
+  * `ALQ120U`: unit of measure (days, weeks, months, or years of drinking alcohol)
+* Diabetes:
+  * `DIQ010`: Diagnosis of diabetes
+* Medical Conditions:
+  * `MCQ160B`: Diagnosis of congestive heart failure (CHF)
+  * `MCQ160C`: Diagnosis of coronary heart diseases (CHD)
+  * `MCQ160F`: Diagnosis of stroke (CVA)
+  * `MCQ220`: Diagnosis of any cancer (CA)
+* Physical Functioning:
+  * `PFQ049`: Limitations keeping you from working
+  * `PFQ054`: Need special equipment to walk
+  * `PFQ059`: Physical, mental, or emotional limitations
+  * `PFQ061B`: Walking for a quarter mile difficulty
+  * `PFQ061C`: Walking up 10 steps difficulty
+  * `PFQ061D`: Stooping, crouching, or kneeling difficulty
+* Smoking - Cigarette Use
+  * `SMQ020`: Smoked at least 100 cigarettes in life
+  * `SMQ040`: Still smoking cigarettes?
+
+For the physical function group variable, `rnhanesdata`'s covariate dataset already included a processed variable set that was derived from some of the PFQs of interest, but we will still use the derived variable for simplicity. 
+
+Similarly, the package already re-formated/derived most of these questionnaire group-variables. As such, using what was already provided seemed prudent. 
+
+```{r remove questionnaire df, include = FALSE}
+rm(list=c("que_survey"))
+```
+
+## Variables of Interest under Limited Data Category
+
+```{r lim_survey}
+lim_survey <- survey_df %>% 
+  filter(category == "limited data") %>% 
+  select(-category, -group_filename)
+
+# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
+#janitor::get_dupes(lim_survey, var_name)
+
+#lim_survey %>% 
+#  distinct(data_desc)
+```
+
+These variables appear to be location-associated or for a more-specific population. Thus, none of the variables from this category will be added to our dataset. 
+
+```{r remove lim df, include = FALSE}
+rm(list=c("lim_survey"))
+```
+
+<br></br>
+
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
+
