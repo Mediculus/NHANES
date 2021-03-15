@@ -24,6 +24,7 @@
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
 
@@ -109,6 +110,15 @@ code span.va { color: #19177c; } /* Variable */
 code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 
+.sourceCode .row {
+  width: 100%;
+}
+.sourceCode {
+  overflow-x: auto;
+}
+.code-folding-btn {
+  margin-right: -30px;
+}
 </style>
 <script>
 // apply pandoc div.sourceCode style to pre.sourceCode instead
@@ -293,6 +303,9 @@ $(document).ready(function () {
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
 
@@ -426,6 +439,14 @@ div.tocify {
 
 <div id="header">
 
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
 
 
 <h1 class="title toc-ignore">Scraping NHANES Codebook</h1>
@@ -433,14 +454,14 @@ div.tocify {
 </div>
 
 
-<div id="cdcs-nhanes-codebook-filtering" class="section level1">
-<h1>CDC’s NHANES Codebook Filtering</h1>
+<div id="cdcs-nhanes-codebook-filtering" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> CDC’s NHANES Codebook Filtering</h1>
 <p>Purpose of this document is to obtain descriptions on the variables that is collected for NHANES. For my project in particular, we are interested in variables that might be associated with diabetes in addition to those already included in the <code>rnhanesdata</code> package. While we won’t select all of the possible variables, we will try to search for those that are most commonly known to affect this disease.</p>
 </div>
-<div id="scraping-nhanes-codebook" class="section level1">
-<h1>Scraping NHANES Codebook</h1>
-<div id="obtaining-variable-descriptions" class="section level2">
-<h2>Obtaining Variable Descriptions</h2>
+<div id="scraping-nhanes-codebook" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Scraping NHANES Codebook</h1>
+<div id="obtaining-variable-descriptions" class="section level2" number="2.1">
+<h2 number="2.1"><span class="header-section-number">2.1</span> Obtaining Variable Descriptions</h2>
 <p>By consulting CDC’s <a href="https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Demographics&amp;CycleBeginYear=2005">NHANES website</a>, we could check 1-by-1 which variables are actually relevant to our interest. As tedious as it was, unfortunately this is the only method that can be done without further assistance or access to their API.</p>
 <p>Given CDC’s structure of data organization, we will give label to these structure so that the process can be followed along. CDC’s data organization is as follows:</p>
 <blockquote>
@@ -453,7 +474,7 @@ div.tocify {
 <li><code>DSBI</code>, <code>DSII</code>, <code>DSPI</code>, <code>RXQ_DRUG</code>: These data are likely from 1999-2000 (i.e. likely aggregate data and too difficult to process)</li>
 </ul>
 <p>To be able to understand our dataset, first we need a function to grab the descriptions for all of the variable-levels from the CDC web.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># page-reader function</span></span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r fold-show"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># page-reader function</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>read_page <span class="ot">&lt;-</span> <span class="cf">function</span>(url, tag) {</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  h <span class="ot">=</span> <span class="fu">read_html</span>(url)               <span class="co"># reads url input</span></span>
@@ -530,7 +551,7 @@ div.tocify {
 <span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(var_content))</span></code></pre></div>
 <p>Now that we have the “list of descriptions”, we could scan which variables/topics are of interest to us. We are particularly interested in variables potentially related to diabetes.</p>
 <p>Note however that <code>nrow =</code> 4681 has 3 more variables when compared to <code>distinct(survey_df, group_filename) =</code> 145, suggesting that there are some duplicates:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>janitor<span class="sc">::</span><span class="fu">get_dupes</span>(survey_df, group_filename)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r fold-show"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>janitor<span class="sc">::</span><span class="fu">get_dupes</span>(survey_df, group_filename)</span></code></pre></div>
 <pre><code>## # A tibble: 4,681 x 5
 ##    group_filename dupe_count category    group_var   data_name                  
 ##    &lt;chr&gt;               &lt;int&gt; &lt;fct&gt;       &lt;chr&gt;       &lt;chr&gt;                      
@@ -547,9 +568,9 @@ div.tocify {
 ## # … with 4,671 more rows</code></pre>
 <p>As we can see, these duplicates are likely from slightly different descriptions of the HPV tests. Thankfully we aren’t interested in these variables so we can “remove the duplicates” later.</p>
 </div>
-<div id="obtaining-detailed-version-of-descriptions" class="section level2">
-<h2>Obtaining Detailed Version of Descriptions</h2>
-<p>Another step we need to do is the add clarifying descriptions as some of these variables are still unclear.</p>
+<div id="obtaining-detailed-version-of-descriptions" class="section level2" number="2.2">
+<h2 number="2.2"><span class="header-section-number">2.2</span> Obtaining Detailed Version of Descriptions</h2>
+<p>Another step we need to do is the add clarifying descriptions as some of these variables are still unclear. Code is below (folded)</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>detailed_var_desc <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(category) <span class="sc">%&gt;%</span> </span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># obtaining the survey type variables</span></span>
@@ -577,12 +598,12 @@ div.tocify {
 <p>We will keep this dataframe to be used for later, once we remove variables that we are NOT interested in.</p>
 </div>
 </div>
-<div id="selecting-variables-of-interest" class="section level1">
-<h1>Selecting Variables of Interest</h1>
+<div id="selecting-variables-of-interest" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> Selecting Variables of Interest</h1>
 <p>Unfortunately, this is one of the more time-consuming portion and tedious as we need to evaluate each variable by eye to determine which variables are of specific interest.</p>
 <p>On first glance, there is an incredible amount of variables we can choose from. Nevertheless, we will aim to select variables that are typically commonly associated with diabetes. CDC reported some common factors associated with diabetes are smoking, obesity, physical inactivity, hypertension, HbA1c levels, and high cholesterol.</p>
-<div id="variables-of-interest-under-demographic-category" class="section level2">
-<h2>Variables of Interest under Demographic Category</h2>
+<div id="variables-of-interest-under-demographic-category" class="section level2" number="3.1">
+<h2 number="3.1"><span class="header-section-number">3.1</span> Variables of Interest under Demographic Category</h2>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>demo_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;demographics&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span></code></pre></div>
@@ -604,8 +625,8 @@ div.tocify {
 </ul>
 <p>Most of these variables are already included in the processed datasets within <code>rnhanesdata</code> package, except for <code>ridexprg</code>. To get these, we will try using <code>process_covar()</code> function but if not available, we will download the <code>.xpt</code> file from NHANES.</p>
 </div>
-<div id="variables-of-interest-under-dietary-category" class="section level2">
-<h2>Variables of Interest under Dietary Category</h2>
+<div id="variables-of-interest-under-dietary-category" class="section level2" number="3.2">
+<h2 number="3.2"><span class="header-section-number">3.2</span> Variables of Interest under Dietary Category</h2>
 <p>We can do similar steps with our dietary data.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>diet_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;dietary&quot;</span>) <span class="sc">%&gt;%</span> </span>
@@ -640,8 +661,8 @@ div.tocify {
 </ul>
 <p>The plan was to obtain an average of these variables over 2 days and either only use the total-energy variable or pick specific macro-nutrients (such as carbohydrates, total sugars, or fat/cholesterol)</p>
 </div>
-<div id="variables-of-interest-under-examination-category" class="section level2">
-<h2>Variables of Interest under Examination Category</h2>
+<div id="variables-of-interest-under-examination-category" class="section level2" number="3.3">
+<h2 number="3.3"><span class="header-section-number">3.3</span> Variables of Interest under Examination Category</h2>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>exam_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;examination&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
@@ -691,8 +712,8 @@ div.tocify {
 </ul>
 <p>The variables under Blood Pressure and Body Measure group variable are not readily available from the <code>rnhanesdata</code>, so it was gathered from NHANES using the package’s <code>process_covar()</code> function. The values from the Physical Activity Monitor group variable are stored under the <code>PAXINTEN_C</code> and <code>PAXINTEN_D</code> dataset from the package, so we will use those.</p>
 </div>
-<div id="variables-of-interest-under-laboratory-category" class="section level2">
-<h2>Variables of Interest under Laboratory Category</h2>
+<div id="variables-of-interest-under-laboratory-category" class="section level2" number="3.4">
+<h2 number="3.4"><span class="header-section-number">3.4</span> Variables of Interest under Laboratory Category</h2>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>lab_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;laboratory&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
@@ -704,8 +725,8 @@ div.tocify {
 <li><code>LBXGH</code>: HbA1c (glycohemoglobin) measures</li>
 </ul>
 </div>
-<div id="keeping-variables-of-interest-under-questionnaire-category" class="section level2">
-<h2>Keeping Variables of Interest under Questionnaire Category</h2>
+<div id="keeping-variables-of-interest-under-questionnaire-category" class="section level2" number="3.5">
+<h2 number="3.5"><span class="header-section-number">3.5</span> Keeping Variables of Interest under Questionnaire Category</h2>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>que_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;questionnaire&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
@@ -748,8 +769,8 @@ div.tocify {
 <p>For the physical function group variable, <code>rnhanesdata</code>’s covariate dataset already included a processed variable set that was derived from some of the PFQs of interest, but we will still use the derived variable for simplicity.</p>
 <p>Similarly, the package already re-formated/derived most of these questionnaire group-variables. As such, using what was already provided seemed prudent.</p>
 </div>
-<div id="variables-of-interest-under-limited-data-category" class="section level2">
-<h2>Variables of Interest under Limited Data Category</h2>
+<div id="variables-of-interest-under-limited-data-category" class="section level2" number="3.6">
+<h2 number="3.6"><span class="header-section-number">3.6</span> Variables of Interest under Limited Data Category</h2>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>lim_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;limited data&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
@@ -828,6 +849,11 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
 
 <script>
 $(document).ready(function ()  {

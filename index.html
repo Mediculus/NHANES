@@ -340,7 +340,7 @@ div.tocify {
 
 <p><br></br></p>
 <center>
-<a href=""><img src="img/nhanes_apple_color_tagline.png"></a>
+<a href=""><img src="_img/nhanes_apple_color_tagline.png"></a>
 </center>
 <p><br></br></p>
 <div id="about-this-project" class="section level2">
@@ -359,13 +359,13 @@ div.tocify {
 <p>The package housed 2 major datasets from NHANES that was associated with activity measures. They were the 2003-2004 and 2005-2006 survey waves (labeled C and D respectively). There are 6 major datasets in total; 2 for activity measures, 2 for activity flags, and 2 for covariates, corresponding to each waves.</p>
 <p>The activity measures dataset contained records of daily minute-by-minute activity measures (intensity) for the duration of 1 week. It appears that these activities are recorded through some wearable device. Similarly, the activity flags recorded daily minute-by-minute activity measures but these are binary measures of 0/1 indicating whether or not the wearable device was actually worn. The function <code>exclude_accel()</code> from the package allows us to compare the two datasets and keep only the activity datapoints which were deemed “reliable”.</p>
 <p>The other datasets contained an already-processed covariate dataset. Some of the variables include <code>BMI</code>, <code>Race</code>, <code>Gender</code>, or <code>DrinkStatus</code>. In its original state, there are 16 variables included in the covariate datasets, not including survey-design-related variables. However, the package does provide a function to extract more covariates, if needed, using the function <code>process_covar()</code>. The function also has an option to <code>extractAll = TRUE</code> if we decided to just get all possible covariates but this is defaulted to <code>FALSE</code>.</p>
-<p>More details can be read <a href="./rnhanesdata_eda/rnhanesdata_explore.html">here</a></p>
+<p>More details can be read <a href="./rnhanesdata_explore.html">here</a></p>
 </div>
 <div id="nhanes-survey-dataset" class="section level2">
 <h2>NHANES Survey Dataset</h2>
 <p>Since this was also my first time being exposed to any kind of survey-dataset, NHANES was an incredibly overwhelming source for me. After I attempted to extract all covariates using the <code>rnhanesdata::process_covar()</code> function, I was surprised to see that there’s 300+ variables from NHANES. This led me to build a scraping function that pulls the variable names and their descriptions.</p>
 <p>In the process, I learned that NHANES divided their variables into demographic, dietary, exam, laboratory, questionnaire, and “limited” data. Ultimately though, by collecting these variables’ descriptions into a dataframe, it really helped me get a much better sense of what NHANES recorded and quickly select which variables I’d like to focus more on. Additionally, I was also able to quickly assess which variables might be named differently but measured the same thing.</p>
-<p>More can be read <a href="./codebook_scrape/codebook_data.Rmd">here</a></p>
+<p>More can be read <a href="./codebook_data.html">here</a></p>
 </div>
 <div id="machine-learning-using-tidymodels" class="section level2">
 <h2>Machine Learning using <code>tidymodels</code></h2>
