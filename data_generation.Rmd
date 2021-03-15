@@ -1,10 +1,7 @@
 ---
-title: "NHANES Data Generation"
-author: "Kevin S.W. --- UNI: ksw2137"
-date: "`r format(Sys.time(), '%x')`"
+title: "NHANES Dataset Generation"
 output: 
   html_document:
-    theme: flatly
     highlight: pygments
     toc: true
     toc_float: true
