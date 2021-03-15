@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Scraping NHANES Codebook</title>
+
+<script src="site_libs/header-attrs-2.7/header-attrs.js"></script>
+<script src="site_libs/jquery-3.5.1/jquery-3.5.1.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+<link href="site_libs/bootstrap-4.5.3/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-4.5.3/bootstrap.bundle.min.js"></script>
+<script src="site_libs/bs3compat-0.2.4/tabs.js"></script>
+<script src="site_libs/bs3compat-0.2.4/bs3compat.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-sm-12 col-md-4 col-lg-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-sm-12 col-md-8 col-lg-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">NHANES Predictive Modeling</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="about.html">
+    <span class="fas fa-user-ninja fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="mailto:&lt;ksw2137@columbia.edu&gt;">
+    <span class="fab fa-telegram-plane fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://www.linkedin.com/in/kwongso/">
+    <span class="fa fa fa fa-linkedin-square fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/Mediculus">
+    <span class="fa fa fa fa-github-alt fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Scraping NHANES Codebook</h1>
+
+</div>
+
+
+<div id="cdcs-nhanes-codebook-filtering" class="section level1">
+<h1>CDC’s NHANES Codebook Filtering</h1>
+<p>Purpose of this document is to obtain descriptions on the variables that is collected for NHANES. For my project in particular, we are interested in variables that might be associated with diabetes in addition to those already included in the <code>rnhanesdata</code> package. While we won’t select all of the possible variables, we will try to search for those that are most commonly known to affect this disease.</p>
+</div>
+<div id="scraping-nhanes-codebook" class="section level1">
+<h1>Scraping NHANES Codebook</h1>
+<div id="obtaining-variable-descriptions" class="section level2">
+<h2>Obtaining Variable Descriptions</h2>
+<p>By consulting CDC’s <a href="https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Demographics&amp;CycleBeginYear=2005">NHANES website</a>, we could check 1-by-1 which variables are actually relevant to our interest. As tedious as it was, unfortunately this is the only method that can be done without further assistance or access to their API.</p>
+<p>Given CDC’s structure of data organization, we will give label to these structure so that the process can be followed along. CDC’s data organization is as follows:</p>
+<blockquote>
+<p>Category/Group Variable/Variable</p>
+</blockquote>
+<p>In other words, take the <code>examination</code> <strong>category</strong>, within it, we will have <strong>group variables</strong> such as “Audiometry”, which will contain various <strong>variables</strong> that is associated with “Audiometry”.</p>
+<p>Notes on removed variables:</p>
+<ul>
+<li><code>All Years</code>, <code>VID_D</code>: These variables have different links</li>
+<li><code>DSBI</code>, <code>DSII</code>, <code>DSPI</code>, <code>RXQ_DRUG</code>: These data are likely from 1999-2000 (i.e. likely aggregate data and too difficult to process)</li>
+</ul>
+<p>To be able to understand our dataset, first we need a function to grab the descriptions for all of the variable-levels from the CDC web.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># page-reader function</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>read_page <span class="ot">&lt;-</span> <span class="cf">function</span>(url, tag) {</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  h <span class="ot">=</span> <span class="fu">read_html</span>(url)               <span class="co"># reads url input</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  data_name <span class="ot">=</span> h <span class="sc">%&gt;%</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">html_nodes</span>(tag) <span class="sc">%&gt;%</span>            <span class="co"># pulls the specific html tag (for titles)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">html_text</span>()</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">tibble</span>(data_name))        <span class="co"># turns scraped data into a dataframe</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Now that we have a page-reader function, first we will scrape all the available “survey” documents’ names. To do this, we create a tibble containing the links to each of this categories (demographics, dietary, examination, laboratory, questionnaire, and limited data “surveys”).</p>
+<p>The code below creates our first dataframe that scrapes the group variables as well as the .doc filenames associated with it.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># obtaining survey type/and its topic-contents</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>survey_df <span class="ot">&lt;-</span> </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">survey_link =</span> <span class="fu">c</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="co"># demographics</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Demographics&amp;CycleBeginYear=2005&quot;</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="co"># dietary</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Dietary&amp;CycleBeginYear=2005&quot;</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>      <span class="co"># examination</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Examination&amp;CycleBeginYear=2005&quot;</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>      <span class="co"># laboratory</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Laboratory&amp;CycleBeginYear=2005&quot;</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>      <span class="co"># questionnaire</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Questionnaire&amp;CycleBeginYear=2005&quot;</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>      <span class="co"># limited data</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/DataPage.aspx?Component=Non-Public&amp;CycleBeginYear=2005&quot;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># categorizing based on CDC&#39;s classification of survey</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">category =</span> <span class="fu">c</span>(<span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;dietary&quot;</span>, <span class="st">&quot;examination&quot;</span>, <span class="st">&quot;laboratory&quot;</span>, <span class="st">&quot;questionnaire&quot;</span>, <span class="st">&quot;limited data&quot;</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">category =</span> <span class="fu">factor</span>(category),</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Obtaining the group variable descriptors</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_var =</span> <span class="fu">map</span>(<span class="at">.x =</span> survey_link,</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>                     <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td.text-left&quot;</span>)),</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Obtaining the filenames for each group variables</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_filename =</span> <span class="fu">map</span>(<span class="at">.x =</span> survey_link,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>                          <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;.text-center:nth-child(2) a&quot;</span>))</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(group_var, group_filename), <span class="at">names_repair =</span> tidyr_legacy) <span class="sc">%&gt;%</span>   </span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Rename to proper descriptors (Group variable name)</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_var =</span> data_name,</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Rename to proper descriptors (filename for group variables)</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_filename =</span> data_name1                          </span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="co"># remove the &quot;Doc&quot; text at the end of every filename in group_filename</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_filename =</span> <span class="fu">gsub</span>(<span class="st">&quot; Doc&quot;</span>, <span class="st">&quot;&quot;</span>, group_filename)    </span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>  <span class="co"># remove the odd-one-out survey links</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(group_filename <span class="sc">%in%</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>             <span class="fu">c</span>(<span class="st">&quot;All Years&quot;</span>, <span class="st">&quot;VID_D&quot;</span>, <span class="st">&quot;DSBI&quot;</span>, <span class="st">&quot;DSII&quot;</span>, <span class="st">&quot;DSPI&quot;</span>, <span class="st">&quot;RXQ_DRUG&quot;</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># creating url for each group variables; prep for scraping the individual variables. </span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">var_url =</span> <span class="fu">case_when</span>(category <span class="sc">!=</span> <span class="st">&quot;limited data&quot;</span> <span class="sc">~</span> </span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">str_c</span>(<span class="st">&quot;https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/&quot;</span>, group_filename, <span class="st">&quot;.htm&quot;</span>),</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>                        category <span class="sc">==</span> <span class="st">&quot;limited data&quot;</span> <span class="sc">~</span> </span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">str_c</span>(<span class="st">&quot;https://wwwn.cdc.gov/Nchs/Nhanes/limited_access/&quot;</span>, group_filename, <span class="st">&quot;.htm&quot;</span>))</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>    <span class="co"># mapping our scraper to obtain the individual variables, nested by group variable.</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">var_content =</span> <span class="fu">map2</span>(<span class="at">.x =</span> var_url,                     </span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>                       <span class="at">.y =</span> <span class="st">&quot;#CodebookLinks a&quot;</span>, </span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>                       <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> .y))</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>  <span class="co"># remove unneeded column</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>survey_link, <span class="sc">-</span>var_url)</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>survey_df <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(var_content))</span></code></pre></div>
+<p>Now that we have the “list of descriptions”, we could scan which variables/topics are of interest to us. We are particularly interested in variables potentially related to diabetes.</p>
+<p>Note however that <code>nrow =</code> 4681 has 3 more variables when compared to <code>distinct(survey_df, group_filename) =</code> 145, suggesting that there are some duplicates:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>janitor<span class="sc">::</span><span class="fu">get_dupes</span>(survey_df, group_filename)</span></code></pre></div>
+<pre><code>## # A tibble: 4,681 x 5
+##    group_filename dupe_count category    group_var   data_name                  
+##    &lt;chr&gt;               &lt;int&gt; &lt;fct&gt;       &lt;chr&gt;       &lt;chr&gt;                      
+##  1 ACQ_D                   6 questionna… Acculturat… SEQN - Respondent sequence…
+##  2 ACQ_D                   6 questionna… Acculturat… ACQ005 - CHECK ITEM        
+##  3 ACQ_D                   6 questionna… Acculturat… ACD010A - English usually …
+##  4 ACQ_D                   6 questionna… Acculturat… ACD010B - Spanish usually …
+##  5 ACQ_D                   6 questionna… Acculturat… ACD010C - Other language(s…
+##  6 ACQ_D                   6 questionna… Acculturat… ACD040 - Language(s) usual…
+##  7 AGQ_D                  24 questionna… Allergy     SEQN - Respondent sequence…
+##  8 AGQ_D                  24 questionna… Allergy     AGQ010 - Doctor told have …
+##  9 AGQ_D                  24 questionna… Allergy     AGD020 - Age when first ha…
+## 10 AGQ_D                  24 questionna… Allergy     AGQ030 - Episode of hay fe…
+## # … with 4,671 more rows</code></pre>
+<p>As we can see, these duplicates are likely from slightly different descriptions of the HPV tests. Thankfully we aren’t interested in these variables so we can “remove the duplicates” later.</p>
+</div>
+<div id="obtaining-detailed-version-of-descriptions" class="section level2">
+<h2>Obtaining Detailed Version of Descriptions</h2>
+<p>Another step we need to do is the add clarifying descriptions as some of these variables are still unclear.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>detailed_var_desc <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(category) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># obtaining the survey type variables</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(category, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># adding url for each survey type</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">detailed_var_url =</span> </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">case_when</span>(category <span class="sc">!=</span> <span class="st">&quot;limited data&quot;</span> <span class="sc">~</span> </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">str_c</span>(<span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?Component=&quot;</span>, </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                        category, <span class="st">&quot;&amp;CycleBeginYear=2005&quot;</span>),</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                category <span class="sc">==</span> <span class="st">&quot;limited data&quot;</span> <span class="sc">~</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?CycleBeginYear=2005&amp;Component=Non-Public&quot;</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># obtaining variable ID and the detailed descriptions</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">var_name =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(1)&quot;</span>)),</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">detailed_var_content =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(2)&quot;</span>)),</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_filename =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(3)&quot;</span>))</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>detailed_var_url) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(var_name, detailed_var_content, group_filename), <span class="at">names_repair =</span> tidyr_legacy) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">&quot;var_name&quot;</span> <span class="ot">=</span> data_name,</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;det_var_desc&quot;</span> <span class="ot">=</span> data_name1,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;group_filename&quot;</span> <span class="ot">=</span> data_name2)</span></code></pre></div>
+<p>We will keep this dataframe to be used for later, once we remove variables that we are NOT interested in.</p>
+</div>
+</div>
+<div id="selecting-variables-of-interest" class="section level1">
+<h1>Selecting Variables of Interest</h1>
+<p>Unfortunately, this is one of the more time-consuming portion and tedious as we need to evaluate each variable by eye to determine which variables are of specific interest.</p>
+<p>On first glance, there is an incredible amount of variables we can choose from. Nevertheless, we will aim to select variables that are typically commonly associated with diabetes. CDC reported some common factors associated with diabetes are smoking, obesity, physical inactivity, hypertension, HbA1c levels, and high cholesterol.</p>
+<div id="variables-of-interest-under-demographic-category" class="section level2">
+<h2>Variables of Interest under Demographic Category</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>demo_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;demographics&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span></code></pre></div>
+<p>Under demographic survey data, we see that variables of interest are:</p>
+<ul>
+<li><code>SEQN</code>: Sequence number</li>
+<li><code>SDDSRVYR</code>: Data release number (likely “wave” ID)</li>
+<li><code>RIDSTATR</code>: Interview (1) or interview + exam (2), NA otherwise</li>
+<li><code>RIAGENDR</code>: Gender</li>
+<li><code>RIDAGEYR</code>: Age at screening in years</li>
+<li><code>RIDRETH1</code>: Ethnicity</li>
+<li><code>DMDEDUC2</code>: Education level (aged 20+)</li>
+<li><code>RIDEXPRG</code>: Pregnancy status</li>
+<li><code>INDFMPIR</code>: Family Poverty Income Ratio (PIR; family income:poverty threshold)</li>
+<li><code>WTINT2YR</code>: Full sample 2-year interview weight</li>
+<li><code>WTMEC2YR</code>: Full sample 2-year MEC exam weight</li>
+<li><code>SDMVPSU</code>: Masked variance pseudo-PSU</li>
+<li><code>SDMVSTRA</code>: Masked variance pseudo-stratum</li>
+</ul>
+<p>Most of these variables are already included in the processed datasets within <code>rnhanesdata</code> package, except for <code>ridexprg</code>. To get these, we will try using <code>process_covar()</code> function but if not available, we will download the <code>.xpt</code> file from NHANES.</p>
+</div>
+<div id="variables-of-interest-under-dietary-category" class="section level2">
+<h2>Variables of Interest under Dietary Category</h2>
+<p>We can do similar steps with our dietary data.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>diet_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;dietary&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># used to check &quot;unique&quot; data descriptions to quickly filter out which categories might be of interest to explore</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#distinct(diet_survey, var_name)</span></span></code></pre></div>
+<p>While we had some variables of interest from the dietary category, it was quite difficult incorporating the sample weights to these variables and we unfortunately <strong>did not include any of the variables from this dietary category</strong>. Our original variables of interest are:</p>
+<ul>
+<li>Dietary Interview - Total Nutrient Intakes, First Day:
+<ul>
+<li><code>DR1TKCAL</code>: energy (kcal)</li>
+<li><code>DR1TPROT</code>: protein (gm)</li>
+<li><code>DR1TCARB</code>: carbs (gm)</li>
+<li><code>DR1TSUGR</code>: total sugars (gm)</li>
+<li><code>DR1TFIBE</code>: dietary fibers (gm)</li>
+<li><code>DR1TTFAT</code>: total fat (gm)</li>
+<li><code>DR1TSFAT</code>: total sat. FA (gm)</li>
+<li><code>DR1TCHOL</code>: cholesterol (mg)</li>
+</ul></li>
+<li>Dietary Interview - Total Nutrient Intakes, Second Day:
+<ul>
+<li><code>DR2TKCAL</code>: energy (kcal)</li>
+<li><code>DR2TPROT</code>: protein (gm)</li>
+<li><code>DR2TCARB</code>: carbs (gm)</li>
+<li><code>DR2TSUGR</code>: total sugars (gm)</li>
+<li><code>DR2TFIBE</code>: dietary fibers (gm)</li>
+<li><code>DR2TTFAT</code>: total fat (gm)</li>
+<li><code>DR2TSFAT</code>: total sat. FA (gm)</li>
+<li><code>DR2TCHOL</code>: cholesterol (mg)</li>
+</ul></li>
+</ul>
+<p>The plan was to obtain an average of these variables over 2 days and either only use the total-energy variable or pick specific macro-nutrients (such as carbohydrates, total sugars, or fat/cholesterol)</p>
+</div>
+<div id="variables-of-interest-under-examination-category" class="section level2">
+<h2>Variables of Interest under Examination Category</h2>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>exam_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;examination&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># used to check &quot;unique&quot; data descriptions to quickly filter out which categories might be of interest to explore</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#janitor::get_dupes(exam_survey, var_name)</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#exam_survey %&gt;% </span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">#  distinct(var_name)</span></span></code></pre></div>
+<p>Variables of interest in this category are:</p>
+<ul>
+<li>Blood Pressure:
+<ul>
+<li><code>BPXPLS</code>: 60 sec pulse (30s x2)</li>
+<li><code>BPXSY*</code>: systolic BP readings:
+<ul>
+<li>1: 1st reading</li>
+<li>2: 2nd reading</li>
+<li>3: 3rd reading</li>
+<li>4: 4th reading (if 3rd reading was not successful)</li>
+</ul></li>
+<li><code>BPXDI*</code>: diastolic BP readings:
+<ul>
+<li>1: 1st reading</li>
+<li>2: 2nd reading</li>
+<li>3: 3rd reading</li>
+<li>4: 4th reading (if 3rd reading was not successful)</li>
+</ul></li>
+</ul></li>
+<li>Body Measures:
+<ul>
+<li><code>BMXWT</code>: weight (kg)</li>
+<li><code>BMXHT</code>: standing height (cm)</li>
+<li><code>BMXBMI</code>: BMI (kg/m^2)</li>
+<li><code>BMXWAIST</code>: waist circumference (cm)</li>
+</ul></li>
+<li>Physical Activity Monitor
+<ul>
+<li><code>PAXSTAT</code>: Data reliability status flag</li>
+<li><code>PAXCAL</code>: Device calibration indicator</li>
+<li><code>PAXDAY</code>: Day of the week</li>
+<li><code>PAXN</code>: Sequential observation number</li>
+<li><code>PAXHOUR</code>: Hour of the day</li>
+<li><code>PAXMINUT</code>: Minute of the hour</li>
+<li><code>PAXINTEN</code>: Device intensity value</li>
+</ul></li>
+</ul>
+<p>The variables under Blood Pressure and Body Measure group variable are not readily available from the <code>rnhanesdata</code>, so it was gathered from NHANES using the package’s <code>process_covar()</code> function. The values from the Physical Activity Monitor group variable are stored under the <code>PAXINTEN_C</code> and <code>PAXINTEN_D</code> dataset from the package, so we will use those.</p>
+</div>
+<div id="variables-of-interest-under-laboratory-category" class="section level2">
+<h2>Variables of Interest under Laboratory Category</h2>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>lab_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;laboratory&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># used to check &quot;unique&quot; data descriptions to quickly filter out which categories might be of interest to explore</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#janitor::get_dupes(lab_survey, var_name)</span></span></code></pre></div>
+<p>One laboratory test that was typically used to support diagnosis of diabetes is the glycohemoglobin test (HbA1c). NHANES has these lab test results as well, so we will obtain the variable. There are other variables that are potentially of interest (such as cholesterol levels) but since we are aiming for common predictors, we’d like to minimize our lab-test variables.</p>
+<ul>
+<li><code>LBXGH</code>: HbA1c (glycohemoglobin) measures</li>
+</ul>
+</div>
+<div id="keeping-variables-of-interest-under-questionnaire-category" class="section level2">
+<h2>Keeping Variables of Interest under Questionnaire Category</h2>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>que_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;questionnaire&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># used to check &quot;unique&quot; data descriptions to quickly filter out which categories might be of interest to explore</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#janitor::get_dupes(que_survey, var_name)</span></span></code></pre></div>
+<p>Questionnaires of interest:</p>
+<ul>
+<li>Alcohol Use:
+<ul>
+<li><code>ALQ120Q</code>: how often drinking alcohol over the past 12 months.</li>
+<li><code>ALQ120U</code>: unit of measure (days, weeks, months, or years of drinking alcohol)</li>
+</ul></li>
+<li>Diabetes:
+<ul>
+<li><code>DIQ010</code>: Diagnosis of diabetes</li>
+</ul></li>
+<li>Medical Conditions:
+<ul>
+<li><code>MCQ160B</code>: Diagnosis of congestive heart failure (CHF)</li>
+<li><code>MCQ160C</code>: Diagnosis of coronary heart diseases (CHD)</li>
+<li><code>MCQ160F</code>: Diagnosis of stroke (CVA)</li>
+<li><code>MCQ220</code>: Diagnosis of any cancer (CA)</li>
+</ul></li>
+<li>Physical Functioning:
+<ul>
+<li><code>PFQ049</code>: Limitations keeping you from working</li>
+<li><code>PFQ054</code>: Need special equipment to walk</li>
+<li><code>PFQ059</code>: Physical, mental, or emotional limitations</li>
+<li><code>PFQ061B</code>: Walking for a quarter mile difficulty</li>
+<li><code>PFQ061C</code>: Walking up 10 steps difficulty</li>
+<li><code>PFQ061D</code>: Stooping, crouching, or kneeling difficulty</li>
+</ul></li>
+<li>Smoking - Cigarette Use
+<ul>
+<li><code>SMQ020</code>: Smoked at least 100 cigarettes in life</li>
+<li><code>SMQ040</code>: Still smoking cigarettes?</li>
+</ul></li>
+</ul>
+<p>For the physical function group variable, <code>rnhanesdata</code>’s covariate dataset already included a processed variable set that was derived from some of the PFQs of interest, but we will still use the derived variable for simplicity.</p>
+<p>Similarly, the package already re-formated/derived most of these questionnaire group-variables. As such, using what was already provided seemed prudent.</p>
+</div>
+<div id="variables-of-interest-under-limited-data-category" class="section level2">
+<h2>Variables of Interest under Limited Data Category</h2>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>lim_survey <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(category <span class="sc">==</span> <span class="st">&quot;limited data&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>category, <span class="sc">-</span>group_filename)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># used to check &quot;unique&quot; data descriptions to quickly filter out which categories might be of interest to explore</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#janitor::get_dupes(lim_survey, var_name)</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#lim_survey %&gt;% </span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#  distinct(data_desc)</span></span></code></pre></div>
+<p>These variables appear to be location-associated or for a more-specific population. Thus, none of the variables from this category will be added to our dataset.</p>
+<p><br></br></p>
+<div style="text-align: right">
+<a href="../index.html">Return to Homepage</a>
+</div>
+</div>
+</div>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+
+ 
+<hr />
+<p style="text-align: center;">
+A work by <a href="https://github.com/Mediculus/">Kevin S.W.</a>
+</p>
+<p style="text-align: center;">
+<span style="color: #808080;"><em><a href="mailto:ksw2137@columbia.edu" class="email">ksw2137@columbia.edu</a></em></span>
+</p>
+<!-- Add icon library -->
+<p><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"></p>
+<!-- Add font awesome icons -->
+<p style="text-align: center;">
+<a href="https://www.linkedin.com/in/kwongso/" class="fa fa-linkedin-square fa-lg"></a> <a href="https://github.com/Mediculus/" class="fa fa-github-alt fa-lg"></a>
+</p>
+<p> </p>
+
+
+
+
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

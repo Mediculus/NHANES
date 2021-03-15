@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.dim = c(10, 4), fig.align = "center", res
 
 <br></br>
 
-<center><a href=""><img src="img/nhanes_apple_color_tagline.png"></a></center>
+<center><a href=""><img src="_img/nhanes_apple_color_tagline.png"></a></center>
 
 <br></br>
 
@@ -40,7 +40,7 @@ The activity measures dataset contained records of daily minute-by-minute activi
 
 The other datasets contained an already-processed covariate dataset. Some of the variables include `BMI`, `Race`, `Gender`, or `DrinkStatus`. In its original state, there are 16 variables included in the covariate datasets, not including survey-design-related variables. However, the package does provide a function to extract more covariates, if needed, using the function `process_covar()`. The function also has an option to `extractAll = TRUE` if we decided to just get all possible covariates but this is defaulted to `FALSE`.
 
-More details can be read [here](./rnhanesdata_eda/rnhanesdata_explore.html)
+More details can be read [here](./rnhanesdata_explore.html)
 
 ## NHANES Survey Dataset
 
@@ -48,7 +48,7 @@ Since this was also my first time being exposed to any kind of survey-dataset, N
 
 In the process, I learned that NHANES divided their variables into demographic, dietary, exam, laboratory, questionnaire, and "limited" data. Ultimately though, by collecting these variables' descriptions into a dataframe, it really helped me get a much better sense of what NHANES recorded and quickly select which variables I'd like to focus more on. Additionally, I was also able to quickly assess which variables might be named differently but measured the same thing. 
 
-More can be read [here](./codebook_scrape/codebook_data.Rmd)
+More can be read [here](./codebook_data.html)
 
 ## Machine Learning using `tidymodels`
 
