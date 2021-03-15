@@ -454,9 +454,13 @@ div.tocify {
 </div>
 
 
-<div id="background-and-objective" class="section level1" number="1">
-<h1 number="1"><span class="header-section-number">1</span> Background and objective</h1>
+<div style="text-align: right">
+<a href="./index.html">Return to Homepage</a>
+</div>
+<p><br></br></p>
 <p>This section details the dataset generation steps that will ultimately be used for our predictive modeling purposes.</p>
+<div id="background-objective" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Background &amp; Objective</h1>
 <p>The goal of this project is to build a predictive modeling for diagnosis of diabetes using machine learning algorithms–LASSO and Random Forest–in the setting of imbalanced dataset. The predictors chosen are primarily from the <code>rnhanesdata</code>’s covariates dataset that span NHANES datasets from 2003-2004 and 2005-2006. Predictor variables will be commonly-found biological, environmental, and behavioral factors associated with diabetes. These variables are typically part of your routine physical exams with physicians, medical histories, demographics, as well as physical activity level. Some other potentially useful variables include household income, family poverty income ratio (PIR), and education level.</p>
 <p>The issue of imbalanced datasets occur when there’s a difference in the frequency between two classes–in our case, diagnosis of diabetes. Since diagnosis involves a binary outcome (yes/no), it does make the imbalanced problem easier to manage. Nevertheless, this causes issue with machine learning algorithms as conventional metrics used to evaluate them become inaccurate. Several ways to mitigate this issue involves data-level approach which are considered “sub-sampling”. Therefore, we will apply these various sub-sampling methods and evaluate which method works best in properly predicting the diagnosis of diabetes.</p>
 <p>Additionally, since conventional metrics will be inaccurate, we will obtain other kinds of metrics that are more sensitive to this imbalance and they are:</p>

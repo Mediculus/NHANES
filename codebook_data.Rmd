@@ -143,14 +143,11 @@ survey_df <-
   ) %>% 
   # remove unneeded column
   select(-survey_link, -var_url)
-
-survey_df <- survey_df %>% 
-  unnest(cols = c(var_content))
 ```
 
 Now that we have the "list of descriptions", we could scan which variables/topics are of interest to us. We are particularly interested in variables potentially related to diabetes.
 
-Note however that `nrow =` `r nrow(survey_df)` has 3 more variables when compared to `distinct(survey_df, group_filename) =` `r nrow(distinct(survey_df, group_filename))`, suggesting that there are some duplicates:
+Before we move forward, we should check for potential duplicate group variables.
 
 ```{r surveydf_dupe_check, class.source = 'fold-show'}
 janitor::get_dupes(survey_df, group_filename)
@@ -163,6 +160,11 @@ As we can see, these duplicates are likely from slightly different descriptions 
 Another step we need to do is the add clarifying descriptions as some of these variables are still unclear. Code is below (folded)
 
 ```{r detailed_var_desc_scrape}
+# unnest the variable cols
+survey_df <- survey_df %>% 
+  unnest(cols = c(var_content))
+
+# get a different df for detailed descriptions
 detailed_var_desc <- survey_df %>% 
   select(category) %>% 
   # obtaining the survey type variables

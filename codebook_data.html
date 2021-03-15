@@ -457,6 +457,7 @@ div.tocify {
 <div style="text-align: right">
 <a href="./index.html">Return to Homepage</a>
 </div>
+<p><br></br></p>
 <p>Purpose of this document is to obtain descriptions on the variables that is collected for NHANES. For my project in particular, we are interested in variables that might be associated with diabetes in addition to those already included in the <code>rnhanesdata</code> package. While we won’t select all of the possible variables, we will try to search for those that are most commonly known to affect this disease.</p>
 <div id="scraping-nhanes-codebook" class="section level1" number="1">
 <h1 number="1"><span class="header-section-number">1</span> Scraping NHANES Codebook</h1>
@@ -545,56 +546,49 @@ div.tocify {
 <span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>                       <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> .y))</span>
 <span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>  <span class="co"># remove unneeded column</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>survey_link, <span class="sc">-</span>var_url)</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>survey_df <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(var_content))</span></code></pre></div>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>survey_link, <span class="sc">-</span>var_url)</span></code></pre></div>
 <p>Now that we have the “list of descriptions”, we could scan which variables/topics are of interest to us. We are particularly interested in variables potentially related to diabetes.</p>
-<p>Note however that <code>nrow =</code> 4681 has 3 more variables when compared to <code>distinct(survey_df, group_filename) =</code> 145, suggesting that there are some duplicates:</p>
+<p>Before we move forward, we should check for potential duplicate group variables.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r fold-show"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>janitor<span class="sc">::</span><span class="fu">get_dupes</span>(survey_df, group_filename)</span></code></pre></div>
-<pre><code>## # A tibble: 4,681 x 5
-##    group_filename dupe_count category    group_var   data_name                  
-##    &lt;chr&gt;               &lt;int&gt; &lt;fct&gt;       &lt;chr&gt;       &lt;chr&gt;                      
-##  1 ACQ_D                   6 questionna… Acculturat… SEQN - Respondent sequence…
-##  2 ACQ_D                   6 questionna… Acculturat… ACQ005 - CHECK ITEM        
-##  3 ACQ_D                   6 questionna… Acculturat… ACD010A - English usually …
-##  4 ACQ_D                   6 questionna… Acculturat… ACD010B - Spanish usually …
-##  5 ACQ_D                   6 questionna… Acculturat… ACD010C - Other language(s…
-##  6 ACQ_D                   6 questionna… Acculturat… ACD040 - Language(s) usual…
-##  7 AGQ_D                  24 questionna… Allergy     SEQN - Respondent sequence…
-##  8 AGQ_D                  24 questionna… Allergy     AGQ010 - Doctor told have …
-##  9 AGQ_D                  24 questionna… Allergy     AGD020 - Age when first ha…
-## 10 AGQ_D                  24 questionna… Allergy     AGQ030 - Episode of hay fe…
-## # … with 4,671 more rows</code></pre>
+<pre><code>## # A tibble: 2 x 5
+##   group_filename dupe_count category  group_var                     var_content 
+##   &lt;chr&gt;               &lt;int&gt; &lt;fct&gt;     &lt;chr&gt;                         &lt;list&gt;      
+## 1 HPVSWR_D                2 laborato… Human Papillomavirus (HPV) D… &lt;tibble [43…
+## 2 HPVSWR_D                2 laborato… Human Papillomavirus (HPV) D… &lt;tibble [43…</code></pre>
 <p>As we can see, these duplicates are likely from slightly different descriptions of the HPV tests. Thankfully we aren’t interested in these variables so we can “remove the duplicates” later.</p>
 </div>
 <div id="obtaining-detailed-version-of-descriptions" class="section level2" number="1.2">
 <h2 number="1.2"><span class="header-section-number">1.2</span> Obtaining Detailed Version of Descriptions</h2>
 <p>Another step we need to do is the add clarifying descriptions as some of these variables are still unclear. Code is below (folded)</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>detailed_var_desc <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(category) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># obtaining the survey type variables</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(category, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># adding url for each survey type</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">detailed_var_url =</span> </span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">case_when</span>(category <span class="sc">!=</span> <span class="st">&quot;limited data&quot;</span> <span class="sc">~</span> </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">str_c</span>(<span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?Component=&quot;</span>, </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                        category, <span class="st">&quot;&amp;CycleBeginYear=2005&quot;</span>),</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                category <span class="sc">==</span> <span class="st">&quot;limited data&quot;</span> <span class="sc">~</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?CycleBeginYear=2005&amp;Component=Non-Public&quot;</span>)</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># obtaining variable ID and the detailed descriptions</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">var_name =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(1)&quot;</span>)),</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">detailed_var_content =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(2)&quot;</span>)),</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_filename =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(3)&quot;</span>))</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>detailed_var_url) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(var_name, detailed_var_content, group_filename), <span class="at">names_repair =</span> tidyr_legacy) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">&quot;var_name&quot;</span> <span class="ot">=</span> data_name,</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;det_var_desc&quot;</span> <span class="ot">=</span> data_name1,</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;group_filename&quot;</span> <span class="ot">=</span> data_name2)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnest the variable cols</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>survey_df <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(var_content))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># get a different df for detailed descriptions</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>detailed_var_desc <span class="ot">&lt;-</span> survey_df <span class="sc">%&gt;%</span> </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(category) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># obtaining the survey type variables</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(category, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># adding url for each survey type</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">detailed_var_url =</span> </span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">case_when</span>(category <span class="sc">!=</span> <span class="st">&quot;limited data&quot;</span> <span class="sc">~</span> </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">str_c</span>(<span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?Component=&quot;</span>, </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                        category, <span class="st">&quot;&amp;CycleBeginYear=2005&quot;</span>),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                category <span class="sc">==</span> <span class="st">&quot;limited data&quot;</span> <span class="sc">~</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?CycleBeginYear=2005&amp;Component=Non-Public&quot;</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># obtaining variable ID and the detailed descriptions</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">var_name =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(1)&quot;</span>)),</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">detailed_var_content =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(2)&quot;</span>)),</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_filename =</span> <span class="fu">map</span>(<span class="at">.x =</span> detailed_var_url, <span class="sc">~</span><span class="fu">read_page</span>(<span class="at">url =</span> .x, <span class="at">tag =</span> <span class="st">&quot;td:nth-child(3)&quot;</span>))</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>detailed_var_url) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(var_name, detailed_var_content, group_filename), <span class="at">names_repair =</span> tidyr_legacy) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">&quot;var_name&quot;</span> <span class="ot">=</span> data_name,</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;det_var_desc&quot;</span> <span class="ot">=</span> data_name1,</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;group_filename&quot;</span> <span class="ot">=</span> data_name2)</span></code></pre></div>
 <p>We will keep this dataframe to be used for later, once we remove variables that we are NOT interested in.</p>
 </div>
 </div>
