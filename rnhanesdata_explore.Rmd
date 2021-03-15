@@ -40,6 +40,9 @@ theme_set(theme_minimal() +
 
 ```
 
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
+<br></br>
+
 This section details my exploration of the `rnhanesdata` package that was the initial objective of my project (which evolved into something else eventually). This was the earliest attempt to explore what the dataset contains and whether or not I could develop something out of the provided dataset. 
 
 # Loading Dataset
@@ -255,8 +258,7 @@ To check out how I built the scraping function and what I did with it, go [here]
 rm(list=c("all_covar_c", "all_covar_d"))
 ```
 
-
 <br></br>
 
-<div style="text-align: right">[Return to Homepage](../index.html)</div>
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
 

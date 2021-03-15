@@ -1,5 +1,5 @@
 ---
-title: "Scraping NHANES Codebook"
+title: "CDC NHANES Codebook Scraping"
 output: 
   html_document:
     highlight: pygments
@@ -41,7 +41,7 @@ theme_set(theme_minimal() +
 
 ```
 
-# CDC's NHANES Codebook Filtering
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
 
 Purpose of this document is to obtain descriptions on the variables that is collected for NHANES. For my project in particular, we are interested in variables that might be associated with diabetes in addition to those already included in the `rnhanesdata` package. While we won't select all of the possible variables, we will try to search for those that are most commonly known to affect this disease.
 
@@ -400,5 +400,5 @@ rm(list=c("lim_survey"))
 
 <br></br>
 
-<div style="text-align: right">[Return to Homepage](../index.html)</div>
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
 

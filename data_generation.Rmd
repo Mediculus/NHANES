@@ -6,6 +6,7 @@ output:
     toc: true
     toc_float: true
     number_sections: true
+    code_folding: hide
 ---
 
 ```{r setup, include = FALSE, message = FALSE, warning = FALSE}
@@ -38,11 +39,16 @@ theme_set(theme_minimal() +
 
 ```
 
-# Background and objective
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
+<br></br>
 
-The goal of this study is to compare LASSO and Random Forest machine learning techniques in their ability to predict diabetic status using some commonly-found biological, environmental, and behavioral factors in the setting of imbalanced dataset. These variables are typically part of your routine physical exams with physicians, medical histories, demographics, as well as physical activity level. Some other potentially useful variables include household income, family poverty income ratio (PIR), and education level.
+This section details the dataset generation steps that will ultimately be used for our predictive modeling purposes. 
 
-Imbalanced datasets occur when there's a difference in the frequency between two classes--in our case, diagnosis of diabetes. Since diagnosis involves a binary outcome (yes/no), it does make the imbalanced problem easier to manage. Nevertheless, this causes issue with machine learning algorithms as conventional metrics used to evaluate them become inaccurate. Several ways to mitigate this issue involves data-level approach which are considered "subsampling". Therefore, we will apply these various subsampling methods and evaluate which method works best in properly predicting the diagnosis of diabetes. 
+# Background & Objective
+
+The goal of this project is to build a predictive modeling for diagnosis of diabetes using machine learning algorithms--LASSO and Random Forest--in the setting of imbalanced dataset. The predictors chosen are primarily from the `rnhanesdata`'s covariates dataset that span NHANES datasets from 2003-2004 and 2005-2006. Predictor variables will be commonly-found biological, environmental, and behavioral factors associated with diabetes. These variables are typically part of your routine physical exams with physicians, medical histories, demographics, as well as physical activity level. Some other potentially useful variables include household income, family poverty income ratio (PIR), and education level.
+
+The issue of imbalanced datasets occur when there's a difference in the frequency between two classes--in our case, diagnosis of diabetes. Since diagnosis involves a binary outcome (yes/no), it does make the imbalanced problem easier to manage. Nevertheless, this causes issue with machine learning algorithms as conventional metrics used to evaluate them become inaccurate. Several ways to mitigate this issue involves data-level approach which are considered "sub-sampling". Therefore, we will apply these various sub-sampling methods and evaluate which method works best in properly predicting the diagnosis of diabetes. 
 
 Additionally, since conventional metrics will be inaccurate, we will obtain other kinds of metrics that are more sensitive to this imbalance and they are:
 
@@ -523,3 +529,8 @@ rm(list = c("reweight_noinclude", "min_vars"))
 # save(data_df, file = "../NHANES pt2/Dataset/data.rda")
 # save(nhanes_df, file = "../NHANES pt2/Dataset/nhanes_data.rda")
 ```
+
+<br></br>
+
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
+
