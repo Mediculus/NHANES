@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.dim = c(10, 4), fig.align = "center", res
 
 <br></br>
 
-<center><a href=""><img src="_img/nhanes_apple_color_tagline.png"></a></center>
+<center><img src="./_img/nhanes_apple_color_tagline.png"></center>
 
 <br></br>
 
