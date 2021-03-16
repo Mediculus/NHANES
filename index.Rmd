@@ -1,4 +1,5 @@
 ---
+title: "NHANES Predictive Modeling"
 output: 
   html_document:
     highlight: pygments
@@ -6,6 +7,12 @@ output:
     toc_depth: 3
     toc_float: true
 ---
+
+<style>
+  .title{
+    display: none;
+  }
+</style>
 
 ```{r setup, include = FALSE, message = FALSE, warning = FALSE}
 
@@ -17,7 +24,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.dim = c(10, 4), fig.align = "center", res
 
 <br></br>
 
-<center><img src="./_img/nhanes_apple_color_tagline.png"></center>
+<center><img src="img/nhanes_apple_color_tagline.png"></center>
 
 <br></br>
 
