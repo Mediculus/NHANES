@@ -1,0 +1,915 @@
+---
+title: "Predictive Modeling"
+author: "Kevin S.W. --- UNI: ksw2137"
+date: "`r format(Sys.time(), '%x')`"
+output: 
+  html_document:
+    theme: flatly
+    highlight: pygments
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+
+# global default settings for chunks
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.dim = c(10, 4), 
+                      fig.align = "center"
+                      )
+
+
+# loaded packages; placed here to be able to load global settings
+Packages <- c("tidyverse", "patchwork", "ghibli",
+              "survey", "tidymodels", "themis", "vip")
+invisible(lapply(Packages, library, character.only = TRUE))
+
+
+# theme global setting for ggplot
+theme_set(theme_minimal() + 
+            theme(legend.position = "bottom") +
+            theme(plot.title = element_text(hjust = 0.5, size = 12),
+                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+          )
+
+```
+
+<div style="text-align: right">[Return to Homepage](./index.html)</div>
+<br></br>
+
+This section details the process of cleaning up the generated NHANES dataset, exploratory analyses, model tuning, and model comparison to ultimately select the best-performing model. 
+
+# Load required packages
+
+```{r load_package1, eval = FALSE}
+# library(tidyverse)    # general data wrangling
+# library(patchwork)    # easy way to combine various ggplot objects neatly
+# library(ghibli)       # some extra color palettes beyond viridis
+```
+
+# Dataset pre-modeling exploration
+
+## Loading dataset
+
+```{r dataset_load}
+# # load dataset from .rda file that contains NA
+# load(file = "../NHANES pt2/Dataset/data.rda")
+
+# load dataset from .rda file that DOESN'T contain NA
+load(file = "../NHANES pt2/Dataset/nhanes_data.rda")
+
+# check columns
+skimr::skim_without_charts(nhanes_df)
+```
+
+From our data-generation section, we were finally able to create a dataset after our inclusion/exclusion criteria. Recall that our inclusion/exclusion criteria are:
+
+* Those aged 20+ years old.
+* Non-pregnant female (including those who had experienced menopause)
+
+## Variable removal
+
+Now that we have our dataset, we should clean this further to remove variables that are unnecessary for our particular model-building. 
+
+Firstly, we notice that `paxcal`, `paxstat`, and `weekday` are no longer necessary. `weekday` is removed because we have obtained a summary variables that aggregated the daily values (average of daily measures). `paxcal` and `paxstat` has been isolated to only contain calibrated/reliable data and thus only contain one unique value in this dataset.
+
+We also removed `sddsrvyr` because we've obtained re-adjusted 4-year survey weight metrics (if needed). `drinks_per_week` is also removed because we have a somewhat-correlated variable that are easier for classification, `drink_status`. Similarly, we will keep `bmi_cat` and remove `bmi` given that one is a categorical analogue of the other. 
+
+Additionally, `na_any` as well as `na_sum` is no longer necessary.
+
+```{r remove_vars}
+# list of variables to be removed
+rm_var <- c("paxcal", "paxstat", "weekday", "sddsrvyr","bmi", "drinks_per_week", "na_any", "na_sum")
+
+# remove the variables
+nhanes_df <- nhanes_df %>% select(-all_of(rm_var))
+rm(list = "rm_var")
+```
+
+## Checking for factor levels and adjustment as necessary
+
+As part of the final process of cleaning the dataset, we now evaluate the factor levels, and ensure that they are coded properly so that our regressions/modeling functions take the proper outcomes of interest, etc.
+
+```{r check_factors}
+nhanes_df %>% select_if(is.factor) %>% str()
+```
+
+As we see above, certain variables are slightly disordered and we should re-arrange them properly where it makes sense.
+
+```{r factor_relevel}
+# relevel stroke to have "No" as reference, and drink status to be "Non-Drinker" as the reference.
+nhanes_df$stroke <- fct_relevel(nhanes_df$stroke, c("No", "Yes"))
+nhanes_df$drink_status <- fct_relevel(nhanes_df$drink_status, c("Non-Drinker", "Moderate Drinker", "Heavy Drinker"))
+```
+
+# Survey GLM
+
+## Evaluating univariate significance of variables
+
+Before we move further into building our predictive models and selecting the best, we should look into which variables are likely to be significant predictors. We will be requiring the help of `survey` library given the survey weights.
+
+```{r load_package2, eval = FALSE}
+library(survey)
+```
+
+After loading the package, we shall create our "survey design" first.
+
+```{r survey_glm}
+# apply controls for our sur
+svy_ctrl <- svydesign(id= ~sdmvpsu, strata = ~sdmvstra, weights = ~wtmec4yr_adj_norm, data = nhanes_df, nest = TRUE)
+```
+
+We will then build multiple glm functions that assesses individual variables' association to diabetes using survey-glm. To do this, we will create a new dataframe containing the variable names and apply the models using `map()` functions.
+
+```{r univariate_glm}
+# vector of variables that will NOT be included in the model
+svy_excl_var <- c("seqn", "sdmvpsu", "sdmvstra", "wtint4yr_adj_norm", "wtmec4yr_adj_norm")
+
+# create tibble with the variable names as column, then use purrr to map the svyglm() function
+# then use broom's tidy() and glance() to obtain metrics.
+# models were checked and was predicting the proper target outcome (diabetes = "Yes")
+survey_df <- tibble(
+  var_names = names(nhanes_df %>% select(-all_of(svy_excl_var), -diabetes)),
+  # apply glm using survey weights
+  svy_mod = map(var_names, 
+              ~svyglm(as.formula(paste0("diabetes ~ ", .x)), 
+                      design = svy_ctrl, 
+                      family = quasibinomial())),
+  # apply glm WITHOUT survey weights
+  glm_mod = map(var_names, 
+              ~glm(as.formula(paste0("diabetes ~ ", .x)), 
+                      family = binomial(), data = nhanes_df)),
+  # obtain results using tidy()
+  svy = map(svy_mod, broom::tidy),
+  glm = map(glm_mod, broom::tidy)
+  ) 
+
+
+# remove the now-unneeded model column and unnest the result/stat columns
+# filter out the "intercept" variables from the "term" column since we're not interested in those.
+# also create new column; binary indicator for p-value < 0.05 (TRUE) or not (FALSE)
+survey_df <- survey_df %>% select(-svy_mod, -glm_mod) %>% unnest(cols = c(svy, glm), names_sep = "_") %>% 
+  filter(svy_term != "(Intercept)", glm_term != "(Intercept)") %>% 
+  mutate(svy_pval_sig = ifelse(svy_p.value < 0.05, T, F),
+         glm_pval_sig = ifelse(glm_p.value < 0.05, T, F),
+         glm_pval_higher = ifelse(glm_p.value > svy_p.value, T, F))
+
+
+# assess beta estimates
+survey_df %>% 
+  select(var_names, svy_term, ends_with(c("estimate", "p.value", "higher", "pval_sig"))) %>% 
+  view()
+
+
+# filter for variables with p-values that are different between the models
+# found 4 variables that changed; race, drink status, cigarette status, pulse quality
+survey_df %>% filter(svy_pval_sig != glm_pval_sig) %>% 
+  select(var_names, svy_term, svy_p.value, glm_p.value, glm_pval_higher, svy_pval_sig, glm_pval_sig) %>% view()
+```
+
+## Applying Backwards Selection using Survey GLM
+
+```{r manual_backwards_glm}
+# variable list that will be tested with the model (test_vars)
+# also create another variable (exc_vars) that will be modified during model selection; this is initiated as the start
+# further modified within the for loop
+exc_vars <- test_vars  <- distinct(survey_df, var_names) %>% filter(!(var_names %in% c("drink_status", "gender"))) %>% pull(var_names)
+
+# create empty vectors to contain variables/values of interest necessary for backwards selection
+# -1 to remove "intercept model" where no predictors are fitted
+epic_vec  <- model_vec <- rep(NA, length(test_vars)-1)
+
+# for loop to do manual backward selection
+for(i in 1:(length(test_vars)-1)){
+    # stores the AIC values for models run within a given i value
+     epic_ij <- rep(NA,length(exc_vars))
+
+    # another for loop that tries all possible combinations given the "current" exc_vars variables
+    for(k in 1:length(exc_vars)){
+        # create predictors excluding "k"th variable
+        form    <- paste0(c(exc_vars[-k]), collapse="+")
+        # fit the predictors
+        fit_tmp <- svyglm(as.formula(paste("diabetes ~", form)), design = svy_ctrl, family=quasibinomial())
+        # store the AIC values for each k
+        epic_ij[k] <- extractAIC(fit_tmp, k=4)[2]
+        # remove the temporary vectors
+        rm(list=c("fit_tmp","form"))
+    }
+    # obtain the k value where AIC is minimal from the k models at a given i
+    k_cur         <- which(epic_ij == min(epic_ij))
+    # store the model predictors at this k value
+    model_vec[i]  <- paste0(c(exc_vars[-k_cur]), collapse="+")
+    # update exc_vars to remove the variable at k (because this k-th model gives the minimal AIC)
+    exc_vars      <- exc_vars[-k_cur]
+    # store the min AIC value for the "min-AIC" model at a given i
+    epic_vec[i]   <- epic_ij[k_cur]
+    # remove the "temporary" variables, then repeat the process with i+1
+    rm(list=c("k_cur", "k", "epic_ij"))
+}
+
+# obtain the overall minimal AIC value
+min(epic_vec)
+
+# extract the model with the min AIC
+model_vec[which(epic_vec == min(epic_vec))]
+
+svyglm(as.formula(paste("diabetes ~", model_vec[which(epic_vec == min(epic_vec))])), design = svy_ctrl, family=quasibinomial())
+
+glm(as.formula(paste("diabetes ~", model_vec[which(epic_vec == min(epic_vec))])), family=quasibinomial())
+```
+
+```{r clean_workspace, include = FALSE}
+# clean workspace
+rm(list=c("exc_vars", "i", "test_vars", "survey_df", "clean_survey_df", "svy_excl_var", "svy_ctrl"))
+```
+
+# Model Building and Testing
+
+**NOTE: We only showed code without running it from pre-processing to tuning models section because we saved the finished tuning result object beforehand. This was done to save time compiling for future uses. Otherwise, each compile will take ~9 hours**
+
+## Pre-processing steps
+
+### Adding custom metrics
+
+Based on the article by [source], the traditional metrics for assessing classification MLs will likely break when the binary outcome is imbalanced. 
+
+For our particular dataset, we do have quite an imbalance with diabetes diagnosis distribution as described below. 
+
+```{r percent_distro_diabetes}
+nhanes_df %>% count(diabetes) %>% mutate(pct = n/sum(n))
+```
+
+[source] provided a way to classify the degree of imbalance by ***. If we calculate ours, we are on the higher end of "moderate imbalance". 
+
+Their article further proposed alternative metrics that would potentially be more sensitive to the changes between sensitivity and specificity. 
+
+Thus, we determined to obtain these metrics:
+
+* ROC-AUC
+* Precision
+* Recall
+* F-measure
+* G-mean
+* UAR
+
+We need to add some of our own functions using `yardstick` to accommodate G-mean and UAR since `yardstick` doesn't have these, despite their comprehensive list of metrics. The code is not shown, but the construction referred to `yardstick`'s vignette on custom-metric-building.
+
+```{r custom_metrics}
+library(rlang)    # needed to create dataframe-friendly version of custom metrics
+
+# prelim function to work with class metrics
+event_col <- function(xtab, event_level) {
+  if (identical(event_level, "first")) {
+    colnames(xtab)[[1]]
+  } else {
+    colnames(xtab)[[2]]
+  }
+}
+
+# G-mean metric custom function
+g_mean_vec <- function(truth, 
+                        estimate, 
+                        estimator = NULL, 
+                        na_rm = TRUE, 
+                        event_level = "first",
+                        ...) {
+  estimator <- finalize_estimator(truth, estimator)
+  
+  g_mean_impl <- function(truth, estimate) {
+    # Create 
+    xtab <- table(estimate, truth)
+    col <- event_col(xtab, event_level)
+    col2 <- setdiff(colnames(xtab), col)
+    
+    tp <- xtab[col, col]
+    fn <- xtab[col2, col]
+    tn <- xtab[col2, col2]
+    fp <- xtab[col, col2]
+    
+    sens <- tp/(tp+fn)
+    spec <- tn/(tn+fp)
+    
+    sqrt(sens*spec)
+  }
+  
+  metric_vec_template(
+    metric_impl = g_mean_impl,
+    truth = truth,
+    estimate = estimate,
+    na_rm = na_rm,
+    cls = "factor",
+    estimator = estimator,
+    ...
+  )
+}
+
+# df version
+g_mean <- function(data, ...) {
+  UseMethod("g_mean")
+}
+
+g_mean <- new_class_metric(g_mean, direction = "maximize")
+
+g_mean.data.frame <- function(data, truth, estimate, na_rm = TRUE, ...) {
+  
+  metric_summarizer(
+    metric_nm = "g_mean",
+    metric_fn = g_mean_vec,
+    data = data,
+    truth = !! enquo(truth),
+    estimate = !! enquo(estimate), 
+    na_rm = na_rm,
+    ...
+  )
+  
+}
+
+
+# UAR custom-metric
+uar_vec <- function(truth, 
+                    estimate, 
+                    estimator = NULL, 
+                    na_rm = TRUE, 
+                    event_level = "first",
+                    ...) {
+  estimator <- finalize_estimator(truth, estimator)
+  
+  uar_impl <- function(truth, estimate) {
+    # Create 
+    xtab <- table(estimate, truth)
+    col <- event_col(xtab, event_level)
+    col2 <- setdiff(colnames(xtab), col)
+    
+    tp <- xtab[col, col]
+    fn <- xtab[col2, col]
+    tn <- xtab[col2, col2]
+    fp <- xtab[col, col2]
+    
+    sens <- tp/(tp+fn)
+    spec <- tn/(tn+fp)
+    
+    (sens+spec)/2
+  }
+  
+  metric_vec_template(
+    metric_impl = uar_impl,
+    truth = truth,
+    estimate = estimate,
+    na_rm = na_rm,
+    cls = "factor",
+    estimator = estimator,
+    ...
+  )
+}
+
+# df version
+uar <- function(data, ...) {
+  UseMethod("uar")
+}
+
+uar <- new_class_metric(uar, direction = "maximize")
+
+uar.data.frame <- function(data, truth, estimate, na_rm = TRUE, ...) {
+  
+  metric_summarizer(
+    metric_nm = "uar",
+    metric_fn = uar_vec,
+    data = data,
+    truth = !! enquo(truth),
+    estimate = !! enquo(estimate), 
+    na_rm = na_rm,
+    ...
+  )
+  
+}
+```
+
+We will then create a list for these metrics that will eventually be piped into our tuning process.
+
+```{r metric_setup}
+# metrics variable
+modmetrics <- metric_set(roc_auc, precision, recall, f_meas, g_mean, uar)
+```
+
+### Subsetting dataset into test/train (holdouts)
+
+Moving on to the actual dataset preprocessing, first we prepare our "model" dataset without id or weight variables.
+
+```{r model_df_prep1, eval = FALSE}
+#names(nhanes_df)
+
+ml_df <- nhanes_df %>% select(-seqn, -sdmvpsu, -sdmvstra, -wtint4yr_adj_norm, -wtmec4yr_adj_norm)
+```
+
+We then create train and test datasets which will be applied to each subsampling method. So first, we should create a dataframe for the subsamples. We also create a helper function to be able to apply the same splits each time (just adding a `set.seed()` function before the split each time).
+
+The split will be done by `rsample::initial_split()` function with the default proportion of 3/4 as training set.
+
+```{r mapping_initialSplit, eval = FALSE}
+# create a column for resampling method 
+model_df <- tibble(sample_type = c("none", rep("oversample", 3), "undersample"), 
+                   resamp_method = c("none", "smote", "bsmote", "adasyn", "down"))
+
+# helper function to ensure the splits are exactly the same (duplicates)
+seed_initialSplit <- function(df) {
+  set.seed(123)
+  split <- df %>% initial_split(strata = "diabetes")
+}
+
+# apply helper function
+model_df <- model_df %>% 
+  mutate(
+    dataset = list(ml_df),
+    split_data = map(dataset, seed_initialSplit),
+    train = map(split_data, training),
+    test = map(split_data, testing)
+  )
+```
+
+### V-Fold Cross Validation for each Dataset
+
+We also need to build a helper function to apply the same folding for each of the resampling applied to the subsampling methods. A 5-fold CV will be applied.
+
+```{r mapping_vfoldcv, eval = FALSE}
+# helper function with 5-fold as default
+seed_vfold <- function(df, v = 5) {
+  set.seed(123)
+  fold <- vfold_cv(df, v = v, strata = "diabetes")
+}
+
+# apply vfold_cv to each subsampling setting
+model_df <- model_df %>% 
+  mutate(folds = map(train, seed_vfold))
+```
+
+### Building a recipe function that will apply further pre-procesing steps 
+
+We will then employ the `recipes` package to proceed with a workflow blueprint of sorts.
+
+First we create the `recipe()` for our model (i.e. blueprint). We also load `themis` package which is not officially a part of `tidymodels` yet.
+
+```{r recipe_functions, eval = FALSE}
+# function for applying subsampling method and obtaining our basic recipe
+recipe_fn <- function(train_df, subsample = NULL, method = NULL) {
+  
+  df_rec <- recipe(diabetes ~ ., data = train_df) %>% 
+    # create dummy variables for factors
+    step_dummy(all_nominal(), -all_outcomes()) %>% 
+    # apply zero-variance pre-processing
+    step_zv(all_numeric(), -all_outcomes()) %>%
+    # center and scale all numeric (note that step_dummy creates binary numeric variables)
+    step_normalize(all_numeric(), -all_outcomes())
+    
+  
+  if (subsample == "oversample") {
+    
+    if (method == "up") {
+      df_rec <- df_rec %>% 
+        step_upsample(diabetes)
+    } else if (method == "smote") {
+      df_rec <- df_rec %>% 
+        step_smote(diabetes)
+    } else if (method == "bsmote") {
+      df_rec <- df_rec %>% 
+        step_bsmote(diabetes)
+    } else if (method == "adasyn") {
+      df_rec <- df_rec %>% 
+        step_adasyn(diabetes)
+    } else if (method == "rose") {
+      df_rec <- df_rec %>% 
+        step_rose(diabetes)
+    }
+    
+  } else if (subsample == "undersample") {
+    
+    if (method == "down") {
+      df_rec <- df_rec %>% 
+        step_downsample(diabetes)
+    } else if (method == "nearmiss") {
+      df_rec <- df_rec %>% 
+        step_nearmiss(diabetes)
+    } else if (method == "tomek") {
+      df_rec <- df_rec %>% 
+        step_tomek(diabetes)
+    }
+
+  }
+  
+  return(df_rec)
+  
+}
+
+# apply function
+model_df <- model_df %>% 
+  mutate(
+    rec_base = pmap(list(train, sample_type, resamp_method), 
+                    ~recipe_fn(train_df = ..1, subsample = ..2, method = ..3))
+  )
+
+
+# since we now have a dataframe with all the necessary elements, we can remove the functions and dataframes that
+# are no longer needed.
+rm(list=c("seed_initialSplit", "seed_vfold", "recipe_fn"))
+```
+
+## Model specifications
+
+### LASSO specification
+
+`recipes` package also allows us to pre-specify our model specifications. So here, we will specify the engine to be used, as well as the tuning grid.
+
+```{r lasso_mod_setup, eval = FALSE}
+# LASSO spec
+# mixture is alpha; 1 = LASSO
+spec_lasso <- logistic_reg(penalty = tune(), mixture = 1) %>% 
+  set_engine("glmnet") %>% 
+  set_mode("classification")
+
+# Grid for lambda
+# will build a grid for lambda that contains 100 values using the max_entropy
+# randomization. As such, we need to set the seed.
+set.seed(123)
+grid_lasso <- spec_lasso %>% 
+  # obtain parameters needed to be tuned from the lasso_spec object
+  parameters() %>% 
+  # apply the max-entropy randomization method
+  grid_max_entropy(size = 100)
+```
+
+### Random Forest specification
+
+Similarly, we will also pre-specify the model and tuning grid required to perform our random forest.
+
+```{r rf_mod_setup, eval = FALSE}
+# RF spec
+spec_rf <- rand_forest(mtry = tune(), trees = tune()) %>% 
+  set_engine("ranger") %>% 
+  set_mode("classification")
+
+
+# Grid for RF
+set.seed(123)
+grid_rf <- spec_rf %>% 
+  # obtain parameters needed tuning
+  parameters() %>% 
+  # "finalize" the max number of nodes, etc since it is dependent on column variables
+  finalize(select(ml_df, -diabetes)) %>% 
+  # apply max-entropy
+  grid_max_entropy(size = 100)
+```
+
+### Building the workflow object for tuning models
+
+Now that we have all the "ingredients" ready, we will build a `workflow::workflow()` object that allows us to run these tuning models smoothly.
+
+### Building functions for workflow
+
+Firstly, we need to build some functions that allow building workflows into the `model_df`.
+
+```{r workflow_functions, eval = FALSE}
+# function to initiate workflow
+# specification, grid, and metrics should be a global object within session
+wf_fn <- function(recipe, specification) {
+  
+  # create workflow template
+  wf <- workflow() %>% 
+    add_recipe(recipe) %>% 
+    add_model(specification)
+    
+  return(wf)
+  
+}
+
+# apply workflow function to the model_df
+model_df <- model_df %>% 
+  mutate(
+    wf_lasso = map(rec_base, ~wf_fn(recipe = .x, specification = spec_lasso)),
+    wf_rf = map(rec_base, ~wf_fn(recipe = .x, specification = spec_rf))
+  )
+```
+
+## Tuning models
+
+We then start tuning the model using another helper function that allows us to map this onto our `model_df` dataframe.
+
+```{r tune_models, eval = FALSE}
+
+# function to tune models
+tune_fn <- function(workflow, resamples, grid, metrics) {
+  
+  set.seed(123)
+  model_results <- workflow %>% 
+    tune_grid(resamples = resamples,
+              grid = grid,
+              metrics = metrics,
+              control = control_grid(verbose = T,
+                                     event_level = "second", 
+                                     save_pred = T)
+              )
+
+  return(model_results)
+  
+}
+
+
+model_df <- model_df %>% 
+  mutate(
+    tune_res_lasso = map2(wf_lasso, folds, 
+                          ~tune_fn(workflow = .x, resamples = .y, 
+                                   grid = grid_lasso, metrics = modmetrics)),
+    tune_res_rf = map2(wf_rf, folds, 
+                       ~tune_fn(workflow = .x, resamples = .y, 
+                                grid = grid_rf, metrics = modmetrics))
+  )
+
+# # saving the finished tuned model so we can load off of it in the future instead of waiting ~8 hours
+# # rda version (uncompressed)
+# save(model_df, file = "../NHANES pt2/Dataset/finished_model_dataframe.rda")
+
+# # rds, compressed (gz-5 for git-compliant compression)
+# write_rds(model_df, file = "../NHANES pt2/Dataset/finished_model_dataframe_git.rds", compress = "xz", compression = 5)
+```
+
+```{r load_finished_model_df, include = FALSE}
+# # load uncompressed version
+# load(file = "../NHANES pt2/Dataset/finished_model_dataframe.rda")
+
+# load compressed version
+model_df <- read_rds(file = "../NHANES pt2/Dataset/finished_model_dataframe_git.rds")
+```
+
+### Tuning results re-arrangement
+
+Now that we've obtained our tuning results stored into our `model_df`, we should apply some small dataset re-arrangement to make it slightly tidier.
+
+```{r pivot_long}
+model_df_long <- model_df %>% 
+  pivot_longer(cols = wf_lasso:tune_res_rf,
+               # apply specification to split into several columns; 
+               # .value will be arbitrary from names_pattern 
+               # while algorithm will contain the grouped regex
+               # from names_pattern
+               names_to = c(".value", "algorithm"),
+               # builds 2 columns named wf_ or tune_res_, 
+               # and puts the values into it respectively.
+               # Then takes whatever remaining into algorithm
+               names_pattern = "(wf_|tune_res_)(.+)") %>% 
+  rename("workflows" = wf_, "tune_results" = tune_res_) %>% 
+  select(algorithm, resamp_method, everything(), -sample_type)
+```
+
+## Assessing the resampling metrics
+
+### Evaluating the metrics by graphs
+
+#### LASSO findings
+
+```{r lasso_results1}
+lasso_summary <- model_df_long %>% 
+  filter(algorithm == "lasso") %>% 
+  mutate(metrics_summary = map(tune_results, collect_metrics),
+         predictions = map(tune_results, collect_predictions)) %>% 
+  select(resamp_method, metrics_summary)
+
+
+lasso_summary %>% 
+  unnest(cols = c(metrics_summary)) %>% 
+  ggplot(aes(x = penalty, y = mean, color = resamp_method, fill = resamp_method)) +
+  geom_point(alpha = 0.5) + 
+  geom_line(alpha = 0.5) + 
+  facet_wrap(~.metric) +
+  ylab("Area under the ROC/PR Curve") +
+  scale_x_log10(labels = scales::label_number())
+```
+
+Here, we see an anomaly with precision and it appears that somehow the function calculates the wrong "positive event". As such, it is unlikely to be a reliable predictor in this case. Nevertheless, it appears to be separating the subsampling methods incredibly well with 5 clearly-visible lines. 
+
+Both F-measure and ROC-AUC was **unable** to distinguish any changes in ability to predict the minority class, which makes both measures unreliable as well.
+
+On the other hand, we could see that G-mean, UAR, and recall to be quite capable of detecting those changes. However, recall is another way of saying sensitivity and is calculated as $\frac{TP}{TP+FN}$ where TP = true positive and FN = false negative. As such, it doesn't take into account the other column that contains specificity. Conversely, G-mean and UAR takes into account both sensitivity and specificity. G-mean also was able to obtain a better separation. As such, we will use G-mean as our metric to optimize. 
+
+From these graphs, we can see that ADASYN and downsampling behaves quite similarly with ADAYSN slightly edging out downsampling methods. 
+
+#### Random Forest findings
+
+```{r rf_results}
+
+```
+
+
+### Comparing best models from each resampling method
+
+```{r best_model_compoare}
+results <- model_df_long %>% 
+  select(algorithm, resamp_method, tune_results) %>% 
+  mutate(best_hyperparam = map(tune_results, select_best, metric = "g_mean")) %>% 
+  select(-tune_results) %>% 
+  unnest(cols = c(best_hyperparam))
+
+model_df_long %>% 
+  select(algorithm, resamp_method, tune_results) %>% 
+  mutate(best_hyperparam = map(tune_results, show_best, metric = "g_mean", n = 1)) %>% 
+  select(-tune_results) %>% 
+  unnest(cols = c(best_hyperparam)) %>% 
+  arrange(desc(mean))
+
+
+raw_metrics <- model_df_long %>% 
+  select(algorithm, resamp_method, tune_results) %>% 
+  unnest(cols = c(tune_results)) %>% 
+  select(algorithm, resamp_method, id, .metrics) %>% 
+  unnest(cols = c(.metrics)) %>% 
+  filter(.metric %in% c("g_mean", "uar"))
+
+
+results %>% left_join(raw_metrics, by = c("algorithm", "resamp_method", ".config")) %>% 
+  filter(.metric == "g_mean") %>% 
+  select(algorithm, resamp_method, id, .estimate, .metric) %>% 
+  ggplot(aes(x = resamp_method, y = .estimate, color = algorithm, fill = algorithm)) +
+  geom_boxplot(alpha = 0.3) + 
+  # unite("model", algorithm:resamp_method) %>%
+  # ggplot(aes(x = model, y = .estimate, color = model, fill = model)) +
+  # geom_boxplot(alpha = 0.3) +
+  facet_wrap(~ .metric)
+```
+
+Seen from graphs ***
+
+# Finalizing model
+
+Now that we have identified the best model from our training, we will finalize it and apply the model to our whole training set and will validate it using our test set. 
+
+We then develop our specifications for the various model we will try
+
+```{r finalize_workflow, eval = FALSE}
+# helper function to apply finalize_workflow to each model
+finalize_wf_fn <- function(wf, params) {
+  
+  final_wf <- wf %>% 
+    finalize_workflow(params)
+  
+  return(final_wf)
+  
+}
+
+# apply the function and obtain the "final" dataframe
+final_model_df_long <- model_df_long %>% 
+  mutate(
+    best_hyperparams = map(tune_results, select_best, metric = "g_mean"),
+    final_workflow = map2(workflows, best_hyperparams, 
+                         ~finalize_wf_fn(wf = .x, params = .y))
+  )
+```
+
+Once we finalized our workflow, it is then time to fit it to the entire training set and evaluate using the hold-out test set.
+
+```{r final_fitting, eval = FALSE}
+# helper function to fit the final datasets
+final_fit <- function(wf, split_scheme, metrics) {
+  
+  final_model <- wf %>% 
+    last_fit(split_scheme, metrics = metrics)
+  
+  return(final_model)
+  
+}
+
+
+# apply the function
+final_dataframe <- final_model_df_long %>% 
+  mutate(
+    final_fit = map2(final_workflow, split_data, 
+                     ~final_fit(wf = .x, split_scheme = .y, metrics = modmetrics))
+  )
+
+# # saving the finalized dataframe so we can load off of it in the future
+# # rda version (uncompressed)
+# save(final_dataframe, file = "../NHANES pt2/Dataset/final_dataframe.rda")
+# # rds, compressed (xz-1 for easy, git-compliant compression)
+# write_rds(final_dataframe, file = "../NHANES pt2/Dataset/final_dataframe_git.rds", compress = "xz", compression = 5)
+```
+
+```{r load_final_dataframe, include = FALSE}
+# # load uncompressed dataframe
+# load(file = "../NHANES pt2/Dataset/final_dataframe.rda")
+
+# load compressed dataframe
+final_dataframe <- read_rds(file = "../NHANES pt2/Dataset/final_dataframe_git.rds")
+```
+
+## Final model assessments
+
+```{r}
+# df containing metrics and its final estimate (based on test set)
+metrics <- final_dataframe %>% 
+  select(sample_type, resamp_method, algorithm, final_fit) %>% 
+  unnest(col = c(final_fit)) %>% 
+  select(sample_type, resamp_method, algorithm, .metrics) %>% 
+  unnest(col = c(.metrics))
+  
+# results for g-mean metric
+metrics %>%   
+  filter(.metric == "g_mean") %>% 
+  arrange(desc(.estimate)) %>% 
+  select(algorithm, resamp_method, everything(), -sample_type, -.estimator, -.config)
+
+# results for uar metric
+metrics %>% 
+  filter(.metric == "uar") %>% 
+  arrange(desc(.estimate)) %>% 
+  select(algorithm, resamp_method, everything(), -sample_type, -.estimator, -.config)
+
+
+# obtain confusion matrix for each algorithm-subsampling pair
+conf_mat <- final_dataframe %>% 
+  select(resamp_method, algorithm, final_fit) %>% 
+  unnest(col = c(final_fit)) %>% 
+  select(resamp_method, algorithm, .predictions) %>% 
+  unnest(col = c(.predictions)) %>% 
+  group_by(resamp_method, algorithm) %>% 
+  conf_mat(diabetes, .pred_class) %>% 
+  select(algorithm, resamp_method, everything()) %>% 
+  arrange(algorithm, resamp_method)
+
+conf_mat$conf_mat
+```
+
+
+
+```{r obtain_coefficients}
+# helper function for pulling coefficients
+coef_fn <- function(algorithm, wf, train_df) {
+  
+  if (algorithm == "lasso") {
+    
+    coef <- wf %>% 
+      fit(train_df) %>% 
+      pull_workflow_fit() %>% 
+      tidy()
+    
+    return(coef)
+    
+  } 
+
+}
+
+# obtain coefficients
+coefficients <- final_dataframe %>% 
+  mutate(
+    coefs = pmap(list(algorithm, final_workflow, train), 
+                 ~coef_fn(algorithm = ..1, wf = ..2, train_df = ..3))
+  )
+
+
+coefficients$coefs[[7]] %>% 
+  filter(estimate != 0) %>% 
+  view()
+
+
+```
+
+
+
+outline the report
+figure out the pieces needed to explain
+
+in the next week or so, type up the outline
+send the rough draft. 
+
+evaluate estimates and see if reasonable
+how to explain?
+
+
+
+```{r summary_table}
+
+# Prints out the summary table
+summary(arsenal::tableby(diabetes ~ ., 
+                         data = nhanes_df %>% select(-all_of(c("seqn", "sdmvpsu", "sdmvstra", 
+                                                               "wtint4yr_adj_norm", "wtmec4yr_adj_norm"))),
+                         control = arsenal::tableby.control(
+                           total = T,
+                           test = F,
+                           # numeric.test = "kwt",
+                           # cat.test = "chisq",
+                           numeric.stats = c("meansd", "medianq1q3", "range"),
+                           cat.stats = c("countpct"),
+                           stats.labels = list(
+                             meansd = "Mean (SD)",
+                             medianq1q3 = "Median (Q1, Q3)",
+                             range = "Min - Max",
+                             countpct = "N (%)")
+                         )), 
+        title = "Table 1: Summary",
+        text = T,
+        digits = 2
+        )
+
+
+```
+
+
+
+
