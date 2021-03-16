@@ -731,6 +731,7 @@ results %>% left_join(raw_metrics, by = c("algorithm", "resamp_method", ".config
   select(algorithm, resamp_method, id, .estimate, .metric) %>% 
   filter((resamp_method == "adasyn" & algorithm == "lasso") | 
            (resamp_method == "down" & algorithm == "rf")) %>% 
+  # calculate mann whitney U test. function defaults to exact test if n < 50
   wilcox.test(formula = .estimate ~ algorithm, data = .)
 ```
 
