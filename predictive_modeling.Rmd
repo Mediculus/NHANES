@@ -4,12 +4,12 @@ author: "Kevin S.W. --- UNI: ksw2137"
 date: "`r format(Sys.time(), '%x')`"
 output: 
   html_document:
-    theme: flatly
     highlight: pygments
     toc: true
     toc_depth: 3
     toc_float: true
     number_sections: true
+    code_folding: hide
 ---
 
 ```{r setup, include = FALSE, message = FALSE, warning = FALSE}
@@ -41,43 +41,33 @@ theme_set(theme_minimal() +
 
 This section details the process of cleaning up the generated NHANES dataset, exploratory analyses, model tuning, and model comparison to ultimately select the best-performing model. 
 
-# Load required packages
-
-```{r load_package1, eval = FALSE}
-# library(tidyverse)    # general data wrangling
-# library(patchwork)    # easy way to combine various ggplot objects neatly
-# library(ghibli)       # some extra color palettes beyond viridis
-```
-
 # Dataset pre-modeling exploration
 
-## Loading dataset
+## Load required packages
 
-```{r dataset_load}
-# # load dataset from .rda file that contains NA
-# load(file = "../NHANES pt2/Dataset/data.rda")
+To do our initial work, we need these packages.
 
-# load dataset from .rda file that DOESN'T contain NA
-load(file = "../NHANES pt2/Dataset/nhanes_data.rda")
-
-# check columns
-skimr::skim_without_charts(nhanes_df)
+```{r load_package1, eval = FALSE}
+library(tidyverse)    # general data wrangling
+library(patchwork)    # easy way to combine various ggplot objects neatly
+library(ghibli)       # some extra color palettes beyond viridis
 ```
 
-From our data-generation section, we were finally able to create a dataset after our inclusion/exclusion criteria. Recall that our inclusion/exclusion criteria are:
+We then load our dataset obtained that was generated from the process described [here](./data_generation.html)
+
+```{r dataset_load}
+# load dataset from .rda file that DOESN'T contain NA
+load(file = "../NHANES/_data/nhanes_data.rda")
+```
+
+Recall that our inclusion/exclusion criteria are:
 
 * Those aged 20+ years old.
 * Non-pregnant female (including those who had experienced menopause)
 
 ## Variable removal
 
-Now that we have our dataset, we should clean this further to remove variables that are unnecessary for our particular model-building. 
-
-Firstly, we notice that `paxcal`, `paxstat`, and `weekday` are no longer necessary. `weekday` is removed because we have obtained a summary variables that aggregated the daily values (average of daily measures). `paxcal` and `paxstat` has been isolated to only contain calibrated/reliable data and thus only contain one unique value in this dataset.
-
-We also removed `sddsrvyr` because we've obtained re-adjusted 4-year survey weight metrics (if needed). `drinks_per_week` is also removed because we have a somewhat-correlated variable that are easier for classification, `drink_status`. Similarly, we will keep `bmi_cat` and remove `bmi` given that one is a categorical analogue of the other. 
-
-Additionally, `na_any` as well as `na_sum` is no longer necessary.
+The dataset is cleaned further to remove variables that are unnecessary for our particular model-building. Firstly, we notice that `paxcal`, `paxstat`, and `weekday` are no longer necessary. We also removed `sddsrvyr` because we've obtained re-adjusted 4-year survey weight metrics (if needed). `drinks_per_week` is also removed because we have a somewhat-correlated variable that are easier for classification, `drink_status`. Similarly, we will keep `bmi_cat` and remove `bmi` given that one is a categorical analogue of the other. Additionally, `na_any` as well as `na_sum` is no longer necessary.
 
 ```{r remove_vars}
 # list of variables to be removed
@@ -90,19 +80,21 @@ rm(list = "rm_var")
 
 ## Checking for factor levels and adjustment as necessary
 
-As part of the final process of cleaning the dataset, we now evaluate the factor levels, and ensure that they are coded properly so that our regressions/modeling functions take the proper outcomes of interest, etc.
+We want to evaluate the factor levels and ensure that they are coded/ordered properly so that our regressions/modeling functions take the proper outcomes of interest, etc.
 
 ```{r check_factors}
 nhanes_df %>% select_if(is.factor) %>% str()
 ```
 
-As we see above, certain variables are slightly disordered and we should re-arrange them properly where it makes sense.
+Certain variables are slightly disordered and we should re-arrange them properly where it makes sense.
 
 ```{r factor_relevel}
 # relevel stroke to have "No" as reference, and drink status to be "Non-Drinker" as the reference.
 nhanes_df$stroke <- fct_relevel(nhanes_df$stroke, c("No", "Yes"))
 nhanes_df$drink_status <- fct_relevel(nhanes_df$drink_status, c("Non-Drinker", "Moderate Drinker", "Heavy Drinker"))
 ```
+
+
 
 # Survey GLM
 
@@ -159,14 +151,13 @@ survey_df <- survey_df %>% select(-svy_mod, -glm_mod) %>% unnest(cols = c(svy, g
 
 # assess beta estimates
 survey_df %>% 
-  select(var_names, svy_term, ends_with(c("estimate", "p.value", "higher", "pval_sig"))) %>% 
-  view()
+  select(var_names, svy_term, ends_with(c("estimate", "p.value", "higher", "pval_sig")))
 
 
 # filter for variables with p-values that are different between the models
 # found 4 variables that changed; race, drink status, cigarette status, pulse quality
 survey_df %>% filter(svy_pval_sig != glm_pval_sig) %>% 
-  select(var_names, svy_term, svy_p.value, glm_p.value, glm_pval_higher, svy_pval_sig, glm_pval_sig) %>% view()
+  select(var_names, svy_term, svy_p.value, glm_p.value, glm_pval_higher, svy_pval_sig, glm_pval_sig)
 ```
 
 ## Applying Backwards Selection using Survey GLM
@@ -637,7 +628,7 @@ model_df <- model_df %>%
 # load(file = "../NHANES pt2/Dataset/finished_model_dataframe.rda")
 
 # load compressed version
-model_df <- read_rds(file = "../NHANES pt2/Dataset/finished_model_dataframe_git.rds")
+model_df <- read_rds(file = "../NHANES/_data/finished_model_dataframe_git.rds")
 ```
 
 ### Tuning results re-arrangement
@@ -669,15 +660,18 @@ model_df_long <- model_df %>%
 ```{r lasso_results1}
 lasso_summary <- model_df_long %>% 
   filter(algorithm == "lasso") %>% 
+  # get metrics and predictions into their own columns
   mutate(metrics_summary = map(tune_results, collect_metrics),
          predictions = map(tune_results, collect_predictions)) %>% 
-  select(resamp_method, metrics_summary)
+  # select just necessary columns for a summary df
+  select(algorithm, resamp_method, metrics_summary, predictions)
 
 
 lasso_summary %>% 
+  select(resamp_method, metrics_summary) %>% 
   unnest(cols = c(metrics_summary)) %>% 
   ggplot(aes(x = penalty, y = mean, color = resamp_method, fill = resamp_method)) +
-  geom_point(alpha = 0.5) + 
+  geom_point(alpha = 0.3, size = 0.7) + 
   geom_line(alpha = 0.5) + 
   facet_wrap(~.metric) +
   ylab("Area under the ROC/PR Curve") +
@@ -708,14 +702,6 @@ results <- model_df_long %>%
   select(-tune_results) %>% 
   unnest(cols = c(best_hyperparam))
 
-model_df_long %>% 
-  select(algorithm, resamp_method, tune_results) %>% 
-  mutate(best_hyperparam = map(tune_results, show_best, metric = "g_mean", n = 1)) %>% 
-  select(-tune_results) %>% 
-  unnest(cols = c(best_hyperparam)) %>% 
-  arrange(desc(mean))
-
-
 raw_metrics <- model_df_long %>% 
   select(algorithm, resamp_method, tune_results) %>% 
   unnest(cols = c(tune_results)) %>% 
@@ -736,6 +722,17 @@ results %>% left_join(raw_metrics, by = c("algorithm", "resamp_method", ".config
 ```
 
 Seen from graphs ***
+
+### Wilcoxon Rank Sum Test (Mann Whitney U Test)
+
+```{r}
+results %>% left_join(raw_metrics, by = c("algorithm", "resamp_method", ".config")) %>% 
+  filter(.metric == "g_mean") %>% 
+  select(algorithm, resamp_method, id, .estimate, .metric) %>% 
+  filter((resamp_method == "adasyn" & algorithm == "lasso") | 
+           (resamp_method == "down" & algorithm == "rf")) %>% 
+  wilcox.test(formula = .estimate ~ algorithm, data = .)
+```
 
 # Finalizing model
 
@@ -796,7 +793,7 @@ final_dataframe <- final_model_df_long %>%
 # load(file = "../NHANES pt2/Dataset/final_dataframe.rda")
 
 # load compressed dataframe
-final_dataframe <- read_rds(file = "../NHANES pt2/Dataset/final_dataframe_git.rds")
+final_dataframe <- read_rds(file = "../NHANES/_data/final_dataframe_git.rds")
 ```
 
 ## Final model assessments
