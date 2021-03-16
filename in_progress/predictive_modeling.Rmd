@@ -57,7 +57,7 @@ We then load our dataset obtained that was generated from the process described 
 
 ```{r dataset_load}
 # load dataset from .rda file that DOESN'T contain NA
-load(file = "../NHANES/_data/nhanes_data.rda")
+load(file = "./_data/nhanes_data.rda")
 ```
 
 Recall that our inclusion/exclusion criteria are:
@@ -614,21 +614,11 @@ model_df <- model_df %>%
                        ~tune_fn(workflow = .x, resamples = .y, 
                                 grid = grid_rf, metrics = modmetrics))
   )
-
-# # saving the finished tuned model so we can load off of it in the future instead of waiting ~8 hours
-# # rda version (uncompressed)
-# save(model_df, file = "../NHANES pt2/Dataset/finished_model_dataframe.rda")
-
-# # rds, compressed (gz-5 for git-compliant compression)
-# write_rds(model_df, file = "../NHANES pt2/Dataset/finished_model_dataframe_git.rds", compress = "xz", compression = 5)
 ```
 
 ```{r load_finished_model_df, include = FALSE}
-# # load uncompressed version
-# load(file = "../NHANES pt2/Dataset/finished_model_dataframe.rda")
-
 # load compressed version
-model_df <- read_rds(file = "../NHANES/_data/finished_model_dataframe_git.rds")
+model_df <- read_rds(file = "./_data/finished_model_dataframe_git.rds")
 ```
 
 ### Tuning results re-arrangement
@@ -781,20 +771,11 @@ final_dataframe <- final_model_df_long %>%
     final_fit = map2(final_workflow, split_data, 
                      ~final_fit(wf = .x, split_scheme = .y, metrics = modmetrics))
   )
-
-# # saving the finalized dataframe so we can load off of it in the future
-# # rda version (uncompressed)
-# save(final_dataframe, file = "../NHANES pt2/Dataset/final_dataframe.rda")
-# # rds, compressed (xz-1 for easy, git-compliant compression)
-# write_rds(final_dataframe, file = "../NHANES pt2/Dataset/final_dataframe_git.rds", compress = "xz", compression = 5)
 ```
 
 ```{r load_final_dataframe, include = FALSE}
-# # load uncompressed dataframe
-# load(file = "../NHANES pt2/Dataset/final_dataframe.rda")
-
 # load compressed dataframe
-final_dataframe <- read_rds(file = "../NHANES/_data/final_dataframe_git.rds")
+final_dataframe <- read_rds(file = "./_data/final_dataframe_git.rds")
 ```
 
 ## Final model assessments
