@@ -30,7 +30,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.dim = c(10, 4), fig.align = "center", res
 
 ## About This Project
 
-Hi! This project was initially an attempt to explore the `rnhanesdata` package and its contents. Due to some unexpected development however, this project developed into building a predictive model for my disease of interest--diabetes--using resources from the `rnhanesdata` package. 
+This project was initially an attempt to explore the `rnhanesdata` package and its contents. Due to some unexpected development, it developed into building a predictive model for my disease of interest--diabetes--using resources from the `rnhanesdata` package. 
 
 Over the development of this project, I faced various challenges and issues that became an opportunity to learn more about survey data, machine-learning, imbalanced class, sub-sampling methods, and metrics associated with these approaches. A proper [report](./report.html) of this project is available. This page will give you a brief overview of what I learned throughout this whole endeavor. It will be divided into several major sections:
 
@@ -43,7 +43,7 @@ Over the development of this project, I faced various challenges and issues that
 
 The package housed 2 major datasets from NHANES that was associated with activity measures. They were the 2003-2004 and 2005-2006 survey waves (labeled C and D respectively). There are 6 major datasets in total; 2 for activity measures, 2 for activity flags, and 2 for covariates, corresponding to each waves. 
 
-The activity measures dataset contained records of daily minute-by-minute activity measures (intensity) for the duration of 1 week. It appears that these activities are recorded through some wearable device. Similarly, the activity flags recorded daily minute-by-minute activity measures but these are binary measures of 0/1 indicating whether or not the wearable device was actually worn. The function `exclude_accel()` from the package allows us to compare the two datasets and keep only the activity datapoints which were deemed "reliable". 
+The "activity measures" dataset contained records of daily minute-by-minute (1440+ format) activity measures (intensity) for the duration of 1 week, recorded via wearable device. Similarly, the "activity flags" dataset recorded binary measures indicating whether or not the wearable device was actually worn in 1440+ format. The function `exclude_accel()` from the package allows us to compare the two datasets and keep only the activity datapoints which were deemed "reliable". 
 
 The other datasets contained an already-processed covariate dataset. Some of the variables include `BMI`, `Race`, `Gender`, or `DrinkStatus`. In its original state, there are 16 variables included in the covariate datasets, not including survey-design-related variables. However, the package does provide a function to extract more covariates, if needed, using the function `process_covar()`. The function also has an option to `extractAll = TRUE` if we decided to just get all possible covariates but this is defaulted to `FALSE`.
 
@@ -61,15 +61,15 @@ More can be read [here](./codebook_data.html)
 
 As I've learned more about the NHANES dataset and with a clearer picture of the direction I wanted to take this project, I decided to build a predictive model for diabetes. For this part, I divided my learning experience into two major sections below.
 
-Additionally, with my newfound goal, I decided to generate a dataset using primarily datasets from the `rnhanesdata` package as well as some additional factors available from NHANES. Detail of how I processed my final dataset, `nhanes_df`, can be found [here](./data_generation.html)
+Additionally, with my newfound goal, I decided to generate a dataset using variables primarily from the `rnhanesdata` package as well as some additional variables available from NHANES. Detail of how I processed my final dataset, `nhanes_df`, can be found [here](./data_generation.html)
 
 ### Machine Learning using `tidymodels`
 
 As the project developed into building predictive models, I had to re-orient myself with all the tools available in R. My supervisor advised me that LASSO and/or Random Forest are likely good starting points for a predictive model. At first, I attempted to use `caret` but this proved quite confusing as the function language was something that I wasn't used to. My supervisor recommended me to use the actual packages instead (`glmnet` and `ranger`). 
 
-While I eventually managed to use all these packages, I also came across `tidymodels`, the apparent successor to `caret` and appeared to play extremely well with the `tidyverse` package. With a copious amount of Google-ing, watching YouTube videos, and/or reading blogs that showcases its use, I became much more comfortable with `tidymodels` and ended up using this package to do my modeling instead. 
+While I eventually managed to use all these packages, I also came across `tidymodels`, the apparent successor to `caret` and appeared to work extremely well with the `tidyverse` package. With a copious amount of Google-ing, watching YouTube videos, and/or reading blogs that showcases its use, I became much more comfortable with `tidymodels` and ended up using this package to do my modeling instead. 
 
-You can check my [report](./report.html) to see how I've combined both `tidyverse` and `tidymodels` techniques to answer my project questions!
+You can check my [report](./report.html) to see the officiated process of my model building incorporating both `tidyverse` and `tidymodels` techniques or check out my [model-building process](./predictive_modeling.html) if you want to explore the details.
 
 ### Imbalanced Class Problem and How to Mitigate Them
 
@@ -81,5 +81,5 @@ Additionally, I also learned that the conventional metrics such as accuracy or e
 
 Ultimately, we found that G-mean was one of the metrics that was able to reasonably detect changes in performance given the imbalance. Furthermore, certain sub-sampling methods did perform worse but overall, they improved the default model. Nevertheless, I have quite a strong suspicion that part of the reason for my default model's poor performance was because my dataset had variables that were not strongly predictive of diabetes, further worsened by the imbalance in the dataset. Next step after this project would likely explore modeling using boosted models such as XGBoost. 
 
-You can check my [report](./report.html) to see how I utilized sub-sampling methods, obtained these alternate metrics, and evaluated them to arrive at my final model.
+You can check my [report](./report.html) to see the officiated process of how I utilized sub-sampling methods, and obtaining these alternate metrics or check out my [model-building process](./predictive_modeling.html) if you want to explore the details.
 

@@ -459,26 +459,10 @@ div.tocify {
 </div>
 <p><br></br></p>
 <p>This section details the dataset generation steps that will ultimately be used for our predictive modeling purposes.</p>
-<div id="background-objective" class="section level1" number="1">
-<h1 number="1"><span class="header-section-number">1</span> Background &amp; Objective</h1>
-<p>The goal of this project is to build a predictive modeling for diagnosis of diabetes using machine learning algorithms–LASSO and Random Forest–in the setting of imbalanced dataset. The predictors chosen are primarily from the <code>rnhanesdata</code>’s covariates dataset that span NHANES datasets from 2003-2004 and 2005-2006. Predictor variables will be commonly-found biological, environmental, and behavioral factors associated with diabetes. These variables are typically part of your routine physical exams with physicians, medical histories, demographics, as well as physical activity level. Some other potentially useful variables include household income, family poverty income ratio (PIR), and education level.</p>
-<p>The issue of imbalanced datasets occur when there’s a difference in the frequency between two classes–in our case, diagnosis of diabetes. Since diagnosis involves a binary outcome (yes/no), it does make the imbalanced problem easier to manage. Nevertheless, this causes issue with machine learning algorithms as conventional metrics used to evaluate them become inaccurate. Several ways to mitigate this issue involves data-level approach which are considered “sub-sampling”. Therefore, we will apply these various sub-sampling methods and evaluate which method works best in properly predicting the diagnosis of diabetes.</p>
-<p>Additionally, since conventional metrics will be inaccurate, we will obtain other kinds of metrics that are more sensitive to this imbalance and they are:</p>
-<ul>
-<li>ROC-AUC</li>
-<li>Precision</li>
-<li>Recall</li>
-<li>F-measure</li>
-<li>G-mean</li>
-<li>UAR</li>
-</ul>
-<p>These metrics will be detailed later.</p>
-<p><strong>Disclaimer: Given the complexity of NHANES data and the relative inexperience of this analyst, the final model MUST NOT be applied or used to support real decision-making. This is primarily an exercise, to the best of this analyst’s abilities, to apply what has been learned with respect to using statistical techniques to build several predictive model and comparing their accuracy/efficiency in potentially classifying future data on their diabetic status.</strong></p>
-</div>
-<div id="data-importing" class="section level1" number="2">
-<h1 number="2"><span class="header-section-number">2</span> Data importing</h1>
-<div id="required-packages" class="section level2" number="2.1">
-<h2 number="2.1"><span class="header-section-number">2.1</span> Required packages</h2>
+<div id="data-importing" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Data importing</h1>
+<div id="required-packages" class="section level2" number="1.1">
+<h2 number="1.1"><span class="header-section-number">1.1</span> Required packages</h2>
 <p>The packages required will be specified on a as-needed basis to reduce confusion. For our data importing and cleaning, we will primarily utilize <code>tidyverse</code>. We will also use <code>rnhanesdata</code> to load already-cleaned data and some other functions to obtain additional covariates. Note that the <code>rnhanesdata</code> package only contains processed NHANES dataset from the years 2003-2004 and 2005-2006, named waves C and D respectively. As such, we will limit our analyses to these time period.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rnhanesdata) <span class="co"># source of primary dataset</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)   <span class="co"># data-wrangling</span></span>
@@ -486,11 +470,9 @@ div.tocify {
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ghibli)      <span class="co"># color palette package</span></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven)       <span class="co"># to load XPT files</span></span></code></pre></div>
 </div>
-<div id="activity-data" class="section level2" number="2.2">
-<h2 number="2.2"><span class="header-section-number">2.2</span> Activity data</h2>
+<div id="activity-data" class="section level2" number="1.2">
+<h2 number="1.2"><span class="header-section-number">1.2</span> Activity data</h2>
 <p>We will load the activity data stored within the <code>rnhanesdata</code> package.</p>
-<div id="importing" class="section level3" number="2.2.1">
-<h3 number="2.2.1"><span class="header-section-number">2.2.1</span> Importing</h3>
 <p>A helper function, <code>clean_loader</code>, was used to clean up the imported data using “standardized” name conventions as well as transforming variables to factors, where appropriate.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># helper function to load, clean, and turn into tibble</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>clean_loader <span class="ot">&lt;-</span> <span class="cf">function</span>(datain) {<span class="fu">as_tibble</span>(datain) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()}</span>
@@ -503,68 +485,61 @@ div.tocify {
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>flagC <span class="ot">&lt;-</span> <span class="fu">clean_loader</span>(Flags_C)</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>flagD <span class="ot">&lt;-</span> <span class="fu">clean_loader</span>(Flags_D)</span></code></pre></div>
 <p>Both the activity (<code>act*</code>) and flag (<code>flag*</code>) datasets contains 5 critical variables along with a minute-by-minute measurement, from <code>MIN1</code> - <code>MIN1440</code>. These variables are <code>seqn</code>, <code>paxcal</code>, <code>paxstat</code>, <code>weekday</code>, <code>sddsrvyr</code>.</p>
-</div>
-<div id="pre-processing-activity-data" class="section level3" number="2.2.2">
-<h3 number="2.2.2"><span class="header-section-number">2.2.2</span> Pre-processing activity data</h3>
 <p>The <code>flag*</code> dataset loaded along with the activity dataset provides a minute-by-minute indicator on whether or not the accelerometer device was worn (0 = not worn, 1 = worn). As such, we should convert all activity counts in the activity dataset to 0 when the flag indicator = 0.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># make activity = 0 if flag = 0 (non-wear indicator)</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>min_vars <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">&quot;min&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">1440</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>min_vars <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">&quot;min&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">1440</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># make activity = 0 if flag = 0 (non-wear indicator)</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>actC[, min_vars] <span class="ot">&lt;-</span> actC[, min_vars]<span class="sc">*</span>flagC[, min_vars]</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>actD[, min_vars] <span class="ot">&lt;-</span> actD[, min_vars]<span class="sc">*</span>flagD[, min_vars]</span></code></pre></div>
 </div>
-</div>
-<div id="covariate-data" class="section level2" number="2.3">
-<h2 number="2.3"><span class="header-section-number">2.3</span> Covariate data</h2>
-<div id="importing-from-package" class="section level3" number="2.3.1">
-<h3 number="2.3.1"><span class="header-section-number">2.3.1</span> Importing from package</h3>
+<div id="covariate-data" class="section level2" number="1.3">
+<h2 number="1.3"><span class="header-section-number">1.3</span> Covariate data</h2>
+<div id="importing-from-package" class="section level3" number="1.3.1">
+<h3 number="1.3.1"><span class="header-section-number">1.3.1</span> Importing from package</h3>
 <p>We will first load the already-processed covariate data from the <code>rnhanesdata</code> package.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># default covariates from rnhanesdata package</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>covC <span class="ot">&lt;-</span> <span class="fu">clean_loader</span>(Covariate_C)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>covD <span class="ot">&lt;-</span> <span class="fu">clean_loader</span>(Covariate_D)</span></code></pre></div>
 </div>
-<div id="importing-extra-covariates-from-nhanes-using-function-in-rnhanesdata-and-directly-from-nhanes" class="section level3" number="2.3.2">
-<h3 number="2.3.2"><span class="header-section-number">2.3.2</span> Importing extra covariates from NHANES using function in <code>rnhanesdata</code> and directly from NHANES</h3>
+<div id="importing-extra-covariates-from-nhanes-using-function-in-rnhanesdata-and-directly-from-nhanes" class="section level3" number="1.3.2">
+<h3 number="1.3.2"><span class="header-section-number">1.3.2</span> Importing extra covariates from NHANES using function in <code>rnhanesdata</code> and directly from NHANES</h3>
 <p>Examining codebook from NHANES, there are a few more variables that we are interested to obtain and we will use the <code>process_covar()</code> function provided in the <code>rnhanesdata</code> package to extract these variables. Additionally, we would like to obtain the HbA1c (a diagnostic test for diabetes) from NHANES directly since the package doesn’t seem to have this data.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get additional covariates</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># variables of interest were selected that are likely to be associated with diabetes</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>extra_covariates <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="co"># Demographics: PIR, RIDEXPRG (1: yes, 2 no, </span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                      <span class="co"># 3: unsure, missing: not female/missing)</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;INDFMPIR&quot;</span>, <span class="st">&quot;RIDEXPRG&quot;</span>,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                      <span class="co"># Exam: HR, BP</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;BPXPLS&quot;</span>, <span class="st">&quot;BPXSY1&quot;</span>, <span class="st">&quot;BPXSY2&quot;</span>, <span class="st">&quot;BPXSY3&quot;</span>, <span class="st">&quot;BPXSY4&quot;</span>, </span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;BPXDI1&quot;</span>,<span class="st">&quot;BPXDI2&quot;</span>, <span class="st">&quot;BPXDI3&quot;</span>, <span class="st">&quot;BPXDI4&quot;</span>,</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                      <span class="co"># Exam: weight, height, waist measures</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;BMXWT&quot;</span>,<span class="st">&quot;BMXHT&quot;</span>, <span class="st">&quot;BMXWAIST&quot;</span>)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># obtain the covarites</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>extra_data <span class="ot">&lt;-</span> <span class="fu">process_covar</span>(<span class="at">varnames =</span> extra_covariates)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co"># isolate to wave C/D</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>extra_covC <span class="ot">&lt;-</span> <span class="fu">clean_loader</span>(extra_data<span class="sc">$</span>Covariate_C)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>extra_covD <span class="ot">&lt;-</span> <span class="fu">clean_loader</span>(extra_data<span class="sc">$</span>Covariate_D)</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="st">&quot;extra_data&quot;</span>)</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># easily-obtained variables of interest to be associated with diabetes</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>extra_covariates <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="co"># Demographics: PIR, RIDEXPRG (1: yes, 2 no, </span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                      <span class="co"># 3: unsure, NA: not female/missing)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;INDFMPIR&quot;</span>, <span class="st">&quot;RIDEXPRG&quot;</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                      <span class="co"># Exam: HR, BP</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;BPXPLS&quot;</span>, <span class="st">&quot;BPXSY1&quot;</span>, <span class="st">&quot;BPXSY2&quot;</span>, <span class="st">&quot;BPXSY3&quot;</span>, <span class="st">&quot;BPXSY4&quot;</span>, </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;BPXDI1&quot;</span>,<span class="st">&quot;BPXDI2&quot;</span>, <span class="st">&quot;BPXDI3&quot;</span>, <span class="st">&quot;BPXDI4&quot;</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                      <span class="co"># Exam: weight, height, waist measures</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;BMXWT&quot;</span>,<span class="st">&quot;BMXHT&quot;</span>, <span class="st">&quot;BMXWAIST&quot;</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># obtain the covariates</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>extra_data <span class="ot">&lt;-</span> <span class="fu">process_covar</span>(<span class="at">varnames =</span> extra_covariates)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co"># isolate to wave C/D</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>extra_covC <span class="ot">&lt;-</span> <span class="fu">clean_loader</span>(extra_data<span class="sc">$</span>Covariate_C)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>extra_covD <span class="ot">&lt;-</span> <span class="fu">clean_loader</span>(extra_data<span class="sc">$</span>Covariate_D)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="st">&quot;extra_data&quot;</span>)</span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># download hba1c data from 2003-2004 and 2005-2006</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>hba1c_C <span class="ot">&lt;-</span> <span class="fu">read_xpt</span>(<span class="st">&quot;https://wwwn.cdc.gov/Nchs/Nhanes/2003-2004/L10_C.XPT&quot;</span>) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>hba1c_D <span class="ot">&lt;-</span> <span class="fu">read_xpt</span>(<span class="st">&quot;https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/GHB_D.XPT&quot;</span>) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co"># merge both years</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>hba1c <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(hba1c_C, hba1c_D)</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># download hba1c data from 2003-2004 and 2005-2006</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>hba1c_C <span class="ot">&lt;-</span> <span class="fu">read_xpt</span>(<span class="st">&quot;https://wwwn.cdc.gov/Nchs/Nhanes/2003-2004/L10_C.XPT&quot;</span>) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>hba1c_D <span class="ot">&lt;-</span> <span class="fu">read_xpt</span>(<span class="st">&quot;https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/GHB_D.XPT&quot;</span>) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>hba1c <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(hba1c_C, hba1c_D)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co"># combine covariate wave C/D, then left join hba1c to the covariates</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>all_extra_cov <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(extra_covC, extra_covD) <span class="sc">%&gt;%</span> <span class="fu">left_join</span>(hba1c, <span class="at">by =</span> <span class="st">&quot;seqn&quot;</span>)</span>
 <span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># combine both waves into a single dataframe as well as merge with hba1c data</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>all_extra_cov <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(extra_covC, extra_covD) <span class="sc">%&gt;%</span> <span class="fu">left_join</span>(hba1c, <span class="at">by =</span> <span class="st">&quot;seqn&quot;</span>)</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co"># remove original datasets/vectors/lists to clean environment</span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">&quot;extra_covC&quot;</span>, <span class="st">&quot;extra_covD&quot;</span>, <span class="st">&quot;extra_covariates&quot;</span>, <span class="st">&quot;hba1c&quot;</span>, <span class="st">&quot;hba1c_C&quot;</span>, <span class="st">&quot;hba1c_D&quot;</span>))</span></code></pre></div>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># remove original datasets/vectors/lists to clean workspace</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">&quot;extra_covC&quot;</span>, <span class="st">&quot;extra_covD&quot;</span>, <span class="st">&quot;extra_covariates&quot;</span>, <span class="st">&quot;hba1c&quot;</span>, <span class="st">&quot;hba1c_C&quot;</span>, <span class="st">&quot;hba1c_D&quot;</span>))</span></code></pre></div>
 </div>
 </div>
-<div id="merging-data-from-activity-and-covariates" class="section level2" number="2.4">
-<h2 number="2.4"><span class="header-section-number">2.4</span> Merging data from activity and covariates</h2>
+<div id="merging-data-from-activity-and-covariates" class="section level2" number="1.4">
+<h2 number="1.4"><span class="header-section-number">1.4</span> Merging data from activity and covariates</h2>
 <p>Now that we have the activity, flag, and covariates data of interest, we shall combine them all. We will create an overall of 2 datasets; 1 containing activity and covariates, while another contains flags and covariates. This is done so that in the end, we can use the <code>reweight_accel()</code> and <code>exclude_accel()</code> functions from the <code>rnhanesdata</code> package.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># merge activity data with covariate data</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>actC_cov <span class="ot">&lt;-</span> <span class="fu">left_join</span>(actC, covC, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;seqn&quot;</span>, <span class="st">&quot;sddsrvyr&quot;</span>))</span>
@@ -588,10 +563,10 @@ div.tocify {
 <span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="st">&quot;all_extra_cov&quot;</span>)</span></code></pre></div>
 </div>
 </div>
-<div id="data-cleaning" class="section level1" number="3">
-<h1 number="3"><span class="header-section-number">3</span> Data cleaning</h1>
-<div id="variable-re-categorization-modification-or-creation-as-necessary" class="section level2" number="3.1">
-<h2 number="3.1"><span class="header-section-number">3.1</span> Variable re-categorization, modification, or creation as necessary</h2>
+<div id="data-cleaning" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Data cleaning</h1>
+<div id="variable-re-categorization-modification-or-creation-as-necessary" class="section level2" number="2.1">
+<h2 number="2.1"><span class="header-section-number">2.1</span> Variable re-categorization, modification, or creation as necessary</h2>
 <p>Some variables require conversion into factors.</p>
 <p>We will take an average of blood pressure (BP) variables. Since most of our covariates are taken from <code>rnhanesdata</code>, they are mostly already set as <code>factor</code>s. The only new ones we need to convert is <code>ridexprg</code> variables. Furthermore, we will collapse some levels within these factors using <code>fct_collapse()</code></p>
 <p>Also noted that the pregnancy variable, <code>ridexprg</code>, has almost &gt;50% missing values. After further exploration, we found that most of these <code>NA</code> are coming from two sources:</p>
@@ -606,45 +581,39 @@ div.tocify {
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>refactor_fn <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span> </span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># if male and NA or if female, age &gt; 59, and NA, code as &quot;no&quot;</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">ridexprg =</span> <span class="fu">case_when</span>((gender <span class="sc">==</span> <span class="st">&quot;Male&quot;</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(ridexprg)) <span class="sc">|</span> </span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                                  (gender <span class="sc">==</span> <span class="st">&quot;Female&quot;</span> <span class="sc">&amp;</span> ridageyr <span class="sc">&gt;</span> <span class="dv">59</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(ridexprg))</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                                <span class="sc">~</span> <span class="dv">2</span>, </span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>                                <span class="cn">TRUE</span> <span class="sc">~</span> ridexprg)) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">&quot;ridexprg&quot;</span>), factor)) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># changing the original codes and adding new variables</span></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>      <span class="co"># recode pregnancy indicator</span></span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">ridexprg =</span> <span class="fu">fct_recode</span>(ridexprg, <span class="st">&quot;Yes&quot;</span> <span class="ot">=</span> <span class="st">&quot;1&quot;</span>, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="st">&quot;2&quot;</span>, <span class="st">&quot;Uncertain&quot;</span> <span class="ot">=</span> <span class="st">&quot;3&quot;</span>),</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>      <span class="co"># obtain average across 4 measures BP systolic</span></span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">bpxsy_avg =</span> <span class="fu">round</span>(<span class="fu">rowMeans</span>(.[, <span class="fu">c</span>(<span class="st">&quot;bpxsy1&quot;</span>, <span class="st">&quot;bpxsy2&quot;</span>, <span class="st">&quot;bpxsy3&quot;</span>, <span class="st">&quot;bpxsy4&quot;</span>)], <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="dv">3</span>),</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>      <span class="co"># obtain average across 4 measures BP diastolic</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">bpxdi_avg =</span> <span class="fu">round</span>(<span class="fu">rowMeans</span>(.[, <span class="fu">c</span>(<span class="st">&quot;bpxdi1&quot;</span>, <span class="st">&quot;bpxdi2&quot;</span>, <span class="st">&quot;bpxdi3&quot;</span>, <span class="st">&quot;bpxdi4&quot;</span>)], <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="dv">3</span>),</span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>      <span class="co"># create new factor for indfmpir (poverty income ratio) per CDC&#39;s recommendation</span></span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">pir_cat =</span> <span class="fu">factor</span>(<span class="fu">case_when</span>(indfmpir <span class="sc">&lt;</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">&quot;Below poverty&quot;</span>,</span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>                                 indfmpir <span class="sc">&gt;=</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">&quot;At or above poverty&quot;</span>))</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>      <span class="co"># combining some factor levels into a single value</span></span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">diabetes =</span> <span class="fu">fct_collapse</span>(diabetes, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>, <span class="st">&quot;Borderline&quot;</span>, <span class="st">&quot;Refused&quot;</span>, <span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>      <span class="at">chf =</span> <span class="fu">fct_collapse</span>(chf, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Refused&quot;</span>,<span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>      <span class="at">chd =</span> <span class="fu">fct_collapse</span>(chd, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Refused&quot;</span>,<span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>      <span class="at">cancer =</span> <span class="fu">fct_collapse</span>(cancer, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Refused&quot;</span>,<span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>      <span class="at">stroke =</span> <span class="fu">fct_collapse</span>(stroke, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Refused&quot;</span>,<span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>      <span class="at">education_adult =</span> <span class="fu">fct_collapse</span>(education_adult,</span>
-<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">&quot;Less than high school&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;Less than 9th grade&quot;</span>, <span class="st">&quot;9-11th grade&quot;</span>),</span>
-<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">&quot;High school&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;High school grad/GED or equivalent&quot;</span>),</span>
-<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">&quot;More than high school&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;Some College or AA degree&quot;</span>, <span class="st">&quot;College graduate or above&quot;</span>),</span>
-<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">NULL =</span> <span class="fu">c</span>(<span class="st">&quot;Refused&quot;</span>, <span class="st">&quot;Don&#39;t know&quot;</span>))</span>
-<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>all_act <span class="ot">&lt;-</span> <span class="fu">refactor_fn</span>(all_act)</span>
-<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> <span class="fu">refactor_fn</span>(all_flag)</span></code></pre></div>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">ridexprg =</span> <span class="fu">factor</span>(<span class="fu">case_when</span>((gender <span class="sc">==</span> <span class="st">&quot;Male&quot;</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(ridexprg)) <span class="sc">|</span> </span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>                                  (gender <span class="sc">==</span> <span class="st">&quot;Female&quot;</span> <span class="sc">&amp;</span> ridageyr <span class="sc">&gt;</span> <span class="dv">59</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(ridexprg))</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                                <span class="sc">~</span> <span class="dv">2</span>, </span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                                <span class="cn">TRUE</span> <span class="sc">~</span> ridexprg))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">ridexprg =</span> <span class="fu">fct_recode</span>(ridexprg, <span class="st">&quot;Yes&quot;</span> <span class="ot">=</span> <span class="st">&quot;1&quot;</span>, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="st">&quot;2&quot;</span>, <span class="st">&quot;Uncertain&quot;</span> <span class="ot">=</span> <span class="st">&quot;3&quot;</span>),</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">bpxsy_avg =</span> <span class="fu">round</span>(<span class="fu">rowMeans</span>(.[, <span class="fu">c</span>(<span class="st">&quot;bpxsy1&quot;</span>, <span class="st">&quot;bpxsy2&quot;</span>, <span class="st">&quot;bpxsy3&quot;</span>, <span class="st">&quot;bpxsy4&quot;</span>)], <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="dv">3</span>),</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">bpxdi_avg =</span> <span class="fu">round</span>(<span class="fu">rowMeans</span>(.[, <span class="fu">c</span>(<span class="st">&quot;bpxdi1&quot;</span>, <span class="st">&quot;bpxdi2&quot;</span>, <span class="st">&quot;bpxdi3&quot;</span>, <span class="st">&quot;bpxdi4&quot;</span>)], <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="dv">3</span>),</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">pir_cat =</span> <span class="fu">factor</span>(<span class="fu">case_when</span>(indfmpir <span class="sc">&lt;</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">&quot;Below poverty&quot;</span>,</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>                                 indfmpir <span class="sc">&gt;=</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">&quot;At or above poverty&quot;</span>))</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>      <span class="co"># combining some factor levels into a single value</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">diabetes =</span> <span class="fu">fct_collapse</span>(diabetes, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>, <span class="st">&quot;Borderline&quot;</span>, <span class="st">&quot;Refused&quot;</span>, <span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">chf =</span> <span class="fu">fct_collapse</span>(chf, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Refused&quot;</span>,<span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>      <span class="at">chd =</span> <span class="fu">fct_collapse</span>(chd, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Refused&quot;</span>,<span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">cancer =</span> <span class="fu">fct_collapse</span>(cancer, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Refused&quot;</span>,<span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>      <span class="at">stroke =</span> <span class="fu">fct_collapse</span>(stroke, <span class="st">&quot;No&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Refused&quot;</span>,<span class="st">&quot;Don&#39;t know&quot;</span>)),</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">education_adult =</span> <span class="fu">fct_collapse</span>(education_adult,</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">&quot;Less than high school&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;Less than 9th grade&quot;</span>, <span class="st">&quot;9-11th grade&quot;</span>),</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">&quot;High school&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;High school grad/GED or equivalent&quot;</span>),</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">&quot;More than high school&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;Some College or AA degree&quot;</span>, <span class="st">&quot;College graduate or above&quot;</span>),</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">NULL =</span> <span class="fu">c</span>(<span class="st">&quot;Refused&quot;</span>, <span class="st">&quot;Don&#39;t know&quot;</span>))</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>all_act <span class="ot">&lt;-</span> <span class="fu">refactor_fn</span>(all_act)</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> <span class="fu">refactor_fn</span>(all_flag)</span></code></pre></div>
 </div>
-<div id="removing-some-variables-and-re-arrangement" class="section level2" number="3.2">
-<h2 number="3.2"><span class="header-section-number">3.2</span> Removing some variables and re-arrangement</h2>
+<div id="removing-some-variables-and-re-arrangement" class="section level2" number="2.2">
+<h2 number="2.2"><span class="header-section-number">2.2</span> Removing some variables and re-arrangement</h2>
 <p>Now that we have all the covariates and data in a “single” dataset, we will remove <code>ridagemn</code> since this is age in months during screening and is likely to overlap with <code>ridageyr</code>, which was recommended by CDC to be used for analysis. We will compare <code>ridageex</code> against <code>ridageyr</code> to evaluate whether or not the difference between the two are large enough to warrant using one or the other.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># obtain a new, temp dataset to assess age at examination vs age at screening</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>age_compare <span class="ot">&lt;-</span> all_act <span class="sc">%&gt;%</span> <span class="fu">select</span>(ridageex, ridageyr) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(</span>
@@ -658,13 +627,11 @@ div.tocify {
 <p><img src="data_generation_files/figure-html/age_diff_visualization-1.png" width="960" style="display: block; margin: auto;" /></p>
 <p>Per the density graph above, majority of the difference are &lt;0.25 years, with a mean of 0.06 and median of 0. We can likely keep using <code>ridageyr</code> and discard <code>ridageex</code>.</p>
 <p>Additionally, since we obtained the <code>bpx**_avg</code> and <code>pir_cat</code> as well, the original measures can be dropped.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># bpx*** variables</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>bp_var <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">c</span>(<span class="st">&quot;bpxsy&quot;</span>, <span class="st">&quot;bpxdi&quot;</span>), <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">each =</span> <span class="dv">2</span>))</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># remove now-unneeded variables</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>all_act <span class="ot">&lt;-</span> <span class="fu">select</span>(all_act, <span class="sc">-</span>ridagemn, <span class="sc">-</span>ridageex, <span class="sc">-</span><span class="fu">all_of</span>(bp_var), <span class="sc">-</span>indfmpir)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> <span class="fu">select</span>(all_flag, <span class="sc">-</span>ridagemn, <span class="sc">-</span>ridageex, <span class="sc">-</span><span class="fu">all_of</span>(bp_var), <span class="sc">-</span>indfmpir)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="st">&quot;bp_var&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>bp_var <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">c</span>(<span class="st">&quot;bpxsy&quot;</span>, <span class="st">&quot;bpxdi&quot;</span>), <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">each =</span> <span class="dv">2</span>))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>all_act <span class="ot">&lt;-</span> <span class="fu">select</span>(all_act, <span class="sc">-</span>ridagemn, <span class="sc">-</span>ridageex, <span class="sc">-</span><span class="fu">all_of</span>(bp_var), <span class="sc">-</span>indfmpir)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> <span class="fu">select</span>(all_flag, <span class="sc">-</span>ridagemn, <span class="sc">-</span>ridageex, <span class="sc">-</span><span class="fu">all_of</span>(bp_var), <span class="sc">-</span>indfmpir)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="st">&quot;bp_var&quot;</span>)</span></code></pre></div>
 <p>We then re-arrange our column variables so that the minutes are at the end, to make it easier to evaluate our covariates.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># obtain the min* data and non-min* data</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>act_var <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">colnames</span>(all_act) <span class="sc">%in%</span> min_vars)</span>
@@ -675,25 +642,23 @@ div.tocify {
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> all_flag[, <span class="fu">c</span>(cov_var, act_var)]</span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">c</span>(<span class="st">&quot;act_var&quot;</span>, <span class="st">&quot;cov_var&quot;</span>))</span></code></pre></div>
 </div>
-<div id="summarizing-activity-count-data" class="section level2" number="3.3">
-<h2 number="3.3"><span class="header-section-number">3.3</span> Summarizing Activity Count Data</h2>
-<div id="replacing-nas-in-activity-count-with-0-since-they-are-mostly-non-active-in-the-first-place." class="section level3" number="3.3.1">
-<h3 number="3.3.1"><span class="header-section-number">3.3.1</span> Replacing NAs in activity count with 0 since they are mostly “non-active” in the first place.</h3>
+<div id="summarizing-activity-count-data" class="section level2" number="2.3">
+<h2 number="2.3"><span class="header-section-number">2.3</span> Summarizing Activity Count Data</h2>
+<div id="replacing-nas-in-activity-count-with-0" class="section level3" number="2.3.1">
+<h3 number="2.3.1"><span class="header-section-number">2.3.1</span> Replacing NAs in activity count with 0</h3>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># using across() function to replace NA with 0 ONLY in the minute variables</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># not shown, but the function has been checked and confirmed to only apply to the minute variables</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># by checking the &quot;total&quot; NA difference between min variables in old vs. new as well as covariates.</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>all_act <span class="ot">&lt;-</span> all_act <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(min_vars), <span class="sc">~</span> <span class="fu">replace_na</span>(.x, <span class="dv">0</span>)))</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> all_flag <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(min_vars), <span class="sc">~</span> <span class="fu">replace_na</span>(.x, <span class="dv">0</span>)))</span></code></pre></div>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>all_act <span class="ot">&lt;-</span> all_act <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(min_vars), <span class="sc">~</span> <span class="fu">replace_na</span>(.x, <span class="dv">0</span>)))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> all_flag <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(min_vars), <span class="sc">~</span> <span class="fu">replace_na</span>(.x, <span class="dv">0</span>)))</span></code></pre></div>
 </div>
-<div id="creating-summary-variables-from-the-activity-counts" class="section level3" number="3.3.2">
-<h3 number="3.3.2"><span class="header-section-number">3.3.2</span> Creating summary variables from the activity counts</h3>
+<div id="feature-engineering-from-the-activity-counts" class="section level3" number="2.3.2">
+<h3 number="2.3.2"><span class="header-section-number">2.3.2</span> Feature engineering from the activity counts</h3>
 <p>We will be creating daily activity summary measures such as total daily physical activity counts (<code>tdac</code>), the daily sum of log of the physical activity (<code>tdlac</code>). The log is a transformation to the data given the skew noted in the activity-count data, which hopefully will make our distribution more normalized.</p>
-<p>Additionally, we also obtained the daily sedentary time (<code>sedtime</code>) as well as moderate-to-vigorous-intensity-actvity (MVIA) time (<code>mviatime</code>). Thresholds were referenced from Dr. Schuna’s article, specifying that sedentary time is typically <span class="math inline">\(&lt;\)</span> 100 cpm (“counts per minute”) while MVIA is typically <span class="math inline">\(\geq\)</span> 2020 cpm.</p>
+<p>Additionally, we also obtained the daily sedentary time (<code>sedtime</code>) as well as moderate-to-vigorous-intensity-actvity (MVIA) time (<code>mviatime</code>). Thresholds were referenced from <a href="https://ijbnpa.biomedcentral.com/articles/10.1186/1479-5868-10-126">Dr. Schuna’s article</a>, specifying that sedentary time is typically <span class="math inline">\(&lt;\)</span> 100 cpm (“counts per minute”) while MVIA is typically <span class="math inline">\(\geq\)</span> 2020 cpm.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For faster processing, isolate minute variables into a separate matrix</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>act_matrix <span class="ot">&lt;-</span> all_act[,min_vars]</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>act_matrix <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(act_matrix)</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># obtain summary variables</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># obtain summary variables (feature engineering)</span></span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>all_act<span class="sc">$</span>tdac <span class="ot">&lt;-</span> all_flag<span class="sc">$</span>tdac <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(act_matrix)</span>
 <span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>all_act<span class="sc">$</span>tdlac  <span class="ot">&lt;-</span> all_flag<span class="sc">$</span>tdlac  <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(<span class="fu">log</span>(<span class="dv">1</span> <span class="sc">+</span> act_matrix))</span>
 <span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>all_act<span class="sc">$</span>sedtime <span class="ot">&lt;-</span> all_flag<span class="sc">$</span>sedtime <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(act_matrix <span class="sc">&lt;</span> <span class="dv">100</span>)</span>
@@ -704,52 +669,45 @@ div.tocify {
 </div>
 </div>
 </div>
-<div id="applying-exclusioninclusion-criteria-for-dataset" class="section level1" number="4">
-<h1 number="4"><span class="header-section-number">4</span> Applying exclusion/inclusion criteria for dataset</h1>
+<div id="applying-exclusioninclusion-criteria-for-dataset" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> Applying exclusion/inclusion criteria for dataset</h1>
 <p>While we are aiming to create a predictive model, we should also provide some criteria in order to clean-up our dataset even further.</p>
 <p>We will restrict our data to:</p>
 <ul>
 <li>Those aged 20 or older.</li>
 <li>Those who are confirmed to be not pregnant (<code>ridexprg = no</code>). Further, since we filtered using pregnancy for a single level, we can then remove the variable.</li>
 </ul>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># applying exclusion criteria</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>all_act <span class="ot">&lt;-</span> all_act <span class="sc">%&gt;%</span> <span class="fu">filter</span>(ridageyr <span class="sc">&gt;=</span> <span class="dv">20</span>, ridexprg <span class="sc">==</span> <span class="st">&quot;No&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>ridexprg)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> all_flag <span class="sc">%&gt;%</span> <span class="fu">filter</span>(ridageyr <span class="sc">&gt;=</span> <span class="dv">20</span>, ridexprg <span class="sc">==</span> <span class="st">&quot;No&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>ridexprg)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>all_act <span class="ot">&lt;-</span> all_act <span class="sc">%&gt;%</span> <span class="fu">filter</span>(ridageyr <span class="sc">&gt;=</span> <span class="dv">20</span>, ridexprg <span class="sc">==</span> <span class="st">&quot;No&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>ridexprg)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>all_flag <span class="ot">&lt;-</span> all_flag <span class="sc">%&gt;%</span> <span class="fu">filter</span>(ridageyr <span class="sc">&gt;=</span> <span class="dv">20</span>, ridexprg <span class="sc">==</span> <span class="st">&quot;No&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>ridexprg)</span></code></pre></div>
 </div>
-<div id="filter-for-good-accelerometer-data" class="section level1" number="5">
-<h1 number="5"><span class="header-section-number">5</span> Filter for “good” accelerometer data</h1>
+<div id="filter-for-good-accelerometer-data" class="section level1" number="4">
+<h1 number="4"><span class="header-section-number">4</span> Filter for “good” accelerometer data</h1>
 <p>The function <code>exclude_accel</code> from the <code>rnhanesdata</code> package returns the indices of daily activities which were identified as “good”. The criteria to determine this was to have at least 10 hours (600 minutes) of wear time. Additionally, the function filters for datapoints which were deemed questionable by NHANES. This function returns a numeric vector containing the indices of days which were identified as “good”. These indices can be used to subset the accelerometry data as desired. An illustration is provided in the examples.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># creating indices for datapoints to keep</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># need this to obtain &quot;good&quot; activity data</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>keep_act <span class="ot">&lt;-</span> <span class="fu">exclude_accel</span>(all_act <span class="sc">%&gt;%</span> <span class="fu">rename_with</span>(str_to_upper), all_flag <span class="sc">%&gt;%</span> <span class="fu">rename_with</span>(str_to_upper))</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># subset data to only contain those weekdays deemed &quot;good&quot;</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>filt_all_act <span class="ot">&lt;-</span> all_act[keep_act, ]</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">c</span>(<span class="st">&quot;keep_act&quot;</span>, <span class="st">&quot;all_act&quot;</span>, <span class="st">&quot;all_flag&quot;</span>))</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># summarize the daily activity counts</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>filt_all_act <span class="ot">&lt;-</span> filt_all_act <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(seqn) <span class="sc">%&gt;%</span> </span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_tdac =</span> <span class="fu">mean</span>(tdac, <span class="at">na.rm =</span> T),</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_tdlac =</span> <span class="fu">mean</span>(tdlac, <span class="at">na.rm =</span> T),</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_sedtime =</span> <span class="fu">mean</span>(sedtime, <span class="at">na.rm =</span> T),</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_mviatime =</span> <span class="fu">mean</span>(mviatime, <span class="at">na.rm =</span> T)</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co"># create vector of variables now-unneeded for analysis (minute-by-minute counts, daily counts, </span></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co"># daily log of counts, daily sedentary counts and moderate to vigorous activity counts)</span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>reweight_noinclude <span class="ot">&lt;-</span> <span class="fu">c</span>(min_vars, <span class="st">&quot;tdac&quot;</span>, <span class="st">&quot;tdlac&quot;</span>, <span class="st">&quot;sedtime&quot;</span>, <span class="st">&quot;mviatime&quot;</span>)</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co"># remove all the now-unneeded variables as well as condensing our data, now that we do not need the daily measures.</span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>data_df <span class="ot">&lt;-</span> filt_all_act <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">all_of</span>(reweight_noinclude)) <span class="sc">%&gt;%</span> <span class="fu">distinct</span>(seqn, <span class="at">.keep_all =</span> T)</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="st">&quot;filt_all_act&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># creating indices for datapoints to keep &quot;good&quot; activity data</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>keep_act <span class="ot">&lt;-</span> <span class="fu">exclude_accel</span>(all_act <span class="sc">%&gt;%</span> <span class="fu">rename_with</span>(str_to_upper), all_flag <span class="sc">%&gt;%</span> <span class="fu">rename_with</span>(str_to_upper))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>filt_all_act <span class="ot">&lt;-</span> all_act[keep_act, ]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">c</span>(<span class="st">&quot;keep_act&quot;</span>, <span class="st">&quot;all_act&quot;</span>, <span class="st">&quot;all_flag&quot;</span>))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co"># summarize the daily activity counts</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>filt_all_act <span class="ot">&lt;-</span> filt_all_act <span class="sc">%&gt;%</span> </span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(seqn) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_tdac =</span> <span class="fu">mean</span>(tdac, <span class="at">na.rm =</span> T),</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_tdlac =</span> <span class="fu">mean</span>(tdlac, <span class="at">na.rm =</span> T),</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_sedtime =</span> <span class="fu">mean</span>(sedtime, <span class="at">na.rm =</span> T),</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_mviatime =</span> <span class="fu">mean</span>(mviatime, <span class="at">na.rm =</span> T)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co"># remove all the now-unneeded variables and remove duplicate points</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>reweight_noinclude <span class="ot">&lt;-</span> <span class="fu">c</span>(min_vars, <span class="st">&quot;tdac&quot;</span>, <span class="st">&quot;tdlac&quot;</span>, <span class="st">&quot;sedtime&quot;</span>, <span class="st">&quot;mviatime&quot;</span>)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>data_df <span class="ot">&lt;-</span> filt_all_act <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">all_of</span>(reweight_noinclude)) <span class="sc">%&gt;%</span> <span class="fu">distinct</span>(seqn, <span class="at">.keep_all =</span> T)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="st">&quot;filt_all_act&quot;</span>)</span></code></pre></div>
 </div>
-<div id="remaining-na-datapoints" class="section level1" number="6">
-<h1 number="6"><span class="header-section-number">6</span> Remaining NA datapoints</h1>
-<p>Now that we have a relatively clean dataset, we proceed to evaluate the missingness in our dataset.</p>
-<div id="evaluating-outcome-distribution" class="section level2" number="6.1">
-<h2 number="6.1"><span class="header-section-number">6.1</span> Evaluating outcome distribution</h2>
+<div id="evaluating-remaining-na-datapoints" class="section level1" number="5">
+<h1 number="5"><span class="header-section-number">5</span> Evaluating remaining NA datapoints</h1>
 <p>For our model building, we are primarily interested in predicting diabetic status. We first check the distribution:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>all_barplot <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> <span class="fu">count</span>(diabetes) <span class="sc">%&gt;%</span> </span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> diabetes, <span class="at">y =</span> n)) <span class="sc">+</span> </span>
@@ -760,63 +718,64 @@ div.tocify {
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>all_barplot</span></code></pre></div>
 <p><img src="data_generation_files/figure-html/orig_barplot-1.png" width="960" style="display: block; margin: auto;" /></p>
-<p>As we see in our simple bar graph above, our dataset is highly imbalanced. Imbalanced data are known to cause issues for machine learning, particularly if we use accuracy as our metric [ref]. As such, we should explore potential ways to address this. Firstly, accuracy metric will likely work poorly in this given dataset and thus we should use ROC-AUC and PR-AUC as our metric, in addition to other metrics such as precision, recall [ref].</p>
-<p>Furthermore, in addition to LASSO and Random Forest, we will also consider several algorithms that are typically robust to imbalanced classes. These are:</p>
-<p>Additionally, we will also consider some resampling methods to improve upon our algorithms, such as up-/down- sampling, SMOTE, or ROSE.</p>
-</div>
-<div id="assessing-the-missingness-in-dataset" class="section level2" number="6.2">
-<h2 number="6.2"><span class="header-section-number">6.2</span> Assessing the missingness in dataset</h2>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>data_df <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> </span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>(seqn) <span class="sc">%&gt;%</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">na_sum =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(<span class="fu">cur_data</span>())),</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">na_any =</span> <span class="fu">ifelse</span>(na_sum <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="cn">TRUE</span>, <span class="cn">FALSE</span>)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>data_df <span class="sc">%&gt;%</span> <span class="fu">count</span>(na_any)</span></code></pre></div>
-<pre><code>## # A tibble: 2 x 2
-##   na_any     n
-##   &lt;lgl&gt;  &lt;int&gt;
-## 1 FALSE   5908
-## 2 TRUE    1232</code></pre>
-<p>As seen above, there’s 1086 rows that contains at least one <code>NA</code>. This means that only 82.75% of our data is complete. Additionally, we note that there is a single person that has 10 variables missing–the maximum amount of missing variables in a given person.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>data_df <span class="sc">%&gt;%</span> <span class="fu">count</span>(diabetes) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">pct =</span> n<span class="sc">/</span><span class="fu">sum</span>(n))</span></code></pre></div>
+<pre><code>## # A tibble: 2 x 3
+##   diabetes     n   pct
+##   &lt;fct&gt;    &lt;int&gt; &lt;dbl&gt;
+## 1 No        6359 0.891
+## 2 Yes        781 0.109</code></pre>
+<p>As seen above, the distribution is quite imbalanced. If we decide to remove our missing data, we should make sure that the resulting dataset contains a similar distribution to this. Let’s evaluate our dataset’s missingness.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>data_df <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> </span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>(seqn) <span class="sc">%&gt;%</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">na_sum =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(<span class="fu">cur_data</span>())),</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">na_any =</span> <span class="fu">ifelse</span>(na_sum <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="cn">TRUE</span>, <span class="cn">FALSE</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>data_df <span class="sc">%&gt;%</span> <span class="fu">count</span>(na_any) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">pct =</span> n<span class="sc">/</span><span class="fu">sum</span>(n))</span></code></pre></div>
+<pre><code>## # A tibble: 2 x 3
+##   na_any     n   pct
+##   &lt;lgl&gt;  &lt;int&gt; &lt;dbl&gt;
+## 1 FALSE   5908 0.827
+## 2 TRUE    1232 0.173</code></pre>
+<p>As seen above, there’s 1232 rows that contains at least one <code>NA</code>. This means that only 82.75% of our data is complete. Additionally, we note that the maximum amount of missing variables in a given person is 10. There is 1 subject(s) with this missing amount.</p>
 <p>If we subset only to these complete data and check the distribution:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>complete_barplot <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span> <span class="fu">count</span>(diabetes) <span class="sc">%&gt;%</span> </span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> diabetes, <span class="at">y =</span> n)) <span class="sc">+</span> </span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="fu">aes</span>(<span class="at">color =</span> diabetes, <span class="at">fill =</span> diabetes), <span class="at">stat =</span> <span class="st">&quot;identity&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.4</span>, <span class="at">width =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> n), <span class="at">show.legend =</span> F, <span class="at">nudge_y =</span> <span class="dv">150</span>, <span class="at">color =</span> <span class="st">&quot;black&quot;</span>) <span class="sc">+</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Diabetes&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Sample Count&quot;</span>, <span class="at">subtitle =</span> <span class="st">&quot;After removing NA&quot;</span>) <span class="sc">+</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;none&quot;</span>) <span class="sc">+</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_ghibli_d</span>(<span class="st">&quot;SpiritedMedium&quot;</span>, <span class="at">direction =</span> <span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_ghibli_d</span>(<span class="st">&quot;SpiritedMedium&quot;</span>, <span class="at">direction =</span> <span class="sc">-</span><span class="dv">1</span>)</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>complete_barplot <span class="sc">|</span> all_barplot <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">subtitle =</span> <span class="st">&quot;Before removing NA&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>complete_barplot <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span> <span class="fu">count</span>(diabetes) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> diabetes, <span class="at">y =</span> n)) <span class="sc">+</span> </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="fu">aes</span>(<span class="at">color =</span> diabetes, <span class="at">fill =</span> diabetes), <span class="at">stat =</span> <span class="st">&quot;identity&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.4</span>, <span class="at">width =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> n), <span class="at">show.legend =</span> F, <span class="at">nudge_y =</span> <span class="dv">150</span>, <span class="at">color =</span> <span class="st">&quot;black&quot;</span>) <span class="sc">+</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Diabetes&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Sample Count&quot;</span>, <span class="at">subtitle =</span> <span class="st">&quot;After removing NA&quot;</span>) <span class="sc">+</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;none&quot;</span>) <span class="sc">+</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_ghibli_d</span>(<span class="st">&quot;SpiritedMedium&quot;</span>, <span class="at">direction =</span> <span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_ghibli_d</span>(<span class="st">&quot;SpiritedMedium&quot;</span>, <span class="at">direction =</span> <span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>complete_barplot <span class="sc">|</span> all_barplot <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">subtitle =</span> <span class="st">&quot;Before removing NA&quot;</span>)</span></code></pre></div>
 <p><img src="data_generation_files/figure-html/complete_barplot-1.png" width="960" style="display: block; margin: auto;" /></p>
-<p>Per our graph comparison, though our dataset is indeed smaller, the resulting distribution is largely unchanged. As such, we believe that it is alright to remove the <code>NA</code>-containing respondents.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># subset to complete dataset only</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>nhanes_df <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> <span class="fu">drop_na</span>() </span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># remove extra objects</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">c</span>(<span class="st">&quot;all_barplot&quot;</span>, <span class="st">&quot;complete_barplot&quot;</span>))</span></code></pre></div>
+<p>Per our graph comparison, though our dataset is indeed smaller, the resulting distribution is largely unchanged. Additionally, the percentage of diabetes status is:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>data_df <span class="sc">%&gt;%</span> <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span> <span class="fu">count</span>(diabetes) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">pct =</span> n<span class="sc">/</span><span class="fu">sum</span>(n))</span></code></pre></div>
+<pre><code>## # A tibble: 2 x 3
+##   diabetes     n   pct
+##   &lt;fct&gt;    &lt;int&gt; &lt;dbl&gt;
+## 1 No        5285 0.895
+## 2 Yes        623 0.105</code></pre>
+<p>Compared to our previous dataset, the proportion is highly similar. As such, we believe that it is alright to remove the <code>NA</code>-containing respondents.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># subset to complete dataset only</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>nhanes_df <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> <span class="fu">drop_na</span>() </span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># remove extra objects</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">c</span>(<span class="st">&quot;all_barplot&quot;</span>, <span class="st">&quot;complete_barplot&quot;</span>))</span></code></pre></div>
 </div>
-</div>
-<div id="re-weighting-the-survey-weights" class="section level1" number="7">
-<h1 number="7"><span class="header-section-number">7</span> Re-weighting the survey weights</h1>
-<p>We also want to re-calculate our weights given that we’ve merged the years 2003-2004 and 2005-2006 as well as applying exclusion criteria. We will</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># obtaining a 4-year weight post-aggregating the dataframes, inclusion/exclusion, etc</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>data_df <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> <span class="fu">rename_with</span>(str_to_upper) <span class="sc">%&gt;%</span> <span class="fu">reweight_accel</span>() <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">matches</span>(<span class="st">&quot;2yr|unadj&quot;</span>), <span class="sc">-</span><span class="fu">ends_with</span>(<span class="st">&quot;4yr_adj&quot;</span>)) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>nhanes_df <span class="ot">&lt;-</span> nhanes_df <span class="sc">%&gt;%</span> <span class="fu">rename_with</span>(str_to_upper) <span class="sc">%&gt;%</span> <span class="fu">reweight_accel</span>() <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">matches</span>(<span class="st">&quot;2yr|unadj&quot;</span>), <span class="sc">-</span><span class="fu">ends_with</span>(<span class="st">&quot;4yr_adj&quot;</span>)) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># remove reweight_df</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">c</span>(<span class="st">&quot;reweight_noinclude&quot;</span>, <span class="st">&quot;min_vars&quot;</span>))</span></code></pre></div>
-</div>
-<div id="final-dataset-export" class="section level1" number="8">
-<h1 number="8"><span class="header-section-number">8</span> Final dataset export</h1>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># # create RData from the final dataset</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># save(data_df, file = &quot;../NHANES pt2/Dataset/data.rda&quot;)</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># save(nhanes_df, file = &quot;../NHANES pt2/Dataset/nhanes_data.rda&quot;)</span></span></code></pre></div>
+<div id="re-weighting-the-survey-weights" class="section level1" number="6">
+<h1 number="6"><span class="header-section-number">6</span> Re-weighting the survey weights</h1>
+<p>We also want to re-calculate our weights given that we’ve merged the years 2003-2004 and 2005-2006 as well as applying exclusion criteria. We will use the <code>rnhanesdata::reweight_accel()</code> function to do this. Once finished, we will use the <code>nhanes_df</code> to do our predictive modeling.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># obtaining a 4-year weight post-aggregating the dataframes, inclusion/exclusion, etc</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>data_df <span class="ot">&lt;-</span> data_df <span class="sc">%&gt;%</span> <span class="fu">rename_with</span>(str_to_upper) <span class="sc">%&gt;%</span> <span class="fu">reweight_accel</span>() <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">matches</span>(<span class="st">&quot;2yr|unadj&quot;</span>), <span class="sc">-</span><span class="fu">ends_with</span>(<span class="st">&quot;4yr_adj&quot;</span>)) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>nhanes_df <span class="ot">&lt;-</span> nhanes_df <span class="sc">%&gt;%</span> <span class="fu">rename_with</span>(str_to_upper) <span class="sc">%&gt;%</span> <span class="fu">reweight_accel</span>() <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">matches</span>(<span class="st">&quot;2yr|unadj&quot;</span>), <span class="sc">-</span><span class="fu">ends_with</span>(<span class="st">&quot;4yr_adj&quot;</span>)) <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="co"># remove reweight_df</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">c</span>(<span class="st">&quot;reweight_noinclude&quot;</span>, <span class="st">&quot;min_vars&quot;</span>))</span></code></pre></div>
 <p><br></br></p>
 <div style="text-align: right">
 <a href="./index.html">Return to Homepage</a>

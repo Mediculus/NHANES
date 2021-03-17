@@ -75,7 +75,7 @@ read_page <- function(url, tag) {
     html_nodes(tag) %>%            # pulls the specific html tag (for titles)
     html_text()
   
-  return(tibble(data_name))        # turns scraped data into a dataframe
+  return(tibble(data_name))        # turns scraped data into a tibble
   
 }
 ```
@@ -105,29 +105,27 @@ survey_df <-
     # categorizing based on CDC's classification of survey
     category = c("demographics", "dietary", "examination", "laboratory", "questionnaire", "limited data")
   ) %>% 
+  
   mutate(
     category = factor(category),
-    # Obtaining the group variable descriptors
-    group_var = map(.x = survey_link,
-                     ~read_page(url = .x, tag = "td.text-left")),
-    # Obtaining the filenames for each group variables
-    group_filename = map(.x = survey_link,
-                          ~read_page(url = .x, tag = ".text-center:nth-child(2) a"))
+    group_var = map(.x = survey_link, ~read_page(url = .x, tag = "td.text-left")),
+    group_filename = map(.x = survey_link, ~read_page(url = .x, tag = ".text-center:nth-child(2) a"))
     ) %>% 
   unnest(cols = c(group_var, group_filename), names_repair = tidyr_legacy) %>%   
+  
   rename(
-    # Rename to proper descriptors (Group variable name)
+    # Rename to proper descriptors
     group_var = data_name,
-    # Rename to proper descriptors (filename for group variables)
     group_filename = data_name1                          
   ) %>% 
+  
   mutate(
-    # remove the "Doc" text at the end of every filename in group_filename
     group_filename = gsub(" Doc", "", group_filename)    
     ) %>% 
+  
   # remove the odd-one-out survey links
-  filter(!(group_filename %in%
-             c("All Years", "VID_D", "DSBI", "DSII", "DSPI", "RXQ_DRUG"))) %>% 
+  filter(!(group_filename %in% c("All Years", "VID_D", "DSBI", "DSII", "DSPI", "RXQ_DRUG"))) %>% 
+  
   # creating url for each group variables; prep for scraping the individual variables. 
   mutate(
     var_url = case_when(category != "limited data" ~ 
@@ -136,12 +134,8 @@ survey_df <-
                           str_c("https://wwwn.cdc.gov/Nchs/Nhanes/limited_access/", group_filename, ".htm"))
   ) %>% 
   mutate(
-    # mapping our scraper to obtain the individual variables, nested by group variable.
-    var_content = map2(.x = var_url,                     
-                       .y = "#CodebookLinks a", 
-                       ~read_page(url = .x, tag = .y))
+    var_content = map(.x = var_url, ~read_page(url = .x, tag = "#CodebookLinks a"))
   ) %>% 
-  # remove unneeded column
   select(-survey_link, -var_url)
 ```
 
@@ -160,16 +154,13 @@ As we can see, these duplicates are likely from slightly different descriptions 
 Another step we need to do is the add clarifying descriptions as some of these variables are still unclear. Code is below (folded)
 
 ```{r detailed_var_desc_scrape}
-# unnest the variable cols
 survey_df <- survey_df %>% 
   unnest(cols = c(var_content))
 
 # get a different df for detailed descriptions
 detailed_var_desc <- survey_df %>% 
   select(category) %>% 
-  # obtaining the survey type variables
   distinct(category, .keep_all = TRUE) %>%
-  # adding url for each survey type
   mutate(
     detailed_var_url = 
       case_when(category != "limited data" ~ 
@@ -178,7 +169,6 @@ detailed_var_desc <- survey_df %>%
                 category == "limited data" ~
                   "https://wwwn.cdc.gov/nchs/nhanes/Search/variablelist.aspx?CycleBeginYear=2005&Component=Non-Public")
     ) %>% 
-  # obtaining variable ID and the detailed descriptions
   mutate(
     var_name = map(.x = detailed_var_url, ~read_page(url = .x, tag = "td:nth-child(1)")),
     detailed_var_content = map(.x = detailed_var_url, ~read_page(url = .x, tag = "td:nth-child(2)")),
@@ -191,13 +181,11 @@ detailed_var_desc <- survey_df %>%
          "group_filename" = data_name2)
 ```
 
-We will keep this dataframe to be used for later, once we remove variables that we are NOT interested in.
-
 # Selecting Variables of Interest
 
 Unfortunately, this is one of the more time-consuming portion and tedious as we need to evaluate each variable by eye to determine which variables are of specific interest. 
 
-On first glance, there is an incredible amount of variables we can choose from. Nevertheless, we will aim to select variables that are typically commonly associated with diabetes. CDC reported some common factors associated with diabetes are smoking, obesity, physical inactivity, hypertension, HbA1c levels, and high cholesterol. 
+On first glance, there is an incredible amount of variables we can choose from. Nevertheless, we will aim to select variables that are typically commonly associated with diabetes. CDC reported some common factors associated with diabetes are smoking, obesity, physical inactivity, hypertension, HbA1c levels, and high cholesterol. We would also likely be interested in behavioral and environmental factors (such as income, caloric intake, macronutrients, gender, body measures, etc).
 
 ## Variables of Interest under Demographic Category
 
@@ -232,15 +220,14 @@ rm(list=c("demo_survey"))
 
 ## Variables of Interest under Dietary Category
 
-We can do similar steps with our dietary data.
-
 ```{r diet_survey}
 diet_survey <- survey_df %>% 
   filter(category == "dietary") %>% 
   select(-category, -group_filename)
 
-# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
-#distinct(diet_survey, var_name)
+# # check for "unique" descriptions only
+# janitor::get_dupes(diet_survey, var_name)
+# distinct(diet_survey, var_name)
 ```
 
 While we had some variables of interest from the dietary category, it was quite difficult incorporating the sample weights to these variables and we unfortunately **did not include any of the variables from this dietary category**. Our original variables of interest are:
@@ -277,11 +264,9 @@ exam_survey <- survey_df %>%
   filter(category == "examination") %>% 
   select(-category, -group_filename)
 
-# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
-#janitor::get_dupes(exam_survey, var_name)
-
-#exam_survey %>% 
-#  distinct(var_name)
+# # check for "unique" descriptions only
+# janitor::get_dupes(exam_survey, var_name)
+# exam_survey %>% distinct(var_name)
 ```
 
 Variables of interest in this category are:
@@ -314,7 +299,7 @@ Variables of interest in this category are:
   * `PAXMINUT`: Minute of the hour
   * `PAXINTEN`: Device intensity value
 
-The variables under Blood Pressure and Body Measure group variable are not readily available from the `rnhanesdata`, so it was gathered from NHANES using the package's `process_covar()` function. The values from the Physical Activity Monitor group variable are stored under the `PAXINTEN_C` and `PAXINTEN_D` dataset from the package, so we will use those. 
+The variables under Blood Pressure and Body Measures group variable are not readily available from the `rnhanesdata`, so it was gathered from NHANES using the package's `process_covar()` function. The values from the Physical Activity Monitor group variable are stored under the `PAXINTEN_C` and `PAXINTEN_D` dataset from the package, so we will use those. 
 
 ```{r remove exam df, include = FALSE}
 rm(list=c("exam_survey"))
@@ -327,8 +312,9 @@ lab_survey <- survey_df %>%
   filter(category == "laboratory") %>% 
   select(-category, -group_filename)
 
-# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
-#janitor::get_dupes(lab_survey, var_name)
+# # check for "unique" descriptions only
+# janitor::get_dupes(lab_survey, var_name)
+# lab_survey %>% distinct(var_name)
 ```
 
 One laboratory test that was typically used to support diagnosis of diabetes is the glycohemoglobin test (HbA1c). NHANES has these lab test results as well, so we will obtain the variable. There are other variables that are potentially of interest (such as cholesterol levels) but since we are aiming for common predictors, we'd like to minimize our lab-test variables. 
@@ -346,8 +332,9 @@ que_survey <- survey_df %>%
   filter(category == "questionnaire") %>% 
   select(-category, -group_filename)
 
-# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
-#janitor::get_dupes(que_survey, var_name)
+# # check for "unique" descriptions only
+# janitor::get_dupes(que_survey, var_name)
+# que_survey %>% distinct(var_name)
 ```
 
 Questionnaires of interest:
@@ -373,7 +360,7 @@ Questionnaires of interest:
   * `SMQ020`: Smoked at least 100 cigarettes in life
   * `SMQ040`: Still smoking cigarettes?
 
-For the physical function group variable, `rnhanesdata`'s covariate dataset already included a processed variable set that was derived from some of the PFQs of interest, but we will still use the derived variable for simplicity. 
+For the physical function group variable, `rnhanesdata`'s covariate dataset already included a processed variable set that was derived from some of the PFQs of interest, so we will still use the derived variable for simplicity. 
 
 Similarly, the package already re-formated/derived most of these questionnaire group-variables. As such, using what was already provided seemed prudent. 
 
@@ -388,11 +375,9 @@ lim_survey <- survey_df %>%
   filter(category == "limited data") %>% 
   select(-category, -group_filename)
 
-# used to check "unique" data descriptions to quickly filter out which categories might be of interest to explore
-#janitor::get_dupes(lim_survey, var_name)
-
-#lim_survey %>% 
-#  distinct(data_desc)
+# # check for "unique" descriptions only
+# janitor::get_dupes(lab_survey, var_name)
+# lim_survey %>% distinct(var_name)
 ```
 
 These variables appear to be location-associated or for a more-specific population. Thus, none of the variables from this category will be added to our dataset. 

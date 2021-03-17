@@ -45,7 +45,7 @@ theme_set(theme_minimal() +
 
 This section details my exploration of the `rnhanesdata` package that was the initial objective of my project (which evolved into something else eventually). This was the earliest attempt to explore what the dataset contains and whether or not I could develop something out of the provided dataset. 
 
-# Loading Dataset
+# Package Exploration
 
 We first install/load the `rnhanesdata` package.
 
@@ -89,23 +89,28 @@ They also had other functions, `process_accel()` and `process_flags()` with the 
 
 Having seen the contents and functions of `rnhanesdata` package, we will explore the processed data further. Note that we won't explore the raw data. 
 
+We'll make a helper function to clean accelerometer and flag data
+
+```{r cleaning_helper_function}
+# helper function to "clean up" accel and flag data
+clean_fn <- function(df) {
+  
+  df %>% 
+    janitor::clean_names() %>% 
+    mutate(across(c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"), factor)) %>% 
+    select(-starts_with("min"))
+  
+}
+```
+
 ## Accelerometer Data
 
 ```{r accel data load}
 data("PAXINTEN_C")
 data("PAXINTEN_D")
 
-# Wave C data clean to remove the min-variables
-accelC_id <- PAXINTEN_C %>% 
-  janitor::clean_names() %>% 
-  mutate(across(c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"), factor)) %>% 
-  select(-starts_with("min"))
-
-# Wave D data clean to remove the min-variables
-accelD_id <- PAXINTEN_D %>% 
-  janitor::clean_names() %>% 
-  mutate(across(c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"), factor)) %>% 
-  select(-starts_with("min"))
+accelC_id <- clean_fn(PAXINTEN_C)
+accelD_id <- clean_fn(PAXINTEN_D)
 ```
   
 Both of these datasets contain similar variables:
@@ -121,7 +126,7 @@ There are `r accelC_id %>% distinct(seqn) %>% count()` unique subjects with the 
 
 Wave D has `r accelD_id %>% distinct(seqn) %>% count()` unique subjects with the ID ranging between `r min(PAXINTEN_D$SEQN)` - `r max(PAXINTEN_D$SEQN)`. 
 
-As noted from the range between these two waves, it appears that NHANES assumes none of the individuals are repeat-measures i.e. they're all assumed different individuals. A quick summary below using the `skimr::skim_without_charts()` function for wave C
+As noted from the range between these two waves, it appears that NHANES assumes none of the individuals are repeat-measures i.e. they're all assumed different individuals. A quick summary below using the `skimr::skim_without_charts()` function for wave C:
 
 ```{r skim accel}
 accelC_id %>% skimr::skim_without_charts()
@@ -134,24 +139,14 @@ rm(list=c("PAXINTEN_C", "PAXINTEN_D"))
 ## Flags Data
 
 ```{r flags_data}
-# load flag data
 data("Flags_C")
 data("Flags_D")
 
-# Wave C data clean to remove the min-variables
-flagC_id <- Flags_C %>% 
-  janitor::clean_names() %>% 
-  mutate(across(c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"), factor)) %>% 
-  select(-starts_with("min"))
-
-# Wave D data clean to remove the min-variables
-flagD_id <- Flags_D %>% 
-  janitor::clean_names() %>% 
-  mutate(across(c("seqn", "paxcal", "paxstat", "weekday", "sddsrvyr"), factor)) %>% 
-  select(-starts_with("min"))
+flagC_id <- clean_fn(Flags_C)
+flagD_id <- clean_fn(Flags_D)
 ```
 
-The flags data appear to contain similar primary variables as in `PAXINTEN_C` & `PAXINTEN_D`. Slightly different to the activity dataset however, is the measures within the 1440+ format. While the activity dataset has numeric variables, the flags are binary with only `0` (non-wear) or `1` (wear), though there are some `NA` values. 
+The flags data appear to contain similar primary variables as in `PAXINTEN_C` & `PAXINTEN_D`. Slightly different to the activity dataset however, is the measures within the 1440+ format. While the activity dataset has `numeric` variables, the flags are binary (`0` = non-wear, `1` = wear) with some `NA`. 
 
 ```{r remove flag data, include = FALSE}
 rm(list=c("flagC_id", "flagD_id", "Flags_C", "Flags_D"))
@@ -162,11 +157,8 @@ rm(list=c("flagC_id", "flagD_id", "Flags_C", "Flags_D"))
 These covariate datasets appear to only contain a very small portion of all available NHANES data that were selected by the package creator. Nevertheless, it has functions to obtain all possible covariates from wave C & D. 
 
 ```{r covar data}
-covarC <- Covariate_C %>% 
-  janitor::clean_names()
-  
-covarD <- Covariate_D %>% 
-  janitor::clean_names()
+covarC <- Covariate_C %>% janitor::clean_names()
+covarD <- Covariate_D %>% janitor::clean_names()
 ```
 
 Interestingly, the covariate datasets have more unique subjects than the accelerometry datasets. Wave C has `r covarC %>% distinct(seqn) %>% count()` unique subjects as opposed to `r accelC_id %>% distinct(seqn) %>% count()` while wave D has `r covarD %>% distinct(seqn) %>% count()` unique subjects as opposed to `r accelD_id %>% distinct(seqn) %>% count()`.
@@ -216,11 +208,8 @@ rm(list=c("accelC_id", "accelD_id", "covarC", "covarD"))
 Processed mortality data for NHANES, released in 2011 for waves C and D. They have mortality data from 2011 and 2015. We will explore the more recent 2015 data for now. 
 
 ```{r mortality data}
-mort_2015_c <- Mortality_2015_C %>% 
-  janitor::clean_names()
-
-mort_2015_d <- Mortality_2015_D %>% 
-  janitor::clean_names()
+mort_2015_c <- Mortality_2015_C %>% janitor::clean_names()
+mort_2015_d <- Mortality_2015_D %>% janitor::clean_names()
 ```
 
 Obtaining the processed mortality table shows a number of unique subjects of `r mort_2015_c %>% distinct(seqn) %>% count()` for wave C and `r mort_2015_d %>% distinct(seqn) %>% count()` for wave D--similar to the number found in covariates data. We also note several new variables besides `SEQN`:

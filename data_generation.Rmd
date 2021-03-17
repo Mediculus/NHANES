@@ -44,25 +44,6 @@ theme_set(theme_minimal() +
 
 This section details the dataset generation steps that will ultimately be used for our predictive modeling purposes. 
 
-# Background & Objective
-
-The goal of this project is to build a predictive modeling for diagnosis of diabetes using machine learning algorithms--LASSO and Random Forest--in the setting of imbalanced dataset. The predictors chosen are primarily from the `rnhanesdata`'s covariates dataset that span NHANES datasets from 2003-2004 and 2005-2006. Predictor variables will be commonly-found biological, environmental, and behavioral factors associated with diabetes. These variables are typically part of your routine physical exams with physicians, medical histories, demographics, as well as physical activity level. Some other potentially useful variables include household income, family poverty income ratio (PIR), and education level.
-
-The issue of imbalanced datasets occur when there's a difference in the frequency between two classes--in our case, diagnosis of diabetes. Since diagnosis involves a binary outcome (yes/no), it does make the imbalanced problem easier to manage. Nevertheless, this causes issue with machine learning algorithms as conventional metrics used to evaluate them become inaccurate. Several ways to mitigate this issue involves data-level approach which are considered "sub-sampling". Therefore, we will apply these various sub-sampling methods and evaluate which method works best in properly predicting the diagnosis of diabetes. 
-
-Additionally, since conventional metrics will be inaccurate, we will obtain other kinds of metrics that are more sensitive to this imbalance and they are:
-
-* ROC-AUC
-* Precision
-* Recall
-* F-measure
-* G-mean
-* UAR
-
-These metrics will be detailed later.
-
-**Disclaimer: Given the complexity of NHANES data and the relative inexperience of this analyst, the final model MUST NOT be applied or used to support real decision-making. This is primarily an exercise, to the best of this analyst's abilities, to apply what has been learned with respect to using statistical techniques to build several predictive model and comparing their accuracy/efficiency in potentially classifying future data on their diabetic status.**
-
 # Data importing
 
 ## Required packages
@@ -81,8 +62,6 @@ library(haven)       # to load XPT files
 
 We will load the activity data stored within the `rnhanesdata` package.
 
-### Importing
-
 A helper function, `clean_loader`, was used to clean up the imported data using "standardized" name conventions as well as transforming variables to factors, where appropriate.
 
 ```{r activity_flag_import}
@@ -100,14 +79,12 @@ flagD <- clean_loader(Flags_D)
 
 Both the activity (`act*`) and flag (`flag*`) datasets contains 5 critical variables along with a minute-by-minute measurement, from `MIN1` - `MIN1440`. These variables are `seqn`, `paxcal`, `paxstat`, `weekday`, `sddsrvyr`.
 
-### Pre-processing activity data
-
 The `flag*` dataset loaded along with the activity dataset provides a minute-by-minute indicator on whether or not the accelerometer device was worn (0 = not worn, 1 = worn). As such, we should convert all activity counts in the activity dataset to 0 when the flag indicator = 0.
 
 ```{r activity_renumeration}
-# make activity = 0 if flag = 0 (non-wear indicator)
 min_vars = paste0("min",1:1440)
 
+# make activity = 0 if flag = 0 (non-wear indicator)
 actC[, min_vars] <- actC[, min_vars]*flagC[, min_vars]
 actD[, min_vars] <- actD[, min_vars]*flagD[, min_vars]
 ```
@@ -130,9 +107,10 @@ Examining codebook from NHANES, there are a few more variables that we are inter
 
 ```{r extra_covariate_load, results = "hide"}
 # get additional covariates
-# variables of interest were selected that are likely to be associated with diabetes
+
+# easily-obtained variables of interest to be associated with diabetes
 extra_covariates <- c(# Demographics: PIR, RIDEXPRG (1: yes, 2 no, 
-                      # 3: unsure, missing: not female/missing)
+                      # 3: unsure, NA: not female/missing)
                       "INDFMPIR", "RIDEXPRG",
                       # Exam: HR, BP
                       "BPXPLS", "BPXSY1", "BPXSY2", "BPXSY3", "BPXSY4", 
@@ -140,7 +118,7 @@ extra_covariates <- c(# Demographics: PIR, RIDEXPRG (1: yes, 2 no,
                       # Exam: weight, height, waist measures
                       "BMXWT","BMXHT", "BMXWAIST")
 
-# obtain the covarites
+# obtain the covariates
 extra_data <- process_covar(varnames = extra_covariates)
 
 # isolate to wave C/D
@@ -153,16 +131,12 @@ rm(list = "extra_data")
 # download hba1c data from 2003-2004 and 2005-2006
 hba1c_C <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2003-2004/L10_C.XPT") %>% janitor::clean_names()
 hba1c_D <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/GHB_D.XPT") %>% janitor::clean_names()
-
-# merge both years
 hba1c <- bind_rows(hba1c_C, hba1c_D)
 
-
-
-# combine both waves into a single dataframe as well as merge with hba1c data
+# combine covariate wave C/D, then left join hba1c to the covariates
 all_extra_cov <- bind_rows(extra_covC, extra_covD) %>% left_join(hba1c, by = "seqn")
 
-# remove original datasets/vectors/lists to clean environment
+# remove original datasets/vectors/lists to clean workspace
 rm(list=c("extra_covC", "extra_covD", "extra_covariates", "hba1c", "hba1c_C", "hba1c_D"))
 ```
 
@@ -214,21 +188,15 @@ Also noted that the pregnancy variable, `ridexprg`, has almost >50% missing valu
 refactor_fn <- function(df) {
   
   df %>% 
-    # if male and NA or if female, age > 59, and NA, code as "no"
-    mutate(ridexprg = case_when((gender == "Male" & is.na(ridexprg)) | 
+    mutate(ridexprg = factor(case_when((gender == "Male" & is.na(ridexprg)) | 
                                   (gender == "Female" & ridageyr > 59 & is.na(ridexprg))
                                 ~ 2, 
-                                TRUE ~ ridexprg)) %>% 
-    mutate(across(c("ridexprg"), factor)) %>% 
-    # changing the original codes and adding new variables
+                                TRUE ~ ridexprg))
+    ) %>% 
     mutate(
-      # recode pregnancy indicator
       ridexprg = fct_recode(ridexprg, "Yes" = "1", "No" = "2", "Uncertain" = "3"),
-      # obtain average across 4 measures BP systolic
       bpxsy_avg = round(rowMeans(.[, c("bpxsy1", "bpxsy2", "bpxsy3", "bpxsy4")], na.rm = TRUE), 3),
-      # obtain average across 4 measures BP diastolic
       bpxdi_avg = round(rowMeans(.[, c("bpxdi1", "bpxdi2", "bpxdi3", "bpxdi4")], na.rm = TRUE), 3),
-      # create new factor for indfmpir (poverty income ratio) per CDC's recommendation
       pir_cat = factor(case_when(indfmpir < 1 ~ "Below poverty",
                                  indfmpir >= 1 ~ "At or above poverty"))
     ) %>% 
@@ -277,10 +245,8 @@ rm(list = "age_compare")
 Additionally, since we obtained the `bpx**_avg` and `pir_cat` as well, the original measures can be dropped.
 
 ```{r remove_variables}
-# bpx*** variables
 bp_var <- paste0(c("bpxsy", "bpxdi"), rep(1:4, each = 2))
 
-# remove now-unneeded variables
 all_act <- select(all_act, -ridagemn, -ridageex, -all_of(bp_var), -indfmpir)
 all_flag <- select(all_flag, -ridagemn, -ridageex, -all_of(bp_var), -indfmpir)
 rm(list = "bp_var")
@@ -301,28 +267,26 @@ rm(list = c("act_var", "cov_var"))
 
 ## Summarizing Activity Count Data
 
-### Replacing NAs in activity count with 0 since they are mostly "non-active" in the first place.
+### Replacing NAs in activity count with 0
 
 ```{r replacing_na}
 # using across() function to replace NA with 0 ONLY in the minute variables
-# not shown, but the function has been checked and confirmed to only apply to the minute variables
-# by checking the "total" NA difference between min variables in old vs. new as well as covariates.
 all_act <- all_act %>% mutate(across(all_of(min_vars), ~ replace_na(.x, 0)))
 all_flag <- all_flag %>% mutate(across(all_of(min_vars), ~ replace_na(.x, 0)))
 ```
 
-### Creating summary variables from the activity counts
+### Feature engineering from the activity counts
 
 We will be creating daily activity summary measures such as total daily physical activity counts (`tdac`), the daily sum of log of the physical activity (`tdlac`). The log is a transformation to the data given the skew noted in the activity-count data, which hopefully will make our distribution more normalized.
 
-Additionally, we also obtained the daily sedentary time (`sedtime`) as well as moderate-to-vigorous-intensity-actvity (MVIA) time (`mviatime`). Thresholds were referenced from Dr. Schuna's article, specifying that sedentary time is typically $<$ 100 cpm ("counts per minute") while MVIA is typically $\geq$ 2020 cpm.
+Additionally, we also obtained the daily sedentary time (`sedtime`) as well as moderate-to-vigorous-intensity-actvity (MVIA) time (`mviatime`). Thresholds were referenced from [Dr. Schuna's article](https://ijbnpa.biomedcentral.com/articles/10.1186/1479-5868-10-126), specifying that sedentary time is typically $<$ 100 cpm ("counts per minute") while MVIA is typically $\geq$ 2020 cpm.
 
 ```{r adding accel_variables}
 # For faster processing, isolate minute variables into a separate matrix
 act_matrix <- all_act[,min_vars]
 act_matrix <- as.matrix(act_matrix)
 
-# obtain summary variables
+# obtain summary variables (feature engineering)
 all_act$tdac <- all_flag$tdac <- rowSums(act_matrix)
 all_act$tdlac  <- all_flag$tdlac  <- rowSums(log(1 + act_matrix))
 all_act$sedtime <- all_flag$sedtime <- rowSums(act_matrix < 100)
@@ -382,7 +346,6 @@ We will restrict our data to:
 -   Those who are confirmed to be not pregnant (`ridexprg = no`). Further, since we filtered using pregnancy for a single level, we can then remove the variable.
 
 ```{r inclexcl_criteria}
-# applying exclusion criteria
 all_act <- all_act %>% filter(ridageyr >= 20, ridexprg == "No") %>% select(-ridexprg)
 all_flag <- all_flag %>% filter(ridageyr >= 20, ridexprg == "No") %>% select(-ridexprg)
 ```
@@ -392,16 +355,15 @@ all_flag <- all_flag %>% filter(ridageyr >= 20, ridexprg == "No") %>% select(-ri
 The function `exclude_accel` from the `rnhanesdata` package returns the indices of daily activities which were identified as "good". The criteria to determine this was to have at least 10 hours (600 minutes) of wear time. Additionally, the function filters for datapoints which were deemed questionable by NHANES. This function returns a numeric vector containing the indices of days which were identified as "good". These indices can be used to subset the accelerometry data as desired. An illustration is provided in the examples.
 
 ```{r accel_data_filter}
-# creating indices for datapoints to keep
-# need this to obtain "good" activity data
+# creating indices for datapoints to keep "good" activity data
 keep_act <- exclude_accel(all_act %>% rename_with(str_to_upper), all_flag %>% rename_with(str_to_upper))
 
-# subset data to only contain those weekdays deemed "good"
 filt_all_act <- all_act[keep_act, ]
 rm(list = c("keep_act", "all_act", "all_flag"))
 
 # summarize the daily activity counts
-filt_all_act <- filt_all_act %>% group_by(seqn) %>% 
+filt_all_act <- filt_all_act %>% 
+  group_by(seqn) %>% 
   mutate(
     mean_tdac = mean(tdac, na.rm = T),
     mean_tdlac = mean(tdlac, na.rm = T),
@@ -410,20 +372,14 @@ filt_all_act <- filt_all_act %>% group_by(seqn) %>%
   ) %>% 
   ungroup()
 
-# create vector of variables now-unneeded for analysis (minute-by-minute counts, daily counts, 
-# daily log of counts, daily sedentary counts and moderate to vigorous activity counts)
+# remove all the now-unneeded variables and remove duplicate points
 reweight_noinclude <- c(min_vars, "tdac", "tdlac", "sedtime", "mviatime")
 
-# remove all the now-unneeded variables as well as condensing our data, now that we do not need the daily measures.
 data_df <- filt_all_act %>% select(-all_of(reweight_noinclude)) %>% distinct(seqn, .keep_all = T)
 rm(list = "filt_all_act")
 ```
 
-# Remaining NA datapoints
-
-Now that we have a relatively clean dataset, we proceed to evaluate the missingness in our dataset.
-
-## Evaluating outcome distribution
+# Evaluating remaining NA datapoints
 
 For our model building, we are primarily interested in predicting diabetic status. We first check the distribution:
 
@@ -436,15 +392,11 @@ all_barplot <- data_df %>% count(diabetes) %>%
   theme(legend.position = "none")
 
 all_barplot
+
+data_df %>% count(diabetes) %>% mutate(pct = n/sum(n))
 ```
 
-As we see in our simple bar graph above, our dataset is highly imbalanced. Imbalanced data are known to cause issues for machine learning, particularly if we use accuracy as our metric [ref]. As such, we should explore potential ways to address this. Firstly, accuracy metric will likely work poorly in this given dataset and thus we should use ROC-AUC and PR-AUC as our metric, in addition to other metrics such as precision, recall [ref].
-
-Furthermore, in addition to LASSO and Random Forest, we will also consider several algorithms that are typically robust to imbalanced classes. These are:
-
-Additionally, we will also consider some resampling methods to improve upon our algorithms, such as up-/down- sampling, SMOTE, or ROSE.
-
-## Assessing the missingness in dataset
+As seen above, the distribution is quite imbalanced. If we decide to remove our missing data, we should make sure that the resulting dataset contains a similar distribution to this. Let's evaluate our dataset's missingness. 
 
 ```{r count_na}
 data_df <- data_df %>% 
@@ -455,10 +407,10 @@ data_df <- data_df %>%
   ) %>% 
   ungroup()
 
-data_df %>% count(na_any)
+data_df %>% count(na_any) %>% mutate(pct = n/sum(n))
 ```
 
-As seen above, there's 1086 rows that contains at least one `NA`. This means that only `r round((1-(data_df %>% count(na_any) %>% .[[2, 2]] / data_df %>% count()))*100, 2)[[1]]`% of our data is complete. Additionally, we note that there is a single person that has `r max(pull(data_df, na_sum))` variables missing--the maximum amount of missing variables in a given person.
+As seen above, there's `r sum(data_df$na_any)` rows that contains at least one `NA`. This means that only `r round((1-(data_df %>% count(na_any) %>% .[[2, 2]] / data_df %>% count()))*100, 2)[[1]]`% of our data is complete. Additionally, we note that the maximum amount of missing variables in a given person is `r max(pull(data_df, na_sum))`. There is `r length(data_df$na_sum[which(data_df$na_sum == max(data_df$na_sum))])` subject(s) with this missing amount.
 
 ```{r counting_na_test, echo = FALSE, eval = FALSE}
 # This code chunk is to assess two ways of flagging if a row has any NA or not 
@@ -498,7 +450,13 @@ complete_barplot <- data_df %>% drop_na() %>% count(diabetes) %>%
 complete_barplot | all_barplot + labs(subtitle = "Before removing NA")
 ```
 
-Per our graph comparison, though our dataset is indeed smaller, the resulting distribution is largely unchanged. As such, we believe that it is alright to remove the `NA`-containing respondents.
+Per our graph comparison, though our dataset is indeed smaller, the resulting distribution is largely unchanged. Additionally, the percentage of diabetes status is:
+
+```{r}
+data_df %>% drop_na() %>% count(diabetes) %>% mutate(pct = n/sum(n))
+```
+
+Compared to our previous dataset, the proportion is highly similar. As such, we believe that it is alright to remove the `NA`-containing respondents.
 
 ```{r finalize_data}
 # subset to complete dataset only
@@ -510,7 +468,7 @@ rm(list = c("all_barplot", "complete_barplot"))
 
 # Re-weighting the survey weights
 
-We also want to re-calculate our weights given that we've merged the years 2003-2004 and 2005-2006 as well as applying exclusion criteria. We will
+We also want to re-calculate our weights given that we've merged the years 2003-2004 and 2005-2006 as well as applying exclusion criteria. We will use the `rnhanesdata::reweight_accel()` function to do this. Once finished, we will use the `nhanes_df` to do our predictive modeling. 
 
 ```{r reweight_data}
 # obtaining a 4-year weight post-aggregating the dataframes, inclusion/exclusion, etc
@@ -520,14 +478,6 @@ nhanes_df <- nhanes_df %>% rename_with(str_to_upper) %>% reweight_accel() %>% se
 
 # remove reweight_df
 rm(list = c("reweight_noinclude", "min_vars"))
-```
-
-# Final dataset export
-
-```{r save_clean_data, eval = FALSE}
-# # create RData from the final dataset
-# save(data_df, file = "../NHANES pt2/Dataset/data.rda")
-# save(nhanes_df, file = "../NHANES pt2/Dataset/nhanes_data.rda")
 ```
 
 <br></br>

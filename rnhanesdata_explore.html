@@ -438,8 +438,8 @@ div.tocify {
 </div>
 <p><br></br></p>
 <p>This section details my exploration of the <code>rnhanesdata</code> package that was the initial objective of my project (which evolved into something else eventually). This was the earliest attempt to explore what the dataset contains and whether or not I could develop something out of the provided dataset.</p>
-<div id="loading-dataset" class="section level1" number="1">
-<h1 number="1"><span class="header-section-number">1</span> Loading Dataset</h1>
+<div id="package-exploration" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Package Exploration</h1>
 <p>We first install/load the <code>rnhanesdata</code> package.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># devtools::install_github(&quot;andrew-leroux/rnhanesdata&quot;)</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rnhanesdata)</span></code></pre></div>
@@ -480,22 +480,23 @@ div.tocify {
 <div id="processed-data-exploration" class="section level1" number="2">
 <h1 number="2"><span class="header-section-number">2</span> Processed Data Exploration</h1>
 <p>Having seen the contents and functions of <code>rnhanesdata</code> package, we will explore the processed data further. Note that we won’t explore the raw data.</p>
+<p>We’ll make a helper function to clean accelerometer and flag data</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># helper function to &quot;clean up&quot; accel and flag data</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>clean_fn <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    janitor<span class="sc">::</span><span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">&quot;seqn&quot;</span>, <span class="st">&quot;paxcal&quot;</span>, <span class="st">&quot;paxstat&quot;</span>, <span class="st">&quot;weekday&quot;</span>, <span class="st">&quot;sddsrvyr&quot;</span>), factor)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">&quot;min&quot;</span>))</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <div id="accelerometer-data" class="section level2" number="2.1">
 <h2 number="2.1"><span class="header-section-number">2.1</span> Accelerometer Data</h2>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;PAXINTEN_C&quot;</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;PAXINTEN_D&quot;</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Wave C data clean to remove the min-variables</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>accelC_id <span class="ot">&lt;-</span> PAXINTEN_C <span class="sc">%&gt;%</span> </span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">&quot;seqn&quot;</span>, <span class="st">&quot;paxcal&quot;</span>, <span class="st">&quot;paxstat&quot;</span>, <span class="st">&quot;weekday&quot;</span>, <span class="st">&quot;sddsrvyr&quot;</span>), factor)) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">&quot;min&quot;</span>))</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Wave D data clean to remove the min-variables</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>accelD_id <span class="ot">&lt;-</span> PAXINTEN_D <span class="sc">%&gt;%</span> </span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">&quot;seqn&quot;</span>, <span class="st">&quot;paxcal&quot;</span>, <span class="st">&quot;paxstat&quot;</span>, <span class="st">&quot;weekday&quot;</span>, <span class="st">&quot;sddsrvyr&quot;</span>), factor)) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">&quot;min&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;PAXINTEN_C&quot;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;PAXINTEN_D&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>accelC_id <span class="ot">&lt;-</span> <span class="fu">clean_fn</span>(PAXINTEN_C)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>accelD_id <span class="ot">&lt;-</span> <span class="fu">clean_fn</span>(PAXINTEN_D)</span></code></pre></div>
 <p>Both of these datasets contain similar variables:</p>
 <ul>
 <li><code>SEQN</code>: Unique subject ID</li>
@@ -507,8 +508,8 @@ div.tocify {
 </ul>
 <p>There are 7176 unique subjects with the ID ranging between 21005 - 31125 for wave C.</p>
 <p>Wave D has 7455 unique subjects with the ID ranging between 31128 - 41474.</p>
-<p>As noted from the range between these two waves, it appears that NHANES assumes none of the individuals are repeat-measures i.e. they’re all assumed different individuals. A quick summary below using the <code>skimr::skim_without_charts()</code> function for wave C</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>accelC_id <span class="sc">%&gt;%</span> skimr<span class="sc">::</span><span class="fu">skim_without_charts</span>()</span></code></pre></div>
+<p>As noted from the range between these two waves, it appears that NHANES assumes none of the individuals are repeat-measures i.e. they’re all assumed different individuals. A quick summary below using the <code>skimr::skim_without_charts()</code> function for wave C:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>accelC_id <span class="sc">%&gt;%</span> skimr<span class="sc">::</span><span class="fu">skim_without_charts</span>()</span></code></pre></div>
 <table>
 <caption>Data summary</caption>
 <tbody>
@@ -604,31 +605,18 @@ div.tocify {
 </div>
 <div id="flags-data" class="section level2" number="2.2">
 <h2 number="2.2"><span class="header-section-number">2.2</span> Flags Data</h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load flag data</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;Flags_C&quot;</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;Flags_D&quot;</span>)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Wave C data clean to remove the min-variables</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>flagC_id <span class="ot">&lt;-</span> Flags_C <span class="sc">%&gt;%</span> </span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">&quot;seqn&quot;</span>, <span class="st">&quot;paxcal&quot;</span>, <span class="st">&quot;paxstat&quot;</span>, <span class="st">&quot;weekday&quot;</span>, <span class="st">&quot;sddsrvyr&quot;</span>), factor)) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">&quot;min&quot;</span>))</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Wave D data clean to remove the min-variables</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>flagD_id <span class="ot">&lt;-</span> Flags_D <span class="sc">%&gt;%</span> </span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">&quot;seqn&quot;</span>, <span class="st">&quot;paxcal&quot;</span>, <span class="st">&quot;paxstat&quot;</span>, <span class="st">&quot;weekday&quot;</span>, <span class="st">&quot;sddsrvyr&quot;</span>), factor)) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">&quot;min&quot;</span>))</span></code></pre></div>
-<p>The flags data appear to contain similar primary variables as in <code>PAXINTEN_C</code> &amp; <code>PAXINTEN_D</code>. Slightly different to the activity dataset however, is the measures within the 1440+ format. While the activity dataset has numeric variables, the flags are binary with only <code>0</code> (non-wear) or <code>1</code> (wear), though there are some <code>NA</code> values.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;Flags_C&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;Flags_D&quot;</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>flagC_id <span class="ot">&lt;-</span> <span class="fu">clean_fn</span>(Flags_C)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>flagD_id <span class="ot">&lt;-</span> <span class="fu">clean_fn</span>(Flags_D)</span></code></pre></div>
+<p>The flags data appear to contain similar primary variables as in <code>PAXINTEN_C</code> &amp; <code>PAXINTEN_D</code>. Slightly different to the activity dataset however, is the measures within the 1440+ format. While the activity dataset has <code>numeric</code> variables, the flags are binary (<code>0</code> = non-wear, <code>1</code> = wear) with some <code>NA</code>.</p>
 </div>
 <div id="covariate-data" class="section level2" number="2.3">
 <h2 number="2.3"><span class="header-section-number">2.3</span> Covariate Data</h2>
 <p>These covariate datasets appear to only contain a very small portion of all available NHANES data that were selected by the package creator. Nevertheless, it has functions to obtain all possible covariates from wave C &amp; D.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>covarC <span class="ot">&lt;-</span> Covariate_C <span class="sc">%&gt;%</span> </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>covarD <span class="ot">&lt;-</span> Covariate_D <span class="sc">%&gt;%</span> </span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>covarC <span class="ot">&lt;-</span> Covariate_C <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>covarD <span class="ot">&lt;-</span> Covariate_D <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span></code></pre></div>
 <p>Interestingly, the covariate datasets have more unique subjects than the accelerometry datasets. Wave C has 10122 unique subjects as opposed to 7176 while wave D has 10348 unique subjects as opposed to 7455.</p>
 <p>Covariates included in these datasets are:</p>
 <ul>
@@ -674,11 +662,8 @@ div.tocify {
 <div id="mortality-data" class="section level2" number="2.4">
 <h2 number="2.4"><span class="header-section-number">2.4</span> Mortality Data</h2>
 <p>Processed mortality data for NHANES, released in 2011 for waves C and D. They have mortality data from 2011 and 2015. We will explore the more recent 2015 data for now.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>mort_2015_c <span class="ot">&lt;-</span> Mortality_2015_C <span class="sc">%&gt;%</span> </span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>mort_2015_d <span class="ot">&lt;-</span> Mortality_2015_D <span class="sc">%&gt;%</span> </span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>mort_2015_c <span class="ot">&lt;-</span> Mortality_2015_C <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>mort_2015_d <span class="ot">&lt;-</span> Mortality_2015_D <span class="sc">%&gt;%</span> janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span></code></pre></div>
 <p>Obtaining the processed mortality table shows a number of unique subjects of 10122 for wave C and 10348 for wave D–similar to the number found in covariates data. We also note several new variables besides <code>SEQN</code>:</p>
 <ul>
 <li><code>eligstat</code>: eligibility for mortality follow-up. 1 = eligible, 2 = &lt;18 yrs (not available for public), 3 = ineligible</li>
@@ -694,12 +679,12 @@ div.tocify {
 <div id="obtaining-all-covariates" class="section level1" number="3">
 <h1 number="3"><span class="header-section-number">3</span> Obtaining All Covariates</h1>
 <p>Now that we’ve assessed the processed datasets, we will evaluate the capability of the functions in obtaining all the covariates.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>covar_data <span class="ot">&lt;-</span> <span class="fu">process_covar</span>(<span class="at">extractAll =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>all_covar_c <span class="ot">&lt;-</span> covar_data<span class="sc">$</span>Covariate_C</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>all_covar_d <span class="ot">&lt;-</span> covar_data<span class="sc">$</span>Covariate_D</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">&quot;covar_data&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>covar_data <span class="ot">&lt;-</span> <span class="fu">process_covar</span>(<span class="at">extractAll =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>all_covar_c <span class="ot">&lt;-</span> covar_data<span class="sc">$</span>Covariate_C</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>all_covar_d <span class="ot">&lt;-</span> covar_data<span class="sc">$</span>Covariate_D</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span><span class="fu">c</span>(<span class="st">&quot;covar_data&quot;</span>))</span></code></pre></div>
 <p>Obtaining all covariates reveal that we have 383 and 325 variables for wave C and D, respectively. This is a huge amount of variables and we won’t be able to filter this efficiently if we evaluate them directly. As such, we will likely build a scraping function to obtain names and descriptions for these variables to make evaluation easier.</p>
 <p>To check out how I built the scraping function and what I did with it, go <a href="./codebook_data.html">here</a></p>
 <p><br></br></p>
