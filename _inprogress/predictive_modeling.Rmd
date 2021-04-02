@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
 
 
 # loaded packages; placed here to be able to load global settings
-Packages <- c("tidyverse", "patchwork", "ghibli",
+Packages <- c("tidyverse", "patchwork", "ghibli", "arsenal", #"kableExtra",
               "survey", "tidymodels", "themis", "vip")
 invisible(lapply(Packages, library, character.only = TRUE))
 
@@ -51,6 +51,8 @@ To do our initial work, we need these packages.
 library(tidyverse)    # general data wrangling
 library(patchwork)    # easy way to combine various ggplot objects neatly
 library(ghibli)       # some extra color palettes beyond viridis
+library(arsenal)      # summary table creations
+# library(kableExtra)   # extra features for kable package
 ```
 
 We then load our dataset obtained that was generated from the process described [here](./data_generation.html)
@@ -94,7 +96,75 @@ nhanes_df$stroke <- fct_relevel(nhanes_df$stroke, c("No", "Yes"))
 nhanes_df$drink_status <- fct_relevel(nhanes_df$drink_status, c("Non-Drinker", "Moderate Drinker", "Heavy Drinker"))
 ```
 
+## Table 1 Creation
 
+```{r summary_table}
+# table variable labels ---------
+table_labels <- list(
+  ridageyr = "Age (yrs)", 
+  bmi_cat = "BMI Category (N %)", 
+  race = "Race/Ethnicity (N %)",
+  gender = "Gender (N %)",
+  chf = "Diagnosis/History of CHF (N %)",
+  chd = "Diagnosis/History of CHD (N %)", 
+  cancer = "Diagnosis/History of Cancer (N %)", 
+  stroke = "Diagnosis/History of Stroke/TIA", 
+  education_adult = "Highest Education (N %)",
+  mobility_problem = "Mobility Problem (N %)",
+  drink_status = "Alcoholic Drinking Status (N %)",
+  smoke_cigs = "Cigarette Smoking Status (N %)", 
+  bmxwt = "Weight (kg)",
+  bmxht = "Height (cm)", 
+  bmxwaist = "Waist Circumference (cm)",
+  bpxpls = "Heart Rate (bpm)",
+  lbxgh = "HbA1c level (%)",
+  bpxsy_avg = "Systolic Blood Pressure (mmHg)",
+  bpxdi_avg = "Diastolic Blood Pressure (mmHg)",
+  pir_cat = "Poverty-Income-Ratio Category (N %)",
+  mean_tdac = "Average Total Daily Activity Measure",
+  mean_tdlac = "Average Total Log-Daily Activity Measure",
+  mean_sedtime = "Average Daily Sedentary Time (min)",
+  mean_mviatime = "Average Daily Moderate-to-Vigorous Activity Time (min)"
+  )
+
+# summary table controls -------------
+table_controls <- tableby.control(total = T, 
+                                  test = F,
+                                  # numeric.test = "kwt",
+                                  # cat.test = "chisq",
+                                  numeric.stats = c("meansd", "medianq1q3", "range"),
+                                  cat.stats = c("countpct"),
+                                  stats.labels = list(
+                                    meansd = "Mean (SD)",
+                                    medianq1q3 = "Median (Q1, Q3)",
+                                    range = "Min - Max",
+                                    countpct = "N (%)"))
+
+# base tableby object ---------------
+base_summ_table <- tableby(diabetes ~ ., 
+                         data = nhanes_df %>% 
+                           select(-all_of(c("seqn", "sdmvpsu", "sdmvstra", 
+                                            "wtint4yr_adj_norm", "wtmec4yr_adj_norm"))),
+                         control = table_controls)
+            
+
+# Prints out the summary table --------------
+table1 <- summary(base_summ_table,
+        title = "Table 1: Summary",
+        labelTranslations = table_labels,
+        text = T,
+        digits = 2)
+
+
+table1 %>% 
+   kable("latex", booktabs = TRUE, linesep = "", digits = 3, 
+         caption = "Summary Statistics of each Variable")
+# %>% 
+#    kable_styling(latex_options = c("HOLD_position"),
+#                 font_size = 9,
+#                 full_width = TRUE) %>% 
+#    column_spec(1, width = "14cm")
+```
 
 # Survey GLM
 
@@ -713,18 +783,6 @@ results %>% left_join(raw_metrics, by = c("algorithm", "resamp_method", ".config
 
 Seen from graphs ***
 
-### Wilcoxon Rank Sum Test (Mann Whitney U Test)
-
-```{r}
-results %>% left_join(raw_metrics, by = c("algorithm", "resamp_method", ".config")) %>% 
-  filter(.metric == "g_mean") %>% 
-  select(algorithm, resamp_method, id, .estimate, .metric) %>% 
-  filter((resamp_method == "adasyn" & algorithm == "lasso") | 
-           (resamp_method == "down" & algorithm == "rf")) %>% 
-  # calculate mann whitney U test. function defaults to exact test if n < 50
-  wilcox.test(formula = .estimate ~ algorithm, data = .)
-```
-
 # Finalizing model
 
 Now that we have identified the best model from our training, we will finalize it and apply the model to our whole training set and will validate it using our test set. 
@@ -812,7 +870,7 @@ conf_mat <- final_dataframe %>%
   select(algorithm, resamp_method, everything()) %>% 
   arrange(algorithm, resamp_method)
 
-conf_mat$conf_mat
+conf_mat$conf_mat[1:5]
 ```
 
 
@@ -845,8 +903,6 @@ coefficients <- final_dataframe %>%
 coefficients$coefs[[7]] %>% 
   filter(estimate != 0) %>% 
   view()
-
-
 ```
 
 
@@ -859,35 +915,6 @@ send the rough draft.
 
 evaluate estimates and see if reasonable
 how to explain?
-
-
-
-```{r summary_table}
-
-# Prints out the summary table
-summary(arsenal::tableby(diabetes ~ ., 
-                         data = nhanes_df %>% select(-all_of(c("seqn", "sdmvpsu", "sdmvstra", 
-                                                               "wtint4yr_adj_norm", "wtmec4yr_adj_norm"))),
-                         control = arsenal::tableby.control(
-                           total = T,
-                           test = F,
-                           # numeric.test = "kwt",
-                           # cat.test = "chisq",
-                           numeric.stats = c("meansd", "medianq1q3", "range"),
-                           cat.stats = c("countpct"),
-                           stats.labels = list(
-                             meansd = "Mean (SD)",
-                             medianq1q3 = "Median (Q1, Q3)",
-                             range = "Min - Max",
-                             countpct = "N (%)")
-                         )), 
-        title = "Table 1: Summary",
-        text = T,
-        digits = 2
-        )
-
-
-```
 
 
 
