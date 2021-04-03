@@ -27,6 +27,14 @@ Packages <- c("tidyverse", "patchwork", "ghibli", "arsenal", #"kableExtra",
 invisible(lapply(Packages, library, character.only = TRUE))
 
 
+# global settings for color palettes
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
 # theme global setting for ggplot
 theme_set(theme_minimal() + 
             theme(legend.position = "bottom") +
@@ -487,6 +495,8 @@ model_df <- model_df %>%
     train = map(split_data, training),
     test = map(split_data, testing)
   )
+
+model_df$resamp_method
 ```
 
 ### V-Fold Cross Validation for each Dataset
@@ -841,36 +851,71 @@ final_dataframe <- read_rds(file = "./_data/final_dataframe_git.rds")
 ```{r}
 # df containing metrics and its final estimate (based on test set)
 metrics <- final_dataframe %>% 
-  select(sample_type, resamp_method, algorithm, final_fit) %>% 
+  select(algorithm, resamp_method,final_fit) %>% 
   unnest(col = c(final_fit)) %>% 
-  select(sample_type, resamp_method, algorithm, .metrics) %>% 
+  select(algorithm, resamp_method, .metrics) %>% 
   unnest(col = c(.metrics))
   
 # results for g-mean metric
 metrics %>%   
   filter(.metric == "g_mean") %>% 
   arrange(desc(.estimate)) %>% 
-  select(algorithm, resamp_method, everything(), -sample_type, -.estimator, -.config)
+  select(algorithm, resamp_method, everything(), -.estimator, -.config)
 
 # results for uar metric
 metrics %>% 
   filter(.metric == "uar") %>% 
   arrange(desc(.estimate)) %>% 
-  select(algorithm, resamp_method, everything(), -sample_type, -.estimator, -.config)
+  select(algorithm, resamp_method, everything(), -.estimator, -.config)
 
 
 # obtain confusion matrix for each algorithm-subsampling pair
-conf_mat <- final_dataframe %>% 
-  select(resamp_method, algorithm, final_fit) %>% 
+conf_mat_df <- final_dataframe %>% 
+  select(algorithm, resamp_method, final_fit) %>% 
   unnest(col = c(final_fit)) %>% 
-  select(resamp_method, algorithm, .predictions) %>% 
+  select(algorithm, resamp_method, .predictions) %>% 
   unnest(col = c(.predictions)) %>% 
-  group_by(resamp_method, algorithm) %>% 
+  group_by(algorithm, resamp_method) %>% 
   conf_mat(diabetes, .pred_class) %>% 
   select(algorithm, resamp_method, everything()) %>% 
   arrange(algorithm, resamp_method)
 
-conf_mat$conf_mat[1:5]
+
+confmat_summarizer <- function(data) {
+  
+  data %>% 
+    tidy() %>% 
+    separate(col = name,
+           into = c("cell", "row", "col")) %>% 
+    select(-cell) %>% 
+    mutate(prediction = factor(case_when(row == 1 ~ "No",
+                                         row == 2 ~ "Yes"), 
+                               levels = c("No", "Yes")),
+           truth = factor(case_when(col == 1 ~ "No",
+                                    col == 2 ~ "Yes"), 
+                          levels = c("Yes", "No"))
+           ) %>% 
+    select(prediction, truth, value)
+  
+}
+
+
+
+conf_mat_df %>%
+  mutate(
+    confmat_sum = map(conf_mat, confmat_summarizer),
+    algorithm = factor(algorithm),
+    resamp_method = factor(resamp_method, levels = c("none", "adasyn", "smote", "bsmote", "down"))
+  ) %>% 
+  select(-conf_mat) %>% 
+  unnest(cols = c(confmat_sum)) %>% 
+  ggplot(aes(truth, prediction)) +
+  geom_tile(fill = "grey50", color = "white") +
+  geom_text(aes(label = value)) +
+  facet_grid(algorithm ~ resamp_method, switch = "x") +
+  scale_x_discrete(position = "top")
+
+
 ```
 
 
@@ -905,6 +950,46 @@ coefficients$coefs[[7]] %>%
   view()
 ```
 
+
+```{r obtain predictions}
+# resample ROC-AUC
+rs_pred <- model_df_long %>% 
+  select(algorithm, resamp_method, tune_results) %>% 
+  unnest(col = c(tune_results)) %>% 
+  select(algorithm, resamp_method, id, .predictions) %>% 
+  unnest(col = c(.predictions))
+
+rs_pred %>% 
+  unite("model", algorithm:resamp_method) %>% 
+  group_by(model, id) %>% 
+  roc_curve(diabetes, .pred_Yes, event_level = "second") %>% 
+  ggplot(aes(x = 1 - specificity, y = sensitivity, color = id)) +
+  geom_path() +
+  geom_abline(lty = 3) +
+  coord_equal() +
+  facet_wrap( ~ model)
+  
+# final ROC-AUC
+pred <- final_dataframe %>% 
+  select(algorithm, resamp_method, final_fit) %>% 
+  unnest(col = c(final_fit)) %>% 
+  select(algorithm, resamp_method, .predictions) %>% 
+  unnest(col = c(.predictions))
+
+pred %>% 
+  group_by(algorithm, resamp_method) %>% 
+  roc_curve(diabetes, .pred_Yes, event_level = "second") %>% 
+  autoplot()
+
+pred %>%
+  unite("model", algorithm:resamp_method) %>% 
+  group_by(model) %>% 
+  roc_curve(diabetes, .pred_Yes, event_level = "second") %>% 
+  ggplot(aes(x = 1 - specificity, y = sensitivity, color = model)) +
+  geom_path() +
+  geom_abline(lty = 3) +
+  coord_equal()
+```
 
 
 outline the report
