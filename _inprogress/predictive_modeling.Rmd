@@ -719,6 +719,8 @@ model_df_long <- model_df %>%
                names_pattern = "(wf_|tune_res_)(.+)") %>% 
   rename("workflows" = wf_, "tune_results" = tune_res_) %>% 
   select(algorithm, resamp_method, everything(), -sample_type)
+
+rm(list=c("model_df"))
 ```
 
 ## Assessing the resampling metrics
@@ -745,7 +747,6 @@ get_metric_summary <- function(data, algo) {
 #### LASSO findings
 
 ```{r lasso_results1}
-
 lasso_summary <- get_metric_summary(model_df_long, "lasso")
 
 lasso_metric_graph <- lasso_summary %>% 
@@ -778,8 +779,10 @@ rf_metric_graph <- rf_summary %>%
   ylab("Area under the ROC/PR Curve")
 ```
 
-```{r}
+```{r patch_graph}
 lasso_metric_graph / rf_metric_graph
+
+rm(list=c("get_metric_summary", "rf_summary", "rf_metric_graph", "lasso_summary", "lasso_metric_graph"))
 ```
 
 ### Comparing best models from each resampling method
@@ -859,6 +862,11 @@ rs_pred %>%
   facet_wrap( ~ model)
 ```
 
+```{r clean_env}
+rm(list=c("rs_pred", "results", "raw_metrics", "model_df_long"))
+```
+
+
 # Finalizing model
 
 Now that we have identified the best model from our training, we will finalize it and apply the model to our whole training set and will validate it using our test set. 
@@ -914,7 +922,9 @@ final_dataframe <- read_rds(file = "./_data/final_dataframe_git.rds")
 
 ## Final model assessments
 
-```{r final_assessment}
+### Confusion matrix
+
+```{r confmat_get}
 # function to get conf_mat components for each model
 confmat_summarizer <- function(data) {
   
@@ -976,8 +986,13 @@ conf_mat_df %>%
   scale_x_discrete(position = "top") +
   # extend the legend length to fit the number markers
   theme(legend.key.width = unit(1, "cm"))
+```
 
+### Final metrics
 
+We use the code below to get all the final metrics except ROC-AUC from the confusion matrix.
+
+```{r finmetrics_get}
 # obtain metrics from the confusion matrix manually
 # due to some metrics taking the wrong "event level"; unable to resolve
 metric_calc <- conf_mat_df %>%
@@ -1004,30 +1019,111 @@ metric_calc <- conf_mat_df %>%
   ) %>% 
   arrange(algorithm, desc(g_mean))
 
-metric_calc
+metric_calc %>% 
+  select(algorithm, resamp_method, g_mean, uar, f_meas, ppv, sens)
 ```
 
-```{r removed_metric_get, echo = FALSE, eval = FALSE}
+Code below is used to obtain the ROC-AUC exclusively. Originally was intended to obtain all the metrics, but some metrics had a faulty event-level specification.
+
+```{r rocauc_metric_get, echo = FALSE, eval = FALSE}
 # originally part of final_assessment chunk to obtain metrics from last-fit objects.
 # "deprecated" because found that certain measures was wrongly calculated because event_level
 # was not set to "second" (i.e. certain metrics are measuring true negatives).
 
 
-# # df containing metrics and its final estimate (based on test set)
-# metrics <- final_dataframe %>% 
-#   select(algorithm, resamp_method, final_fit) %>% 
-#   unnest(col = c(final_fit)) %>% 
-#   select(algorithm, resamp_method, .metrics) %>% 
-#   unnest(col = c(.metrics))
-#   
-# # results for g-mean metric
-# metrics %>% 
-#   filter(.metric == "g_mean") %>% 
-#   arrange(desc(.estimate)) %>% 
-#   select(algorithm, resamp_method, everything(), -.estimator, -.config) %>% 
-#   arrange(algorithm, desc(.estimate))
+# df containing metrics and its final estimate (based on test set)
+metrics <- final_dataframe %>%
+  select(algorithm, resamp_method, final_fit) %>%
+  unnest(col = c(final_fit)) %>%
+  select(algorithm, resamp_method, .metrics) %>%
+  unnest(col = c(.metrics))
+
+# results for g-mean metric
+metrics %>%
+  filter(.metric == "roc_auc") %>%
+  arrange(desc(.estimate)) %>%
+  select(algorithm, resamp_method, everything(), -.estimator, -.config) %>%
+  arrange(algorithm, desc(.estimate))
 ```
 
+Code below graphs the ROC-AUC faceted by algorithm-subsampling combinations.
+
+```{r final_rocauc}
+# final ROC-AUC
+pred <- final_dataframe %>% 
+  select(algorithm, resamp_method, final_fit) %>% 
+  unnest(col = c(final_fit)) %>% 
+  select(algorithm, resamp_method, .predictions) %>% 
+  unnest(col = c(.predictions))
+
+pred %>%
+  mutate(
+    algorithm = fct_recode(algorithm, "LASSO" = "lasso", "Random Forest" = "rf"),
+    resamp_method = fct_recode(resamp_method,
+                               "None" = "none", "ADASYN" = "adasyn", 
+                               "SMOTE" = "smote", "BSMOTE" = "bsmote",
+                               "Undersample" = "down")
+  ) %>% 
+  group_by(algorithm, resamp_method) %>% 
+  roc_curve(diabetes, .pred_Yes, event_level = "second") %>% 
+  rename_with(str_to_title) %>% 
+  ggplot(aes(x = 1 - Specificity, y = Sensitivity, color = Resamp_method)) +
+  geom_path(alpha = 0.5) +
+  geom_abline(lty = 3) +
+  coord_equal() +
+  facet_wrap(~ Algorithm) +
+  theme(legend.position = "right")
+
+rm(list=c("conf_mat_df", "metric_calc", "metrics", "pred", "confmat_summarizer"))
+```
+
+### Variable importance
+
+```{r vip_get}
+vip_df <- final_dataframe %>% 
+  select(-sample_type, -dataset, -split_data, -folds, -rec_base, -workflows, -tune_results) %>% 
+  filter(algorithm == "lasso", resamp_method == "adasyn")
+
+vip_wf <- vip_df$final_workflow[[1]]
+
+vi_df <- vip_wf %>% 
+  fit(vip_df$train[[1]]) %>% 
+  pull_workflow_fit() %>% 
+  vi(lambda = vip_df$best_hyperparams[[1]]$penalty)
+
+vi_df %>% 
+  slice_max(Importance, n = 10) %>% 
+  mutate(
+    Variable = case_when(Variable == "lbxgh" ~ "HbA1c",
+                         Variable == "bmxwaist" ~ "Waist Circumference",
+                         Variable == "mean_tdac" ~ "Avg. Daily Activity Count",
+                         Variable == "ridageyr" ~ "Age (yrs)",
+                         Variable == "bpxdi_avg" ~ "Avg. Diastolic BP",
+                         Variable == "chf_Yes" ~ "History of CHF",
+                         Variable == "stroke_Yes" ~ "History of Stroke",
+                         Variable == "race_Other.Hispanic" ~ "Other Hispanic",
+                         Variable == "race_Mexican.American" ~ "Mexican American",
+                         Variable == "pir_cat_Below.poverty" ~ "Below Poverty"),
+    Sign = case_when(Sign == "NEG" ~ "Negative",
+                     Sign == "POS" ~ "Positive")
+  ) %>% 
+  ggplot(aes(x = Importance, y = reorder(Variable, Importance), color = Sign, fill = Sign)) +
+  geom_col() +
+  scale_color_ghibli_d("KikiMedium", direction = -1) +
+  scale_fill_ghibli_d("KikiMedium", direction = -1) +
+  labs(title = "Variable Importance Plot",
+       subtitle = "For LASSO-ADASYN, the best-performing overall model",
+       y = "Variables") +
+  theme(legend.position = "right")
+  
+
+rm(list=c("vip_df", "vip_wf", "vi_df"))
+```
+
+
+### Coefficient for LASSO
+
+Since LASSO-ADASYN was the best model we obtained, we could also try to obtain the coefficients. 
 
 ```{r obtain_coefficients}
 # helper function for pulling coefficients
@@ -1048,38 +1144,35 @@ coef_fn <- function(algorithm, wf, train_df) {
 
 # obtain coefficients
 coefficients <- final_dataframe %>% 
+  filter(algorithm == "lasso", resamp_method == "adasyn") %>% 
   mutate(
     coefs = pmap(list(algorithm, final_workflow, train), 
                  ~coef_fn(algorithm = ..1, wf = ..2, train_df = ..3))
   )
 
 
-coefficients$coefs[[7]] %>% 
+coefficients$coefs[[1]] %>% 
   filter(estimate != 0) %>% 
-  view()
+  select(-penalty) %>% 
+  arrange(desc(estimate)) %>% 
+  mutate(
+    term = case_when(term == "lbxgh" ~ "HbA1c",
+                     term == "bmxwaist" ~ "Waist Circumference",
+                     term == "mean_tdac" ~ "Avg. Daily Activity Count",
+                     term == "ridageyr" ~ "Age (yrs)",
+                     term == "bpxdi_avg" ~ "Avg. Diastolic BP",
+                     term == "chf_Yes" ~ "History of CHF",
+                     term == "stroke_Yes" ~ "History of Stroke",
+                     term == "race_Other.Hispanic" ~ "Other Hispanic",
+                     term == "race_Mexican.American" ~ "Mexican American",
+                     term == "pir_cat_Below.poverty" ~ "Below Poverty",
+                     term == "drink_status_Moderate.Drinker" ~ "Moderate Alcoholic Drinker",
+                     term == "smoke_cigs_Former" ~ "Former Cigarette Smoker",
+                     term == "(Intercept)" ~ "Model Intercept")
+  ) %>% 
+  rename(Variables = term, "Model Coefficients" = estimate)
 ```
 
+Obtaining the coefficients above shows an interesting finding. 
 
-```{r final_rocauc}
-# final ROC-AUC
-pred <- final_dataframe %>% 
-  select(algorithm, resamp_method, final_fit) %>% 
-  unnest(col = c(final_fit)) %>% 
-  select(algorithm, resamp_method, .predictions) %>% 
-  unnest(col = c(.predictions))
-
-pred %>% 
-  group_by(algorithm, resamp_method) %>% 
-  roc_curve(diabetes, .pred_Yes, event_level = "second") %>% 
-  autoplot()
-
-pred %>%
-  unite("model", algorithm:resamp_method) %>% 
-  group_by(model) %>% 
-  roc_curve(diabetes, .pred_Yes, event_level = "second") %>% 
-  ggplot(aes(x = 1 - specificity, y = sensitivity, color = model)) +
-  geom_path() +
-  geom_abline(lty = 3) +
-  coord_equal()
-```
 
