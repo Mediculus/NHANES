@@ -38,8 +38,8 @@ scale_fill_discrete = scale_fill_viridis_d
 # theme global setting for ggplot
 theme_set(theme_minimal() + 
             theme(legend.position = "bottom") +
-            theme(plot.title = element_text(hjust = 0.5, size = 12),
-                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+            theme(plot.title = element_text(hjust = 0, size = 12),
+                  plot.subtitle = element_text(hjust = 0, size = 8))
           )
 
 ```
@@ -725,21 +725,30 @@ model_df_long <- model_df %>%
 
 ### Evaluating the metrics by graphs
 
+Create helper functions to obtain summaries, etc.
+
+```{r helper_fn}
+get_metric_summary <- function(data, algo) {
+  
+  data %>% 
+    filter(algorithm == algo) %>% 
+    # get metrics and predictions into their own columns
+    mutate(metrics_summary = map(tune_results, collect_metrics),
+           predictions = map(tune_results, collect_predictions)) %>% 
+    # select just necessary columns for a summary df
+    select(resamp_method, metrics_summary) %>% 
+    unnest(cols = c(metrics_summary))
+  
+}
+```
+
 #### LASSO findings
 
 ```{r lasso_results1}
-lasso_summary <- model_df_long %>% 
-  filter(algorithm == "lasso") %>% 
-  # get metrics and predictions into their own columns
-  mutate(metrics_summary = map(tune_results, collect_metrics),
-         predictions = map(tune_results, collect_predictions)) %>% 
-  # select just necessary columns for a summary df
-  select(algorithm, resamp_method, metrics_summary, predictions)
 
+lasso_summary <- get_metric_summary(model_df_long, "lasso")
 
-lasso_summary %>% 
-  select(resamp_method, metrics_summary) %>% 
-  unnest(cols = c(metrics_summary)) %>% 
+lasso_metric_graph <- lasso_summary %>% 
   ggplot(aes(x = penalty, y = mean, color = resamp_method, fill = resamp_method)) +
   geom_point(alpha = 0.3, size = 0.7) + 
   geom_line(alpha = 0.5) + 
@@ -759,11 +768,32 @@ From these graphs, we can see that ADASYN and downsampling behaves quite similar
 #### Random Forest findings
 
 ```{r rf_results}
+rf_summary <- get_metric_summary(model_df_long, "rf")
 
+rf_metric_graph <- rf_summary %>% 
+  ggplot(aes(x = mtry, y = mean, color = resamp_method, fill = resamp_method)) +
+  geom_point(alpha = 0.3, size = 0.7) + 
+  geom_line(alpha = 0.5) + 
+  facet_wrap(~ .metric) +
+  ylab("Area under the ROC/PR Curve")
 ```
 
+```{r}
+lasso_metric_graph / rf_metric_graph
+```
 
 ### Comparing best models from each resampling method
+
+```{r show_best_metrics, echo = false, eval = false}
+# get average, std of best model; for internal use
+model_df_long %>% 
+  select(algorithm, resamp_method, tune_results) %>% 
+  mutate(best_hyperparam = map(tune_results, show_best, metric = "g_mean", n = 1)) %>% 
+  select(-tune_results) %>% 
+  unnest(cols = c(best_hyperparam)) %>% 
+  arrange(algorithm, desc(mean))
+```
+
 
 ```{r best_model_compoare}
 results <- model_df_long %>% 
@@ -780,18 +810,54 @@ raw_metrics <- model_df_long %>%
   filter(.metric %in% c("g_mean", "uar"))
 
 
+# Boxplot for G-mean
 results %>% left_join(raw_metrics, by = c("algorithm", "resamp_method", ".config")) %>% 
   filter(.metric == "g_mean") %>% 
-  select(algorithm, resamp_method, id, .estimate, .metric) %>% 
+  # pre-graphing processing to change appearance/order, etc
+  mutate(
+    algorithm = fct_recode(algorithm, "LASSO" = "lasso", "Random Forest" = "rf"),
+    resamp_method = fct_relevel(resamp_method, "none", "adasyn", "smote", "bsmote", "down"),
+    resamp_method = fct_recode(resamp_method,
+                               "None" = "none", "ADASYN" = "adasyn", 
+                               "SMOTE" = "smote", "BSMOTE" = "bsmote",
+                               "Undersample" = "down")) %>% 
+  select(algorithm, resamp_method, id, .estimate) %>% 
+  # graph boxplot
   ggplot(aes(x = resamp_method, y = .estimate, color = algorithm, fill = algorithm)) +
   geom_boxplot(alpha = 0.3) + 
-  # unite("model", algorithm:resamp_method) %>%
-  # ggplot(aes(x = model, y = .estimate, color = model, fill = model)) +
-  # geom_boxplot(alpha = 0.3) +
-  facet_wrap(~ .metric)
+  # label settings
+  labs(title = "G-mean Metric Resample Performance",
+       subtitle = "Using best hyperparameters",
+       x = "Resampling Methods",
+       y = "G-mean Value",
+       color = "Algorithm", fill = "Algorithm") +
+  theme(legend.position = "right")
 ```
 
 Seen from graphs ***
+
+### Assessing ROC Curves
+
+We'll also assess how the ROC curves perform given the imbalanced set in this case.
+
+```{r resample_rocauc}
+# resample ROC-AUC
+rs_pred <- model_df_long %>% 
+  select(algorithm, resamp_method, tune_results) %>% 
+  unnest(col = c(tune_results)) %>% 
+  select(algorithm, resamp_method, id, .predictions) %>% 
+  unnest(col = c(.predictions))
+
+rs_pred %>% 
+  unite("model", algorithm:resamp_method) %>% 
+  group_by(model, id) %>% 
+  roc_curve(diabetes, .pred_Yes, event_level = "second") %>% 
+  ggplot(aes(x = 1 - specificity, y = sensitivity, color = id)) +
+  geom_path() +
+  geom_abline(lty = 3) +
+  coord_equal() +
+  facet_wrap( ~ model)
+```
 
 # Finalizing model
 
@@ -848,39 +914,8 @@ final_dataframe <- read_rds(file = "./_data/final_dataframe_git.rds")
 
 ## Final model assessments
 
-```{r}
-# df containing metrics and its final estimate (based on test set)
-metrics <- final_dataframe %>% 
-  select(algorithm, resamp_method,final_fit) %>% 
-  unnest(col = c(final_fit)) %>% 
-  select(algorithm, resamp_method, .metrics) %>% 
-  unnest(col = c(.metrics))
-  
-# results for g-mean metric
-metrics %>%   
-  filter(.metric == "g_mean") %>% 
-  arrange(desc(.estimate)) %>% 
-  select(algorithm, resamp_method, everything(), -.estimator, -.config)
-
-# results for uar metric
-metrics %>% 
-  filter(.metric == "uar") %>% 
-  arrange(desc(.estimate)) %>% 
-  select(algorithm, resamp_method, everything(), -.estimator, -.config)
-
-
-# obtain confusion matrix for each algorithm-subsampling pair
-conf_mat_df <- final_dataframe %>% 
-  select(algorithm, resamp_method, final_fit) %>% 
-  unnest(col = c(final_fit)) %>% 
-  select(algorithm, resamp_method, .predictions) %>% 
-  unnest(col = c(.predictions)) %>% 
-  group_by(algorithm, resamp_method) %>% 
-  conf_mat(diabetes, .pred_class) %>% 
-  select(algorithm, resamp_method, everything()) %>% 
-  arrange(algorithm, resamp_method)
-
-
+```{r final_assessment}
+# function to get conf_mat components for each model
 confmat_summarizer <- function(data) {
   
   data %>% 
@@ -899,25 +934,99 @@ confmat_summarizer <- function(data) {
   
 }
 
-
-
-conf_mat_df %>%
+# obtain confusion matrix for each algorithm-subsampling pair
+conf_mat_df <- final_dataframe %>% 
+  select(algorithm, resamp_method, final_fit) %>% 
+  unnest(col = c(final_fit)) %>% 
+  select(algorithm, resamp_method, .predictions) %>% 
+  unnest(col = c(.predictions)) %>% 
+  group_by(algorithm, resamp_method) %>% 
+  conf_mat(diabetes, .pred_class) %>% 
+  select(algorithm, resamp_method, everything()) %>% 
+  arrange(algorithm, resamp_method) %>%
   mutate(
     confmat_sum = map(conf_mat, confmat_summarizer),
     algorithm = factor(algorithm),
     resamp_method = factor(resamp_method, levels = c("none", "adasyn", "smote", "bsmote", "down"))
   ) %>% 
   select(-conf_mat) %>% 
-  unnest(cols = c(confmat_sum)) %>% 
-  ggplot(aes(truth, prediction)) +
-  geom_tile(fill = "grey50", color = "white") +
-  geom_text(aes(label = value)) +
-  facet_grid(algorithm ~ resamp_method, switch = "x") +
-  scale_x_discrete(position = "top")
+  unnest(cols = c(confmat_sum))
 
 
+# graph confusion matrix
+conf_mat_df %>% 
+  # cosmetic adjustments
+  mutate(
+    algorithm = fct_recode(algorithm, "LASSO" = "lasso", "Random Forest" = "rf"),
+    resamp_method = fct_recode(resamp_method,
+                               "None" = "none", "ADASYN" = "adasyn", 
+                               "SMOTE" = "smote", "BSMOTE" = "bsmote",
+                               "Undersample" = "down")) %>% 
+  rename_with(str_to_title) %>% 
+  ggplot(aes(x = Truth, y = Prediction)) +
+  # fill color based on value (count), line color "white"
+  geom_tile(aes(fill = Value), color = "white") +
+  # manually set color gradient for "Value"
+  scale_fill_gradient(low = "#F4F9FF", high = "#013676") +
+  # add a binary color code for text, set to > 1000
+  geom_text(aes(label = Value, color = Value > 1000)) +
+  # apply manual text color for <1000, and >1000
+  scale_color_manual(guide = FALSE, values = c("black", "white")) +
+  facet_grid(Algorithm ~ Resamp_method, switch = "x") +
+  scale_x_discrete(position = "top") +
+  # extend the legend length to fit the number markers
+  theme(legend.key.width = unit(1, "cm"))
+
+
+# obtain metrics from the confusion matrix manually
+# due to some metrics taking the wrong "event level"; unable to resolve
+metric_calc <- conf_mat_df %>%
+  mutate(
+    # the cell type in a 2x2 table
+    cell_type = case_when(prediction == "Yes" & truth == "Yes" ~ "tp",
+                          prediction == "Yes" & truth == "No" ~ "fp",
+                          prediction == "No" & truth == "Yes" ~ "fn",
+                          prediction == "No" & truth == "No" ~ "tn")
+  ) %>% 
+  select(-prediction, -truth) %>% 
+  pivot_wider(names_from = cell_type,
+              values_from = value) %>% 
+  select(algorithm, resamp_method, tp, fp, fn, tn) %>% 
+  mutate(
+    # obtain metrics
+    sens = tp/(tp+fn),
+    spec = tn/(tn+fp),
+    ppv = tp/(tp+fp),
+    npv = tn/(tn+fn),
+    g_mean = sqrt(sens*spec),
+    uar = (sens+spec)/2,
+    f_meas = 2*((sens*ppv)/(sens+ppv))
+  ) %>% 
+  arrange(algorithm, desc(g_mean))
+
+metric_calc
 ```
 
+```{r removed_metric_get, echo = FALSE, eval = FALSE}
+# originally part of final_assessment chunk to obtain metrics from last-fit objects.
+# "deprecated" because found that certain measures was wrongly calculated because event_level
+# was not set to "second" (i.e. certain metrics are measuring true negatives).
+
+
+# # df containing metrics and its final estimate (based on test set)
+# metrics <- final_dataframe %>% 
+#   select(algorithm, resamp_method, final_fit) %>% 
+#   unnest(col = c(final_fit)) %>% 
+#   select(algorithm, resamp_method, .metrics) %>% 
+#   unnest(col = c(.metrics))
+#   
+# # results for g-mean metric
+# metrics %>% 
+#   filter(.metric == "g_mean") %>% 
+#   arrange(desc(.estimate)) %>% 
+#   select(algorithm, resamp_method, everything(), -.estimator, -.config) %>% 
+#   arrange(algorithm, desc(.estimate))
+```
 
 
 ```{r obtain_coefficients}
@@ -951,24 +1060,7 @@ coefficients$coefs[[7]] %>%
 ```
 
 
-```{r obtain predictions}
-# resample ROC-AUC
-rs_pred <- model_df_long %>% 
-  select(algorithm, resamp_method, tune_results) %>% 
-  unnest(col = c(tune_results)) %>% 
-  select(algorithm, resamp_method, id, .predictions) %>% 
-  unnest(col = c(.predictions))
-
-rs_pred %>% 
-  unite("model", algorithm:resamp_method) %>% 
-  group_by(model, id) %>% 
-  roc_curve(diabetes, .pred_Yes, event_level = "second") %>% 
-  ggplot(aes(x = 1 - specificity, y = sensitivity, color = id)) +
-  geom_path() +
-  geom_abline(lty = 3) +
-  coord_equal() +
-  facet_wrap( ~ model)
-  
+```{r final_rocauc}
 # final ROC-AUC
 pred <- final_dataframe %>% 
   select(algorithm, resamp_method, final_fit) %>% 
@@ -990,17 +1082,4 @@ pred %>%
   geom_abline(lty = 3) +
   coord_equal()
 ```
-
-
-outline the report
-figure out the pieces needed to explain
-
-in the next week or so, type up the outline
-send the rough draft. 
-
-evaluate estimates and see if reasonable
-how to explain?
-
-
-
 
