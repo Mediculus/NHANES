@@ -165,7 +165,7 @@ table1 <- summary(base_summ_table,
 
 
 table1 %>% 
-   kable("latex", booktabs = TRUE, linesep = "", digits = 3, 
+   knitr::kable("latex", booktabs = TRUE, linesep = "", digits = 3, 
          caption = "Summary Statistics of each Variable")
 # %>% 
 #    kable_styling(latex_options = c("HOLD_position"),
